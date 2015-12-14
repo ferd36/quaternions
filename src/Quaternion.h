@@ -13,14 +13,23 @@
 
 using namespace std;
 
+/**
+ * Two utility functions to work with numbers approximately equal to zero.
+ * If eps == 0, does a "hard" comparison to 0.
+ * Otherwise, uses a ball of radius eps around 0. If the scalar is inside
+ * that ball, it is equivalent to 0.
+ */
 template <typename T>
-inline bool is_zero(T x) {
-  return std::abs(x) < std::numeric_limits<T>::epsilon();
+inline bool is_scalar_zero(T x, T eps = 0) {
+  if (eps > 0)
+    return std::abs(x) < eps;
+  else
+    return x == 0;
 }
 
 template <typename T>
 inline T round_to_zero(T x) {
-  return is_zero(x) ? 0 : x;
+  return is_scalar_zero(x) ? 0 : x;
 }
 
 /**
@@ -36,18 +45,39 @@ inline T round_to_zero(T x) {
 template <typename T =double> // assert operations for numeric
 class Quaternion {
 public:
+  /**
+   * Construct a quaternion from at most 4 components of type T.
+   * Specifying only a != 0 makes the quaternion a real.
+   * Specifying only a != and b != 0 makes the quaternion an ordinary complex number.
+   */
   Quaternion(T a =0, T b =0, T c =0, T d =0)
       : _a(a), _b(b), _c(c), _d(d)
   {}
 
+  /**
+   * Construct a quaternion from a single complex<T>.
+   * The j and k components are 0.
+   */
   Quaternion(const std::complex<T>& x)
-      : _a(x.real()), _b(x.imag()), _c(0), _d(0)
+      : _a(const_cast<std::complex<T>&>(x).real()),
+        _b(const_cast<std::complex<T>&>(x).imag()),
+        _c(0), _d(0)
   {}
 
+  /**
+   * Construct a quaternion from 2 complex<T>.
+   * This will set all 4 components of the quaternion.
+   */
   Quaternion(const std::complex<T>& x, const std::complex<T>& y)
-      : _a(x.real()), _b(x.imag()), _c(y.real()), _d(y.imag())
+      : _a(const_cast<std::complex<T>&>(x).real()),
+        _b(const_cast<std::complex<T>&>(x).imag()),
+        _c(const_cast<std::complex<T>&>(x).real()),
+        _d(const_cast<std::complex<T>&>(x).imag())
   {}
 
+  /**
+   * Copy constructor.
+   */
   Quaternion(const Quaternion& other)
       : _a(other.a()),
         _b(other.b()),
@@ -55,26 +85,177 @@ public:
         _d(other.d())
   {}
 
+  /**
+   * Accessors for all 4 components of the quaternion.
+   */
   T a() const { return _a; }
   T b() const { return _b; }
   T c() const { return _c; }
   T d() const { return _d; }
 
-  Quaternion operator-() const {
+  /**
+   * The real and "unreal" parts of the quaternion.
+   */
+  T real() const { return _a; }
+  Quaternion unreal() const { return Quaternion(0,b(),c(),d()); }
+
+  /**
+   * Transforms this quaternion into its conjugate.
+   */
+  void conjugate() {
+    _b = -b();
+    _c = -c();
+    _d = -d();
+  }
+
+  /**
+   * The squared of the norm of the quaternion.
+   * (The square is sometimes useful, and it avoids paying for a sqrt).
+   */
+  T norm2() const {
+    return a()*a() + b()*b() + c()*c() + d()*d();
+  }
+
+  /**
+   * The norm of the quaternion (the l2 norm).
+   */
+  T norm() const {
+    return sqrt(norm2());
+  }
+
+  /**
+   * The l1 norm of the quaternion.
+   */
+  T l1() const {
+    return std::abs(a()) + std::abs(b()) + std::abs(c()) + std::abs(d());
+  }
+
+  /**
+   * The l2 norm of the quaternion.
+   */
+  T l2() const {
+    return norm();
+  }
+
+  /**
+   * The larget of the components of the quaternion.
+   */
+  T sup() const {
+    return std::max(std::max(a(),b()), std::max(c(),d()));
+  }
+
+  /**
+   * Return true if this quaternion is zero, false otherwise.
+   * TODO: introduce epsilon
+   */
+  bool is_zero() const {
+    return a() == 0 && b() == 0 && c() == 0 && d() == 0;
+  }
+
+  /**
+   * Return true if this quaternion is one, false otherwise.
+   * TODO: introduce epsilon
+   */
+  bool is_one() const {
+    return a() == 1 && b() == 0 && c() == 0 && d() == 0;
+  }
+
+  /**
+   * Return true if this quaternion has norm 1, false otherwise.
+   * TODO: introduce epsilon
+   */
+  bool is_unit() const {
+    return norm() == 1;
+  }
+
+  /**
+   * Return true if this quaternion is real, false otherwise.
+   * TODO: introduce epsilon
+   */
+  bool is_real() const {
+    return b() == 0 && c() == 0 && d() == 0;
+  }
+
+  /**
+   * Return true if this quaternion is complex, false otherwise.
+   * TODO: introduce epsilon
+   */
+  bool is_complex() const {
+    return c() == 0 && d() == 0;
+  }
+
+  /**
+   * Return true if this quaternion is real, false otherwise.
+   * TODO: introduce epsilon
+   */
+  bool is_unreal() const {
+    return b() != 0 || c() == 0 || d() == 0;
+  }
+
+  /**
+   * Unary minus.
+   */
+  Quaternion operator -() const {
     return Quaternion(-a(), -b(), -c(), -d());
   }
 
+  /**
+   * Unary +=.
+   */
   Quaternion operator +=(const Quaternion& y)
   {
-    // TODO: if 0 == y, if 1  == y, optional
-    _a = a()*y.a();
-    _b = b()*y.b();
-    _c = c()*y.c();
-    _d = d()*y.d();
+    _a = a()+y.a();
+    _b = b()+y.b();
+    _c = c()+y.c();
+    _d = d()+y.d();
     return *this;
   }
 
   /**
+  * Unary -=.
+  */
+  Quaternion operator -=(const Quaternion& y)
+  {
+    _a = a()-y.a();
+    _b = b()-y.b();
+    _c = c()-y.c();
+    _d = d()-y.d();
+    return *this;
+  }
+
+  /**
+   * Scaling by a constant.
+   */
+  Quaternion operator *=(T k)
+  {
+    if (k == 0) {
+      _a = _b = _c = _d = 0;
+    }
+    if (k != 1) {
+      _a = k * _a;
+      _b = k * _b;
+      _c = k * _c;
+      _d = k * _d;
+    }
+    return *this;
+  }
+
+  /**
+  * Scaling by a constant.
+  */
+  Quaternion operator /=(T k)
+  {
+    if (k != 1) {
+      _a = _a / k;
+      _b = _b / k;
+      _c = _c / k;
+      _d = _d / k;
+    }
+    return *this;
+  }
+
+  /**
+   * Unary multiplication.
    * 28 operations
    */
   Quaternion operator *=(const Quaternion& y)
@@ -91,18 +272,69 @@ public:
     return *this;
   }
 
+  /**
+   * The type used for matrix representations of quaternions.
+   */
   typedef array<array<std::complex<T>,2>,2> MatrixRepresentation;
 
-  MatrixRepresentation to_matrix() const {
+  /**
+   * Returns a matrix representation of a quaternion.
+   */
+  MatrixRepresentation to_matrix_representation() const {
     array<std::complex<T>,2> r0{{std::complex<T>(a(),b()), std::complex<T>(c(),d())}};
     array<std::complex<T>,2> r1{{std::complex<T>(-c(),d()), std::complex<T>(a(),-b())}};
     return MatrixRepresentation{{r0,r1}};
+  }
+
+  /**
+   * Print format control flags.
+   */
+  static T scalar_zero_threshold;
+
+  /**
+   * Print a quaternion to a stream in various formats.
+   */
+  std::ostream& print(std::ostream& out) const {
+      if (is_zero())
+        return out << 0;
+      if (is_one())
+        return out << 1;
+      if (*this == Quaternion<T>(-1))
+        return out << -1;
+      if (*this == Quaternion<T>(0,1))
+        return out << "i";
+      if (*this == Quaternion<T>(0,-1))
+        return out << "-i";
+      if (*this == Quaternion<T>(0,0,1))
+        return out << "j";
+      if (*this == Quaternion<T>(0,0,-1))
+        return out << "-j";
+      if (*this == Quaternion<T>(0,0,0,1))
+        return out << "k";
+      if (*this == Quaternion<T>(0,0,0,-1))
+        return out << "-k";
+      auto s = [](T x) { return x < 0 ? "" : "+"; };
+      if (!is_scalar_zero(a(), scalar_zero_threshold))
+        out << a();
+      if (!is_scalar_zero(b(), scalar_zero_threshold))
+        out << s(b()) << b() << "i";
+      if (!is_scalar_zero(c(), scalar_zero_threshold))
+        out << s(c()) << c() << "j";
+      if (!is_scalar_zero(d(), scalar_zero_threshold))
+        out << s(d()) << d() << "k";
+      return out;
   }
 
 private:
   T _a,_b,_c,_d;
 };
 
+template <typename T>
+T Quaternion<T>::scalar_zero_threshold = std::numeric_limits<T>::epsilon();
+
+/**
+ * Predefined quaternions on floats.
+ */
 typedef Quaternion<float> Qf;
 const Qf Qf_0 = Qf();
 const Qf Qf_1 = Qf(1);
@@ -110,6 +342,9 @@ const Qf Qf_i = Qf(0,1);
 const Qf Qf_j = Qf(0,0,1);
 const Qf Qf_k = Qf(0,0,0,1);
 
+/**
+ * Predefined quaternions on doubles.
+ */
 typedef Quaternion<double> Qd;
 const Qd Qd_0 = Qd();
 const Qd Qd_1 = Qd(1);
@@ -117,6 +352,9 @@ const Qd Qd_i = Qd(0,1);
 const Qd Qd_j = Qd(0,0,1);
 const Qd Qd_k = Qd(0,0,0,1);
 
+/**
+ * Predefined quaternions on long doubles.
+ */
 typedef Quaternion<long double> Qld;
 const Qld Qld_0 = Qld();
 const Qld Qld_1 = Qld(1);
@@ -132,105 +370,143 @@ const Qld Qld_k = Qld(0,0,0,1);
  */
 template <typename T>
 inline ostream& operator<<(ostream& out, const Quaternion<T>& q) {
-  if (q == Quaternion<T>())
-    return out << 0;
-  if (q == Quaternion<T>(1))
-    return out << 1;
-  if (q == Quaternion<T>(-1))
-    return out << -1;
-  if (q == Quaternion<T>(0,1))
-    return out << "i";
-  if (q == Quaternion<T>(0,-1))
-    return out << "-i";
-  if (q == Quaternion<T>(0,0,1))
-    return out << "j";
-  if (q == Quaternion<T>(0,0,-1))
-    return out << "-j";
-  if (q == Quaternion<T>(0,0,0,1))
-    return out << "k";
-  if (q == Quaternion<T>(0,0,0,-1))
-    return out << "-k";
-  auto s = [](T x) { return x < 0 ? "" : "+"; };
-  if (!is_zero(q.a()))
-    out << q.a();
-  if (!is_zero(q.b()))
-    out << s(q.b()) << q.b() << "i";
-  if (!is_zero(q.c()))
-    out << s(q.c()) << q.c() << "j";
-  if (!is_zero(q.d()))
-    out << s(q.d()) << q.d() << "k";
-  return out;
+  return q.print(out);
 }
 
+/**
+ * Multiplication by a constant on the left.
+ */
 template <typename T, typename T1>
 inline Quaternion<T> operator*(T1 k, const Quaternion<T>& x) {
-//  if (is_zero(k)) // TODO: make optional
-//    return Q_0<T>;
-//  if (is_zero(k-1))
-//    return x;
-  return Quaternion<T>(k*x.a(), k*x.b(), k*x.c(), k*x.d());
+  return Quaternion<T>(x) *= k;
 }
 
+// Same, swapping the lhs and rhs.
 template <typename T, typename T1>
 inline Quaternion<T> operator*(const Quaternion<T>& x, T1 k) {
   return k * x;
 }
 
+// TODO: multiplication by a complex number
+
+/**
+ * Division by a number.
+ */
 template <typename T, typename T1>
 inline Quaternion<T> operator/(const Quaternion<T>& x, T1 k) {
-//  if (is_zero(k-1))
-//    return x;
-  return Quaternion<T>(x.a()/k, x.b()/k, x.c()/k, x.d()/k);
+  return x * T(1)/k;
 }
 
+/**
+ * Returns the conjugate of x, as a new quaternion (x is unchanged).
+ */
 template <typename T>
 inline Quaternion<T> conjugate(const Quaternion<T>& x) {
-  return Quaternion<T>(x.a(), -x.b(), -x.c(), -x.d());
+  Quaternion<T> r(x);
+  r.conjugate();
+  return r;
 }
 
+/**
+ * The norms on a quaternion.
+ */
 template <typename T>
 inline T norm2(const Quaternion<T>& x) {
-  return x.a()*x.a() + x.b()*x.b() + x.c()*x.c() + x.d()*x.d();
+  return x.norm2();
 }
 
 template <typename T>
 inline T norm(const Quaternion<T>& x) {
-  return std::sqrt(norm2(x));
+  return x.norm();
 }
 
 template <typename T>
+inline T l1(const Quaternion<T>& x) {
+  return x.l1();
+}
+
+template <typename T>
+inline T l2(const Quaternion<T>& x) {
+  return x.l2();
+}
+
+template <typename T>
+inline T sup(const Quaternion<T>& x) {
+  return x.sup();
+}
+
+/**
+ * Quaternion tests.
+ */
+template <typename T>
 inline bool is_zero(const Quaternion<T>& x) {
-  return is_zero(norm2(x));
+  return x.is_zero();
+}
+
+template <typename T>
+inline bool is_one(const Quaternion<T>& x) {
+  return x.is_one();
 }
 
 template <typename T>
 inline bool is_unit(const Quaternion<T>& x) {
-  return is_zero(norm2(x) - 1);
+  return x.is_unit();
 }
 
 template <typename T>
 inline bool is_real(const Quaternion<T>& x) {
-  return is_zero(x.b()) && is_zero(x.c()) && is_zero(x.d());
+  return x.is_real();
+}
+
+template <typename T>
+inline bool is_complex(const Quaternion<T>& x) {
+  return x.is_complex();
+}
+
+template <typename T>
+inline bool is_unreal(const Quaternion<T>& x) {
+  return x.is_unreal();
 }
 
 /**
+ * Equality of two quaternions.
  * TODO: for very large values, equality is a classic floating point problem
  */
 template <typename T>
 inline bool operator==(const Quaternion<T>& x, const Quaternion<T>& y) {
-  return is_zero(norm2(x - y));
+  return x.a() == y.a() && x.b() == y.b() && x.c() == y.c() && x.d() == y.d();
+}
+
+template <typename T>
+inline bool operator!=(const Quaternion<T>& x, const Quaternion<T>& y) {
+  return !(x == y);
+}
+
+/**
+ * Equality of a quaternion and a real, or at least a number that can converted to a real.
+ */
+template <typename T, typename T2>
+inline bool operator==(const Quaternion<T>& x, T2 y) {
+  return is_real(x) && x.a() == static_cast<T>(y);
 }
 
 template <typename T, typename T2>
-inline bool operator==(const Quaternion<T>& x, T2 y) {
-  T yy = static_cast<T>(y);
-  return is_real(x) && is_zero(x.a() - yy);
+inline bool operator!=(const Quaternion<T>& x, T2 y) {
+  return !(x == y);
 }
 
+// Same, swapping the lhs and rhs.
 template <typename T, typename T2>
 inline bool operator==(T2 y, const Quaternion<T>& x) {
   return x == y;
 }
+
+template <typename T, typename T2>
+inline bool operator!=(T2 y, const Quaternion<T>& x) {
+  return x != y;
+}
+
+// TODO: equality of quaternion and complex, of quaternion and array/container
 
 template <typename T>
 inline Quaternion<T> operator+(const Quaternion<T>& x, const Quaternion<T>& y) {
@@ -245,12 +521,11 @@ inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T>& y) {
 /**
  * SSE operations: tried 2 implementations (SO and vectorclass): not faster.
  * Boost: as fast as boost implementation.
- * TODO: threads
+ * TODO: threads?
  */
 template <typename T>
 inline Quaternion<T> operator*(const Quaternion<T>& x, const Quaternion<T>& y) {
-  Quaternion<T> r(x);
-  return r *= y;
+  return Quaternion<T>(x) *= y;
 }
 
 template <typename T>
@@ -349,6 +624,8 @@ inline Quaternion<T> pow4(const Quaternion<T>& x) {
 template <typename T, typename I>
 inline Quaternion<T> pow(const Quaternion<T>& x, I exponent) {
 
+//  T n1 = norm(x);
+//
   if (exponent < 0)
     return inverse(pow(x, -exponent));
   if (exponent == 0)

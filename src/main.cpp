@@ -113,7 +113,7 @@ void test_pow() {
 
 void test_to_matrix() {
   Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
-  auto X = x.to_matrix();
+  auto X = x.to_matrix_representation();
   //cout << X << endl;
 }
 
