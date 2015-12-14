@@ -1,15 +1,32 @@
 #include "Quaternion.h"
-#include "generators.h"
+
+#include <random>
 #include <chrono>
 #include <boost/math/quaternion.hpp>
-#include "../vectorclass/quaternion.h"
 
 using namespace std;
 using namespace boost::math;
 
+
+/**
+ * A random number generator.
+ */
+std::default_random_engine generator;
+std::uniform_real_distribution<float> distribution(0.0,1.0);
+auto rng = bind(distribution, generator);
+
+/**
+ * A function to generate random quaternions.
+ */
+template <typename T, typename G>
+inline Quaternion<T> random_quaternion(G& g) {
+  return Quaternion<T>(g(), g(), g(), g());
+}
+
 /**
  * This method useful in unit tests, to compare against boost, which has
  * a (supposedly) well tested quaternion library.
+ * NOTE: hard to compare large values, requires floating point comparison.
  */
 bool operator==(const Quaternion<float>& x, const quaternion<float>& boost_y) {
   return x.a() == boost_y.R_component_1()
@@ -19,6 +36,28 @@ bool operator==(const Quaternion<float>& x, const quaternion<float>& boost_y) {
 }
 
 bool operator==(const quaternion<float>& boost_y, const Quaternion<float>& x) {
+  return x == boost_y;
+}
+
+bool operator==(const Quaternion<double>& x, const quaternion<double>& boost_y) {
+  return x.a() == boost_y.R_component_1()
+         && x.b() == boost_y.R_component_2()
+         && x.c() == boost_y.R_component_3()
+         && x.d() == boost_y.R_component_4();
+}
+
+bool operator==(const quaternion<double>& boost_y, const Quaternion<double>& x) {
+  return x == boost_y;
+}
+
+bool operator==(const Quaternion<long double>& x, const quaternion<long double>& boost_y) {
+  return x.a() == boost_y.R_component_1()
+         && x.b() == boost_y.R_component_2()
+         && x.c() == boost_y.R_component_3()
+         && x.d() == boost_y.R_component_4();
+}
+
+bool operator==(const quaternion<long double>& boost_y, const Quaternion<long double>& x) {
   return x == boost_y;
 }
 
@@ -44,24 +83,47 @@ void test_pow2() {
 
 void test_pow3() {
   cout << "Testing pow3" << endl;
-  assert(pow3(Qf_0) == 0);
-  assert(pow3(Qf_1) == 1);
-  assert(pow3(Qf_i) == -Qf_i);
-  assert(pow3(Qf_j) == -Qf_j);
-  assert(pow3(Qf_k) == -Qf_k);
+  assert(pow3(Qd_0) == 0);
+  assert(pow3(Qd_1) == 1);
+  assert(pow3(Qd_i) == -Qd_i);
+  assert(pow3(Qd_j) == -Qd_j);
+  assert(pow3(Qd_k) == -Qd_k);
+
+  assert(pow3(Qld_0) == 0);
+  assert(pow3(Qld_1) == 1);
+  assert(pow3(Qld_i) == -Qld_i);
+  assert(pow3(Qld_j) == -Qld_j);
+  assert(pow3(Qld_k) == -Qld_k);
 }
 
 void test_pow() {
   cout << "Testing pow" << endl;
-  Qf x(1,2,3,4);
-  Qf y = Qf_1;
-  for (size_t i = 0; i < 7; ++i)
-    y *= x;
-  assert(pow(x,7) == y);
+  for (size_t i = 0; i < 100; ++i) {
+    int n = (int) random() % 20;
+    Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
+    Qld y = Qld_1;
+    for (size_t j = 0; j < n; ++j)
+      y *= x;
+    assert(pow(x, n) == y);
+    // Test against boost
+    quaternion<long double> bx(x.a(),x.b(),x.c(),x.d());
+    assert(pow(bx, n) == y);
+  }
+}
 
-  // Test against boost
-  quaternion<float> bx(1,2,3,4);
-  assert(pow(bx,7) == y);
+void test_to_matrix() {
+  Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
+  auto X = x.to_matrix();
+  //cout << X << endl;
+}
+
+void test_exp() {
+  cout << "Testing exp" << endl;
+  Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
+  quaternion<long double> bx(x.a(),x.b(),x.c(),x.d());
+  cout << exp(x) << endl;
+  cout << exp(bx) << endl;
+  assert(exp(x) == exp(bx));
 }
 
 void test_addition() {
@@ -132,11 +194,7 @@ void test_multiplication_speed() {
   cout << "Testing multiplication speed" << endl;
   size_t N = 10000;
 
-  std::default_random_engine generator;
-  std::lognormal_distribution<float> distribution(0.0,1.0);
-  auto rng = bind(distribution, generator);
   Quaternion<float> q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
-
 
   { // With Boost
     quaternion<float> a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
@@ -152,19 +210,19 @@ void test_multiplication_speed() {
     cout << "Certificate=" << certificate << endl;
   }
 
-  { // With vectorclass
-    Quaternion4f a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
-    float certificate = 0.0;
-    auto start = std::chrono::system_clock::now();
-    for (size_t i = 0; i < N; ++i) {
-      Quaternion4f r = a * b;
-      certificate += r.extract(0) + r.extract(1) + r.extract(2) + r.extract(3);
-    }
-    auto end = std::chrono::system_clock::now();
-    std::chrono::duration<float> diff = end - start;
-    cout << "vectorclass: " << (1e9 * diff.count() / N) << "ns" << endl;
-    cout << "Certificate=" << certificate << endl;
-  }
+//  { // With vectorclass, which uses intrinsics - didn't turn out to be faster
+//    Quaternion4f a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
+//    float certificate = 0.0;
+//    auto start = std::chrono::system_clock::now();
+//    for (size_t i = 0; i < N; ++i) {
+//      Quaternion4f r = a * b;
+//      certificate += r.extract(0) + r.extract(1) + r.extract(2) + r.extract(3);
+//    }
+//    auto end = std::chrono::system_clock::now();
+//    std::chrono::duration<float> diff = end - start;
+//    cout << "vectorclass: " << (1e9 * diff.count() / N) << "ns" << endl;
+//    cout << "Certificate=" << certificate << endl;
+//  }
 
   {
     float certificate = 0.0;
@@ -226,7 +284,9 @@ int main() {
   test_pow2();
   test_pow3();
   test_pow();
-  //test_multiplication_speed();
+  test_exp();
+  test_multiplication_speed();
   test_pow_speed();
+  test_to_matrix();
   return 0;
 }

@@ -7,10 +7,9 @@
 
 #include <iostream>
 #include <cmath>
-#include <array>
 #include <limits>
-#include <xmmintrin.h>
-#include <pmmintrin.h>
+#include <array>
+#include <complex>
 
 using namespace std;
 
@@ -39,10 +38,14 @@ class Quaternion {
 public:
   Quaternion(T a =0, T b =0, T c =0, T d =0)
       : _a(a), _b(b), _c(c), _d(d)
-//      : _a(round_to_zero(a)),
-//        _b(round_to_zero(b)),
-//        _c(round_to_zero(c)),
-//        _d(round_to_zero(d))
+  {}
+
+  Quaternion(const std::complex<T>& x)
+      : _a(x.real()), _b(x.imag()), _c(0), _d(0)
+  {}
+
+  Quaternion(const std::complex<T>& x, const std::complex<T>& y)
+      : _a(x.real()), _b(x.imag()), _c(y.real()), _d(y.imag())
   {}
 
   Quaternion(const Quaternion& other)
@@ -52,8 +55,23 @@ public:
         _d(other.d())
   {}
 
+  T a() const { return _a; }
+  T b() const { return _b; }
+  T c() const { return _c; }
+  T d() const { return _d; }
+
   Quaternion operator-() const {
     return Quaternion(-a(), -b(), -c(), -d());
+  }
+
+  Quaternion operator +=(const Quaternion& y)
+  {
+    // TODO: if 0 == y, if 1  == y, optional
+    _a = a()*y.a();
+    _b = b()*y.b();
+    _c = c()*y.c();
+    _d = d()*y.d();
+    return *this;
   }
 
   /**
@@ -61,23 +79,25 @@ public:
    */
   Quaternion operator *=(const Quaternion& y)
   {
-    // TODO: if 0 == y, if 1  == y
-    T ta = a()*y.a() - b()*y.b() - c()*y.c() - d()*y.d();
-    T tb = a()*y.b() + b()*y.a() + c()*y.d() - d()*y.c();
-    T tc = a()*y.c() - b()*y.d() + c()*y.a() + d()*y.b();
-    T td = a()*y.d() + b()*y.c() - c()*y.b() + d()*y.a();
+    // TODO: if 0 == y, if 1  == y, optional
+    T ta = a() * y.a() - b() * y.b() - c() * y.c() - d() * y.d();
+    T tb = a() * y.b() + b() * y.a() + c() * y.d() - d() * y.c();
+    T tc = a() * y.c() - b() * y.d() + c() * y.a() + d() * y.b();
+    T td = a() * y.d() + b() * y.c() - c() * y.b() + d() * y.a();
     _a = ta;
     _b = tb;
     _c = tc;
     _d = td;
-
-    return(*this);
+    return *this;
   }
 
-  T a() const { return _a; }
-  T b() const { return _b; }
-  T c() const { return _c; }
-  T d() const { return _d; }
+  typedef array<array<std::complex<T>,2>,2> MatrixRepresentation;
+
+  MatrixRepresentation to_matrix() const {
+    array<std::complex<T>,2> r0{{std::complex<T>(a(),b()), std::complex<T>(c(),d())}};
+    array<std::complex<T>,2> r1{{std::complex<T>(-c(),d()), std::complex<T>(a(),-b())}};
+    return MatrixRepresentation{{r0,r1}};
+  }
 
 private:
   T _a,_b,_c,_d;
@@ -104,6 +124,20 @@ const Qf Qf_1 = Qf(1);
 const Qf Qf_i = Qf(0,1);
 const Qf Qf_j = Qf(0,0,1);
 const Qf Qf_k = Qf(0,0,0,1);
+
+typedef Quaternion<double> Qd;
+const Qd Qd_0 = Qd();
+const Qd Qd_1 = Qd(1);
+const Qd Qd_i = Qd(0,1);
+const Qd Qd_j = Qd(0,0,1);
+const Qd Qd_k = Qd(0,0,0,1);
+
+typedef Quaternion<long double> Qld;
+const Qld Qld_0 = Qld();
+const Qld Qld_1 = Qld(1);
+const Qld Qld_i = Qld(0,1);
+const Qld Qld_j = Qld(0,0,1);
+const Qld Qld_k = Qld(0,0,0,1);
 
 /**
  * This streaming operator made me wonder if I should sneak "smart" code
@@ -145,10 +179,10 @@ inline ostream& operator<<(ostream& out, const Quaternion<T>& q) {
 
 template <typename T, typename T1>
 inline Quaternion<T> operator*(T1 k, const Quaternion<T>& x) {
-  if (is_zero(k))
-    return Q_0<T>;
-  if (is_zero(k-1))
-    return x;
+//  if (is_zero(k)) // TODO: make optional
+//    return Q_0<T>;
+//  if (is_zero(k-1))
+//    return x;
   return Quaternion<T>(k*x.a(), k*x.b(), k*x.c(), k*x.d());
 }
 
@@ -159,8 +193,8 @@ inline Quaternion<T> operator*(const Quaternion<T>& x, T1 k) {
 
 template <typename T, typename T1>
 inline Quaternion<T> operator/(const Quaternion<T>& x, T1 k) {
-  if (is_zero(k-1))
-    return x;
+//  if (is_zero(k-1))
+//    return x;
   return Quaternion<T>(x.a()/k, x.b()/k, x.c()/k, x.d()/k);
 }
 
@@ -194,6 +228,9 @@ inline bool is_real(const Quaternion<T>& x) {
   return is_zero(x.b()) && is_zero(x.c()) && is_zero(x.d());
 }
 
+/**
+ * TODO: for very large values, equality is a classic floating point problem
+ */
 template <typename T>
 inline bool operator==(const Quaternion<T>& x, const Quaternion<T>& y) {
   return is_zero(norm2(x - y));
@@ -228,56 +265,8 @@ inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T>& y) {
 template <typename T>
 inline Quaternion<T> operator*(const Quaternion<T>& x, const Quaternion<T>& y) {
   Quaternion<T> r(x);
-  r *= y;
-  return r;
-//  return Quaternion<T>(x.a()*y.a() - x.b()*y.b() - x.c()*y.c() - x.d()*y.d(),
-//                       x.a()*y.b() + x.b()*y.a() + x.c()*y.d() - x.d()*y.c(),
-//                       x.a()*y.c() - x.b()*y.d() + x.c()*y.a() + x.d()*y.b(),
-//                       x.a()*y.d() + x.b()*y.c() - x.c()*y.b() + x.d()*y.a());
+  return r *= y;
 }
-
-inline __m128 _mm_cross4_ps(const __m128 xyzw, const __m128 abcd)
-{
-  /* The product of two quaternions is:                                 */
-  /* (X,Y,Z,W) = (xd+yc-zb+wa, -xc+yd+za+wb, xb-ya+zd+wc, -xa-yb-zc+wd) */
-
-  __m128 wzyx = _mm_shuffle_ps(xyzw, xyzw, _MM_SHUFFLE(0,1,2,3));
-  __m128 baba = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(0,1,0,1));
-  __m128 dcdc = _mm_shuffle_ps(abcd, abcd, _MM_SHUFFLE(2,3,2,3));
-
-  /* variable names below are for parts of componens of result (X,Y,Z,W) */
-  /* nX stands for -X and similarly for the other components             */
-
-  /* znxwy  = (xb - ya, zb - wa, wd - zc, yd - xc) */
-  __m128 ZnXWY = _mm_hsub_ps(_mm_mul_ps(xyzw, baba), _mm_mul_ps(wzyx, dcdc));
-
-  /* xzynw  = (xd + yc, zd + wc, wb + za, yb + xa) */
-  __m128 XZYnW = _mm_hadd_ps(_mm_mul_ps(xyzw, dcdc), _mm_mul_ps(wzyx, baba));
-
-  /* _mm_shuffle_ps(XZYnW, ZnXWY, _MM_SHUFFLE(3,2,1,0)) */
-  /*      = (xd + yc, zd + wc, wd - zc, yd - xc)        */
-  /* _mm_shuffle_ps(ZnXWY, XZYnW, _MM_SHUFFLE(2,3,0,1)) */
-  /*      = (zb - wa, xb - ya, yb + xa, wb + za)        */
-
-  /* _mm_addsub_ps adds elements 1 and 3 and subtracts elements 0 and 2, so we get: */
-  /* _mm_addsub_ps(*, *) = (xd+yc-zb+wa, xb-ya+zd+wc, wd-zc+yb+xa, yd-xc+wb+za)     */
-
-  __m128 XZWY = _mm_addsub_ps(_mm_shuffle_ps(XZYnW, ZnXWY, _MM_SHUFFLE(3,2,1,0)),
-                              _mm_shuffle_ps(ZnXWY, XZYnW, _MM_SHUFFLE(2,3,0,1)));
-
-  /* now we only need to shuffle the components in place and return the result      */
-  return XZWY; //_mm_shuffle_ps(XZWY, XZWY, _MM_SHUFFLE(2,1,3,0));
-
-  /* operations: 6 shuffles, 4 multiplications, 3 compound additions/subtractions   */
-}
-
-// Not faster than regular C++ for now
-//template <>
-//inline Quaternion<float> operator*(const Quaternion<float>& x, const Quaternion<float>& y) {
-//  __m128 r = _mm_cross4_ps(*reinterpret_cast<const __m128*>(&x), *reinterpret_cast<const __m128*>(&y));
-//  float* p = reinterpret_cast<float*>(&r);
-//  return Quaternion<float>(*(p+2), *(p+1), *(p+3), *p);
-//}
 
 template <typename T>
 inline Quaternion<T> inverse(const Quaternion<T>& x) {
@@ -378,9 +367,9 @@ inline Quaternion<T> pow(const Quaternion<T>& x, I exponent) {
   if (exponent < 0)
     return inverse(pow(x, -exponent));
   if (exponent == 0)
-    return Q_0<T>;
-  if (exponent == 1)
     return Q_1<T>;
+  if (exponent == 1)
+    return x;
   if (exponent == 2)
     return pow2(x);
   if (exponent == 3)
@@ -399,6 +388,16 @@ inline Quaternion<T> pow(const Quaternion<T>& x, I exponent) {
     y *= x;
 
   return y;
+}
+
+template <typename T>
+inline Quaternion<T> exp(const Quaternion<T>& x) {
+  T n1 = sqrt(x.b()*x.b() + x.c()*x.c() + x.d()*x.d());
+  T n2 = exp(x.a())*sin(n1)/n1;
+  return Quaternion<T>(exp(x.a())*cos(n1),
+                       n2*x.b(),
+                       n2*x.c(),
+                       n2*x.d());
 }
 
 
