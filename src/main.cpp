@@ -102,7 +102,7 @@ void test_pow() {
     int n = (int) random() % 20;
     Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
     Qld y = Qld_1;
-    for (size_t j = 0; j < n; ++j)
+    for (int j = 0; j < n; ++j)
       y *= x;
     assert(pow(x, n) == y);
     // Test against boost

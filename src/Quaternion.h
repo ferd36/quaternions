@@ -103,21 +103,6 @@ private:
   T _a,_b,_c,_d;
 };
 
-template <typename T=double>
-const Quaternion<T> Q_0 = Quaternion<T>();
-
-template <typename T=double>
-const Quaternion<T> Q_1 = Quaternion<T>(1);
-
-template <typename T=double>
-const Quaternion<T> Q_i = Quaternion<T>(0,1);
-
-template <typename T=double>
-const Quaternion<T> Q_j = Quaternion<T>(0,0,1);
-
-template <typename T=double>
-const Quaternion<T> Q_k = Quaternion<T>(0,0,0,1);
-
 typedef Quaternion<float> Qf;
 const Qf Qf_0 = Qf();
 const Qf Qf_1 = Qf(1);
@@ -147,23 +132,23 @@ const Qld Qld_k = Qld(0,0,0,1);
  */
 template <typename T>
 inline ostream& operator<<(ostream& out, const Quaternion<T>& q) {
-  if (q == Q_0<T>)
+  if (q == Quaternion<T>())
     return out << 0;
-  if (q == Q_1<T>)
+  if (q == Quaternion<T>(1))
     return out << 1;
-  if (q == -Q_1<T>)
+  if (q == Quaternion<T>(-1))
     return out << -1;
-  if (q == Q_i<T>)
+  if (q == Quaternion<T>(0,1))
     return out << "i";
-  if (q == -Q_i<T>)
+  if (q == Quaternion<T>(0,-1))
     return out << "-i";
-  if (q == Q_j<T>)
+  if (q == Quaternion<T>(0,0,1))
     return out << "j";
-  if (q == -Q_j<T>)
+  if (q == Quaternion<T>(0,0,-1))
     return out << "-j";
-  if (q == Q_k<T>)
+  if (q == Quaternion<T>(0,0,0,1))
     return out << "k";
-  if (q == -Q_k<T>)
+  if (q == Quaternion<T>(0,0,0,-1))
     return out << "-k";
   auto s = [](T x) { return x < 0 ? "" : "+"; };
   if (!is_zero(q.a()))
@@ -367,7 +352,7 @@ inline Quaternion<T> pow(const Quaternion<T>& x, I exponent) {
   if (exponent < 0)
     return inverse(pow(x, -exponent));
   if (exponent == 0)
-    return Q_1<T>;
+    return Quaternion<T>(1);
   if (exponent == 1)
     return x;
   if (exponent == 2)
