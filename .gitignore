@@ -28,10 +28,13 @@
 *.app
 
 *~
-*.dat
 .gdb_history
 test
-temp.mph
 tags
 TAGS
 .idea
+
+CMakeCache.txt
+CMakeFiles
+cmake_install.cmake
+quaternions
