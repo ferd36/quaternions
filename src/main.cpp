@@ -8,6 +8,20 @@
 using namespace std;
 using namespace boost::math;
 
+/**
+ * Prints out arrays to streams
+ */
+template <typename T, size_t n>
+inline ostream& operator<<(ostream& out, const array<T,n>& x) {
+  out << "{";
+  for (size_t i = 0; i < n; ++i) {
+    out << x[i];
+    if (i < n-1)
+      out << ",";
+  }
+  return out << "}";
+}
+
 
 /**
  * A random number generator.
@@ -31,9 +45,9 @@ inline Quaternion<T> random_quaternion(G& g) {
  */
 bool operator==(const Quaternion<float>& x, const quaternion<float>& boost_y) {
   return x.a() == boost_y.R_component_1()
-         && x.b() == boost_y.R_component_2()
-         && x.c() == boost_y.R_component_3()
-         && x.d() == boost_y.R_component_4();
+    && x.b() == boost_y.R_component_2()
+    && x.c() == boost_y.R_component_3()
+    && x.d() == boost_y.R_component_4();
 }
 
 bool operator==(const quaternion<float>& boost_y, const Quaternion<float>& x) {
@@ -42,9 +56,9 @@ bool operator==(const quaternion<float>& boost_y, const Quaternion<float>& x) {
 
 bool operator==(const Quaternion<double>& x, const quaternion<double>& boost_y) {
   return x.a() == boost_y.R_component_1()
-         && x.b() == boost_y.R_component_2()
-         && x.c() == boost_y.R_component_3()
-         && x.d() == boost_y.R_component_4();
+    && x.b() == boost_y.R_component_2()
+    && x.c() == boost_y.R_component_3()
+    && x.d() == boost_y.R_component_4();
 }
 
 bool operator==(const quaternion<double>& boost_y, const Quaternion<double>& x) {
@@ -53,9 +67,9 @@ bool operator==(const quaternion<double>& boost_y, const Quaternion<double>& x) 
 
 bool operator==(const Quaternion<long double>& x, const quaternion<long double>& boost_y) {
   return x.a() == boost_y.R_component_1()
-         && x.b() == boost_y.R_component_2()
-         && x.c() == boost_y.R_component_3()
-         && x.d() == boost_y.R_component_4();
+    && x.b() == boost_y.R_component_2()
+    && x.c() == boost_y.R_component_3()
+    && x.d() == boost_y.R_component_4();
 }
 
 bool operator==(const quaternion<long double>& boost_y, const Quaternion<long double>& x) {
@@ -99,23 +113,34 @@ void test_pow3() {
 
 void test_pow() {
   cout << "Testing pow" << endl;
+  
   for (size_t i = 0; i < 100; ++i) {
     int n = (int) random() % 20;
     Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
     Qld y = Qld_1;
     for (int j = 0; j < n; ++j)
       y *= x;
-    assert(pow(x, n) == y);
-    // Test against boost
     quaternion<long double> bx(x.a(),x.b(),x.c(),x.d());
-    assert(pow(bx, n) == y);
+    cout << endl << set_style_compact<long double>();
+    cout << "boost:          " << pow(bx, n) << endl;
+    cout << "multiplication: " << y << endl;
+    cout << "quaternions:    " << pow(x,n) << endl;
   }
+}
+
+void test_to_polar_representation() {
+  cout << "Testing polar represtantion" << endl;
+  Qd x(1);
+  cout << Qd(1,0,0,0).to_polar_representation() << endl;
+  cout << Qd(0,1,0,0).to_polar_representation() << endl;
+  cout << Qd(0,0,1,0).to_polar_representation() << endl;
+  cout << Qd(0,0,0,1).to_polar_representation() << endl;
 }
 
 void test_to_matrix() {
   Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
   auto X = x.to_matrix_representation();
-  //cout << X << endl;
+  cout << X << endl;
 }
 
 void test_exp() {
@@ -229,19 +254,19 @@ void test_multiplication_speed() {
     cout << "Certificate=" << certificate << endl;
   }
 
-//  { // With vectorclass, which uses intrinsics - didn't turn out to be faster
-//    Quaternion4f a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
-//    float certificate = 0.0;
-//    auto start = std::chrono::system_clock::now();
-//    for (size_t i = 0; i < N; ++i) {
-//      Quaternion4f r = a * b;
-//      certificate += r.extract(0) + r.extract(1) + r.extract(2) + r.extract(3);
-//    }
-//    auto end = std::chrono::system_clock::now();
-//    std::chrono::duration<float> diff = end - start;
-//    cout << "vectorclass: " << (1e9 * diff.count() / N) << "ns" << endl;
-//    cout << "Certificate=" << certificate << endl;
-//  }
+  //  { // With vectorclass, which uses intrinsics - didn't turn out to be faster
+  //    Quaternion4f a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
+  //    float certificate = 0.0;
+  //    auto start = std::chrono::system_clock::now();
+  //    for (size_t i = 0; i < N; ++i) {
+  //      Quaternion4f r = a * b;
+  //      certificate += r.extract(0) + r.extract(1) + r.extract(2) + r.extract(3);
+  //    }
+  //    auto end = std::chrono::system_clock::now();
+  //    std::chrono::duration<float> diff = end - start;
+  //    cout << "vectorclass: " << (1e9 * diff.count() / N) << "ns" << endl;
+  //    cout << "Certificate=" << certificate << endl;
+  //  }
 
   {
     float certificate = 0.0;
@@ -304,10 +329,11 @@ int main() {
   test_pow3();
   test_pow();
   test_exp();
-  test_multiplication_speed();
-  test_pow_speed();
-  test_to_matrix();
-  test_io_eps();
-  test_io_style();
+  // test_multiplication_speed();
+  // test_pow_speed();
+  // test_to_polar_representation();
+  // test_to_matrix();
+  // test_io_eps();
+  // test_io_style();
   return 0;
 }
