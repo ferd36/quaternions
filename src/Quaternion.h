@@ -1,6 +1,6 @@
-//
-// Created by Frank Astier on 2015/12/13.
-//
+/**
+ * A quaternion class.
+ */
 
 #ifndef QUATERNIONS_QUATERNION_H
 #define QUATERNIONS_QUATERNION_H
@@ -10,26 +10,21 @@
 #include <limits>
 #include <array>
 #include <complex>
-
-using namespace std;
+#include <assert.h>
 
 /**
- * Two utility functions to work with numbers approximately equal to zero.
+ * Utility function to work with numbers approximately equal to zero.
  * If eps == 0, does a "hard" comparison to 0.
  * Otherwise, uses a ball of radius eps around 0. If the scalar is inside
  * that ball, it is equivalent to 0.
+ * TODO: refine for large floating point numbers
  */
 template <typename T>
-inline bool is_scalar_zero(T x, T eps = 0) {
+inline bool is_scalar_zero(T x, T eps =0) {
   if (eps > 0)
-    return std::abs(x) < eps;
+    return std::fabs(x) < eps;
   else
     return x == 0;
-}
-
-template <typename T>
-inline T round_to_zero(T x) {
-  return is_scalar_zero(x) ? 0 : x;
 }
 
 /**
@@ -275,45 +270,47 @@ public:
   /**
    * The type used for matrix representations of quaternions.
    */
-  typedef array<array<std::complex<T>,2>,2> MatrixRepresentation;
+  typedef std::array<std::array<std::complex<T>,2>,2> MatrixRepresentation;
 
   /**
    * Returns a matrix representation of a quaternion.
    */
   MatrixRepresentation to_matrix_representation() const {
-    array<std::complex<T>,2> r0{{std::complex<T>(a(),b()), std::complex<T>(c(),d())}};
-    array<std::complex<T>,2> r1{{std::complex<T>(-c(),d()), std::complex<T>(a(),-b())}};
+    std::array<std::complex<T>,2> r0{{std::complex<T>(a(),b()), std::complex<T>(c(),d())}};
+    std::array<std::complex<T>,2> r1{{std::complex<T>(-c(),d()), std::complex<T>(a(),-b())}};
     return MatrixRepresentation{{r0,r1}};
   }
 
   /**
-   * Print format control flags.
-   */
-  static T scalar_zero_threshold;
+  * Print format control flags.
+  */
+  static T scalar_zero_threshold; // if 0, does "hard" equality tests for zero
+  static int print_style;
 
   /**
    * Print a quaternion to a stream in various formats.
    */
   std::ostream& print(std::ostream& out) const {
+    if (print_style == 0) {
       if (is_zero())
         return out << 0;
       if (is_one())
         return out << 1;
       if (*this == Quaternion<T>(-1))
         return out << -1;
-      if (*this == Quaternion<T>(0,1))
+      if (*this == Quaternion<T>(0, 1))
         return out << "i";
-      if (*this == Quaternion<T>(0,-1))
+      if (*this == Quaternion<T>(0, -1))
         return out << "-i";
-      if (*this == Quaternion<T>(0,0,1))
+      if (*this == Quaternion<T>(0, 0, 1))
         return out << "j";
-      if (*this == Quaternion<T>(0,0,-1))
+      if (*this == Quaternion<T>(0, 0, -1))
         return out << "-j";
-      if (*this == Quaternion<T>(0,0,0,1))
+      if (*this == Quaternion<T>(0, 0, 0, 1))
         return out << "k";
-      if (*this == Quaternion<T>(0,0,0,-1))
+      if (*this == Quaternion<T>(0, 0, 0, -1))
         return out << "-k";
-      auto s = [](T x) { return x < 0 ? "" : "+"; };
+      auto s = [](T x) { return x < 0 ? "" : "+"; }; // print out the sign correctly
       if (!is_scalar_zero(a(), scalar_zero_threshold))
         out << a();
       if (!is_scalar_zero(b(), scalar_zero_threshold))
@@ -322,15 +319,17 @@ public:
         out << s(c()) << c() << "j";
       if (!is_scalar_zero(d(), scalar_zero_threshold))
         out << s(d()) << d() << "k";
-      return out;
+    } else if (print_style == 1) {
+      out << "{" << a() << "," << b() << "," << c() << "," << d() << "}";
+    }
+    return out;
   }
+
+  // TODO: read from stream
 
 private:
   T _a,_b,_c,_d;
 };
-
-template <typename T>
-T Quaternion<T>::scalar_zero_threshold = std::numeric_limits<T>::epsilon();
 
 /**
  * Predefined quaternions on floats.
@@ -363,13 +362,61 @@ const Qld Qld_j = Qld(0,0,1);
 const Qld Qld_k = Qld(0,0,0,1);
 
 /**
+ * IO manipulators to control the format when printing quaternions out to a stream.
+ */
+template <typename T>
+T Quaternion<T>::scalar_zero_threshold;
+
+template <typename T>
+int Quaternion<T>::print_style;
+
+template <typename T>
+struct SetScalarZeroThreshold { T eps = 0; };
+
+template <typename T>
+inline SetScalarZeroThreshold<T> set_eps(T eps) {
+  SetScalarZeroThreshold<T> sszt;
+  sszt.eps = eps;
+  return sszt;
+}
+
+template <typename T>
+inline std::ostream& operator<<(std::ostream& out, SetScalarZeroThreshold<T> sszt) {
+  Quaternion<T>::scalar_zero_threshold = sszt.eps;
+  return out;
+}
+
+template <typename T>
+struct SetPrintStyle { int style; };
+
+template <typename T>
+inline SetPrintStyle<T> set_style_nice() {
+  SetPrintStyle<T> sps;
+  sps.style = 0;
+  return sps;
+}
+
+template <typename T>
+inline SetPrintStyle<T> set_style_compact() {
+  SetPrintStyle<T> sps;
+  sps.style = 1;
+  return sps;
+}
+
+template <typename T>
+inline std::ostream& operator<<(std::ostream& out, SetPrintStyle<T> sps) {
+  Quaternion<T>::print_style = sps.style;
+  return out;
+}
+
+/**
  * This streaming operator made me wonder if I should sneak "smart" code
  * in the quaternion arithmetic, in order to optimize it for space, but that
  * turned out not worthwhile (see CQuaternion).
  * TODO: control format for file or human readable. Also write operator>>
  */
 template <typename T>
-inline ostream& operator<<(ostream& out, const Quaternion<T>& q) {
+inline std::ostream& operator<<(std::ostream& out, const Quaternion<T>& q) {
   return q.print(out);
 }
 
