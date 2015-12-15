@@ -113,7 +113,7 @@ void test_pow3() {
 
 void test_pow() {
   cout << "Testing pow" << endl;
-  
+
   for (size_t i = 0; i < 100; ++i) {
     int n = (int) random() % 20;
     Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
@@ -121,6 +121,7 @@ void test_pow() {
     for (int j = 0; j < n; ++j)
       y *= x;
     quaternion<long double> bx(x.a(),x.b(),x.c(),x.d());
+    assert(is_scalar_zero(norm2(pow(x,n) - y),(long double) 1e-5));
     cout << endl << set_style_compact<long double>();
     cout << "boost:          " << pow(bx, n) << endl;
     cout << "multiplication: " << y << endl;

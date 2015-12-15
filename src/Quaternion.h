@@ -148,58 +148,67 @@ public:
   }
 
   /**
-   * The larget of the components of the quaternion.
+   * The value of the largest components of the quaternion.
    */
   T sup() const {
-    return std::max(std::max(a(),b()), std::max(c(),d()));
+    return std::max(std::max(std::abs(a()),std::abs(b())),
+                    std::max(std::abs(c()),std::abs(d())));
   }
 
   /**
    * Return true if this quaternion is zero, false otherwise.
-   * TODO: introduce epsilon
+   * Each component is tested for equality with zero, which means
+   * we are using a "square" hyper-box around 0, which is more
+   * lenient than a spherical ball around 0. It preserves convexity.
    */
-  bool is_zero() const {
-    return a() == 0 && b() == 0 && c() == 0 && d() == 0;
+  bool is_zero(T eps = 0) const {
+    return is_scalar_zero(a(), eps)
+           && is_scalar_zero(b(), eps)
+           && is_scalar_zero(c(), eps)
+           && is_scalar_zero(d(), eps);
   }
 
   /**
    * Return true if this quaternion is one, false otherwise.
-   * TODO: introduce epsilon
    */
-  bool is_one() const {
-    return a() == 1 && b() == 0 && c() == 0 && d() == 0;
+  bool is_one(T eps = 0) const {
+    return is_scalar_zero(a()-1, eps)
+           && is_scalar_zero(b()-1, eps)
+           && is_scalar_zero(c()-1, eps)
+           && is_scalar_zero(d()-1, eps);
   }
 
   /**
    * Return true if this quaternion has norm 1, false otherwise.
-   * TODO: introduce epsilon
    */
-  bool is_unit() const {
-    return norm() == 1;
+  bool is_unit(T eps = 0) const {
+    return is_scalar_zero(norm() - 1);
   }
 
   /**
    * Return true if this quaternion is real, false otherwise.
-   * TODO: introduce epsilon
    */
-  bool is_real() const {
-    return b() == 0 && c() == 0 && d() == 0;
+  bool is_real(T eps = 0) const {
+    return is_scalar_zero(b(), eps)
+           && is_scalar_zero(c(), eps)
+           && is_scalar_zero(d(), eps);
   }
 
   /**
    * Return true if this quaternion is complex, false otherwise.
-   * TODO: introduce epsilon
    */
-  bool is_complex() const {
-    return c() == 0 && d() == 0;
+  bool is_complex(T eps = 0) const {
+    return is_scalar_zero(c(), eps)
+           && is_scalar_zero(d(), eps);
   }
 
   /**
    * Return true if this quaternion is real, false otherwise.
-   * TODO: introduce epsilon
    */
-  bool is_unreal() const {
-    return b() != 0 || c() == 0 || d() == 0;
+  bool is_unreal(T eps = 0) const {
+    return !is_scalar_zero(b(), eps)
+           && is_scalar_zero(c(), eps)
+           && is_scalar_zero(d(), eps);
   }
 
   /**
@@ -285,11 +294,13 @@ public:
   /**
    * The polar representation of a quaternion.
    * WIP.
+   * TODO: handle theta = 0 correctly
    */
   polar_representation to_polar_representation() const {
     T n = norm();
     T theta = std::acos(a() / n);
-    return {{n, theta, n*std::cos(theta), b()*std::sin(theta)/n, c()*std::sin(theta)/n, d()*std::sin(theta)/n}};
+    T ns = n*std::sin(theta);
+    return {{n, theta, n*std::cos(theta), b()/ns, c()/ns, d()/ns}};
   }
 
   /**
@@ -693,40 +704,39 @@ inline Quaternion<T> pow(const Quaternion<T>& x, T2 expt) {
 
   typename Quaternion<T>::polar_representation pr = x.to_polar_representation();
 
-  // This code has a bug right now, and I haven't looked at its speed
-//  T n = pr[0], theta = pr[1];
-//  T ui = pr[3], uj = pr[4], uk = pr[5];
-//  T ne = std::pow(n,expt), nes = ne * std::sin(theta);
+  T n = pr[0], theta = pr[1];
+  T ui = pr[3], uj = pr[4], uk = pr[5];
+  T ne = std::pow(n,expt), nes = ne * std::sin(expt*theta);
+
+  return {ne*std::cos(expt*theta),
+      nes*ui,
+      nes*uj,
+      nes*uk};
 //
-//  return {ne*std::cos(expt*theta),
-//      nes*ui,
-//      nes*uj,
-//      nes*uk};
-
-  //This code works, and it seems to be faster than boost
-  if (expt < 0)
-    return inverse(pow(x, -expt));
-  if (expt == 0)
-    return Quaternion<T>(1);
-  if (expt == 1)
-    return x;
-  if (expt == 2)
-    return pow2(x);
-  if (expt == 3)
-    return pow3(x);
-  if (expt == 4)
-    return pow4(x);
-
-  Quaternion<T> x4 = pow4(x), y = x4;
-  for (size_t i = 1; i < expt / 4; ++i)
-    y *= x4;
-  if (expt % 4 == 3)
-    y *= pow3(x);
-  if (expt % 4 == 2)
-    y *= pow2(x);
-  if (expt % 4 == 1)
-    y *= x;
-  return y;
+//  //This code works, and it seems to be faster than boost
+//  if (expt < 0)
+//    return inverse(pow(x, -expt));
+//  if (expt == 0)
+//    return Quaternion<T>(1);
+//  if (expt == 1)
+//    return x;
+//  if (expt == 2)
+//    return pow2(x);
+//  if (expt == 3)
+//    return pow3(x);
+//  if (expt == 4)
+//    return pow4(x);
+//
+//  Quaternion<T> x4 = pow4(x), y = x4;
+//  for (size_t i = 1; i < expt / 4; ++i)
+//    y *= x4;
+//  if (expt % 4 == 3)
+//    y *= pow3(x);
+//  if (expt % 4 == 2)
+//    y *= pow2(x);
+//  if (expt % 4 == 1)
+//    y *= x;
+//  return y;
 }
 
 template <typename T>
