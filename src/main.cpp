@@ -114,18 +114,13 @@ void test_pow3() {
 void test_pow() {
   cout << "Testing pow" << endl;
 
-  for (size_t i = 0; i < 100; ++i) {
+  for (size_t i = 0; i < 1000; ++i) {
     int n = (int) random() % 20;
     Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
     Qld y = Qld_1;
     for (int j = 0; j < n; ++j)
       y *= x;
-    quaternion<long double> bx(x.a(),x.b(),x.c(),x.d());
-    assert(is_scalar_zero(norm2(pow(x,n) - y),(long double) 1e-5));
-    cout << endl << set_style_compact<long double>();
-    cout << "boost:          " << pow(bx, n) << endl;
-    cout << "multiplication: " << y << endl;
-    cout << "quaternions:    " << pow(x,n) << endl;
+    assert(norm2(y - pow(x,n)) < 1e-10);
   }
 }
 
@@ -183,10 +178,6 @@ void test_norm() {
   cout << norm(Qf(1, 2, 3, 4)) << " " << sqrt(30) << endl;
 }
 
-void test_is_unit() {
-  cout << is_unit(Qf(0, 1, 0, 0)) << endl;
-}
-
 void test_inverse() {
   cout << inverse(Qf(0, 1, 0, 0)) << endl;
   cout << (inverse(Qf(0, 1, 0, 0)) == Qf_i) << endl;
@@ -237,7 +228,7 @@ void test_io_style() {
  */
 void test_multiplication_speed() {
   cout << "Testing multiplication speed" << endl;
-  size_t N = 10000;
+  size_t N = 100000;
 
   Quaternion<float> q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
 
@@ -250,8 +241,8 @@ void test_multiplication_speed() {
       certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
     }
     auto end = std::chrono::system_clock::now();
-    std::chrono::duration<float> diff = end - start;
-    cout << "Boost: " << (1e9 * diff.count() / N) << "ns" << endl;
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Boost: " << (diff.count() / N) << "ns" << endl;
     cout << "Certificate=" << certificate << endl;
   }
 
@@ -277,8 +268,8 @@ void test_multiplication_speed() {
       certificate += r.a() + r.b() + r.c() + r.d();
     }
     auto end = std::chrono::system_clock::now();
-    std::chrono::duration<float> diff = end - start;
-    cout << "Quaternion: " << (1e9 * diff.count() / N) << "ns" << endl;
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Quaternion: " << (diff.count() / N) << "ns" << endl;
     cout << "Certificate=" << certificate << endl;
   }
   // TODO: match all 3 results
@@ -286,7 +277,7 @@ void test_multiplication_speed() {
 
 void test_pow_speed() {
   cout << "Testing pow speed" << endl;
-  size_t N = 10000;
+  size_t N = 100000;
 
   std::default_random_engine generator;
   std::lognormal_distribution<float> distribution(0.0,1.0);
@@ -303,8 +294,8 @@ void test_pow_speed() {
       certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
     }
     auto end = std::chrono::system_clock::now();
-    std::chrono::duration<float> diff = end - start;
-    cout << "Boost: " << (1e9 * diff.count() / N) << "ns" << endl;
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Boost: " << (diff.count() / N) << "ns" << endl;
     cout << "Certificate=" << certificate << endl;
   }
 
@@ -316,8 +307,8 @@ void test_pow_speed() {
       certificate += r.a() + r.b() + r.c() + r.d();
     }
     auto end = std::chrono::system_clock::now();
-    std::chrono::duration<float> diff = end - start;
-    cout << "Quaternion: " << (1e9 * diff.count() / N) << "ns" << endl;
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Quaternion: " << (diff.count() / N) << "ns" << endl;
     cout << "Certificate=" << certificate << endl;
   }
 
@@ -330,8 +321,8 @@ int main() {
   test_pow3();
   test_pow();
   test_exp();
-  // test_multiplication_speed();
-  // test_pow_speed();
+  test_multiplication_speed();
+  test_pow_speed();
   // test_to_polar_representation();
   // test_to_matrix();
   // test_io_eps();

@@ -38,328 +38,345 @@ inline bool is_scalar_zero(T x, T eps =0) {
  * TODO: provide round to zero as optional
  */
 template <typename T =double> // assert operations for numeric
-  class Quaternion {
- public:
- /**
-  * The value of each component of a quaternion.
-  */
- typedef T value_type;
+class Quaternion {
+public:
+  /**
+   * The value of each component of a quaternion.
+   */
+  typedef T value_type;
 
- /**
-  * The polar representation of a quaternion.
-  */
- typedef std::array<T,6> polar_representation;
+  /**
+   * The polar representation of a quaternion.
+   */
+  typedef std::array<T,5> polar_representation;
 
- /**
-  * The type used for matrix representations of quaternions.
-  */
- typedef std::array<std::array<std::complex<T>,2>,2> matrix_representation;
+  /**
+   * The type used for matrix representations of quaternions.
+   */
+  typedef std::array<std::array<std::complex<T>,2>,2> matrix_representation;
 
- /**
-  * Construct a quaternion from at most 4 components of type T.
-  * Specifying only a != 0 makes the quaternion a real.
-  * Specifying only a != and b != 0 makes the quaternion an ordinary complex number.
-  */
- Quaternion(T a =0, T b =0, T c =0, T d =0)
- : _a(a), _b(b), _c(c), _d(d)
- {}
+  /**
+   * Construct a quaternion from at most 4 components of type T.
+   * Specifying only a != 0 makes the quaternion a real.
+   * Specifying only a != and b != 0 makes the quaternion an ordinary complex number.
+   */
+  Quaternion(T a =0, T b =0, T c =0, T d =0)
+      : _a(a), _b(b), _c(c), _d(d)
+  {}
 
- /**
-  * Construct a quaternion from a single complex<T>.
-  * The j and k components are 0.
-  */
- Quaternion(const std::complex<T>& x)
- : _a(const_cast<std::complex<T>&>(x).real()),
- _b(const_cast<std::complex<T>&>(x).imag()),
- _c(0), _d(0)
- {}
+  /**
+   * Construct a quaternion from a single complex<T>.
+   * The j and k components are 0.
+   */
+  Quaternion(const std::complex<T>& x)
+      : _a(const_cast<std::complex<T>&>(x).real()),
+        _b(const_cast<std::complex<T>&>(x).imag()),
+        _c(0), _d(0)
+  {}
 
- /**
-  * Construct a quaternion from 2 complex<T>.
-  * This will set all 4 components of the quaternion.
-  */
- Quaternion(const std::complex<T>& x, const std::complex<T>& y)
- : _a(const_cast<std::complex<T>&>(x).real()),
- _b(const_cast<std::complex<T>&>(x).imag()),
- _c(const_cast<std::complex<T>&>(x).real()),
- _d(const_cast<std::complex<T>&>(x).imag())
- {}
+  /**
+   * Construct a quaternion from 2 complex<T>.
+   * This will set all 4 components of the quaternion.
+   */
+  Quaternion(const std::complex<T>& x, const std::complex<T>& y)
+      : _a(const_cast<std::complex<T>&>(x).real()),
+        _b(const_cast<std::complex<T>&>(x).imag()),
+        _c(const_cast<std::complex<T>&>(x).real()),
+        _d(const_cast<std::complex<T>&>(x).imag())
+  {}
 
- /**
-  * Copy constructor.
-  */
- Quaternion(const Quaternion& other)
- : _a(other.a()),
- _b(other.b()),
- _c(other.c()),
- _d(other.d())
- {}
+  /**
+   * Copy constructor.
+   */
+  Quaternion(const Quaternion& other)
+      : _a(other._a),
+        _b(other._b),
+        _c(other._c),
+        _d(other._d)
+  {}
 
- /**
-  * Accessors for all 4 components of the quaternion.
-  */
- T a() const { return _a; }
- T b() const { return _b; }
- T c() const { return _c; }
- T d() const { return _d; }
+  /**
+   * Casting constructor.
+   */
+  template <typename T1>
+  explicit Quaternion(Quaternion<T1>& y)
+      : _a(static_cast<T>(y._a)),
+        _b(static_cast<T>(y._b)),
+        _c(static_cast<T>(y._c)),
+        _d(static_cast<T>(y._d))
+  {}
 
- /**
-  * The real and "unreal" parts of the quaternion.
-  */
- T real() const { return _a; }
- Quaternion unreal() const { return Quaternion(0,b(),c(),d()); }
+  /**
+   * Assingment operator.
+   */
+  Quaternion& operator=(const Quaternion& other)
+  {
+    if (&other != this) {
+      _a = other._a;
+      _b = other._b;
+      _c = other._c;
+      _d = other._d;
+    }
+    return *this;
+  }
 
- /**
-  * Transforms this quaternion into its conjugate.
-  */
- void conjugate() {
-   _b = -b();
-   _c = -c();
-   _d = -d();
- }
+  /**
+   * Accessors for all 4 components of the quaternion.
+   */
+  T a() const { return _a; }
+  T b() const { return _b; }
+  T c() const { return _c; }
+  T d() const { return _d; }
 
- /**
-  * The squared of the norm of the quaternion.
-  * (The square is sometimes useful, and it avoids paying for a sqrt).
-  */
- T norm2() const {
-   return a()*a() + b()*b() + c()*c() + d()*d();
- }
+  /**
+   * The real and "unreal" parts of the quaternion.
+   */
+  T real() const { return _a; }
+  Quaternion unreal() const { return Quaternion(0,_b,_c,_d); }
 
- /**
-  * The norm of the quaternion (the l2 norm).
-  */
- T norm() const {
-   return sqrt(norm2());
- }
+  /**
+   * Transforms this quaternion into its conjugate.
+   */
+  void conjugate() {
+    _b = -_b;
+    _c = -_c;
+    _d = -_d;
+  }
 
- /**
-  * The l1 norm of the quaternion.
-  */
- T l1() const {
-   return std::abs(a()) + std::abs(b()) + std::abs(c()) + std::abs(d());
- }
+  /**
+   * The squared of the norm of the quaternion.
+   * (The square is sometimes useful, and it avoids paying for a sqrt).
+   */
+  T norm2() const {
+    return _a*_a + _b*_b + _c*_c + _d*_d;
+  }
 
- /**
-  * The l2 norm of the quaternion.
-  */
- T l2() const {
-   return norm();
- }
+  /**
+   * The norm of the quaternion (the l2 norm).
+   */
+  T norm() const {
+    return std::sqrt(norm2());
+  }
 
- /**
-  * The value of the largest components of the quaternion.
-  */
- T sup() const {
-   return std::max(std::max(std::abs(a()),std::abs(b())),
-		   std::max(std::abs(c()),std::abs(d())));
- }
+  /**
+   * The l1 norm of the quaternion.
+   */
+  T l1() const {
+    return std::abs(_a) + std::abs(_b) + std::abs(_c) + std::abs(_d);
+  }
 
- /**
-  * Return true if this quaternion is zero, false otherwise.
-  * Each component is tested for equality with zero, which means
-  * we are using a "square" hyper-box around 0, which is more
-  * lenient than a spherical ball around 0. It preserves convexity.
-  */
- bool is_zero() const {
-   return is_scalar_zero(a(), scalar_zero_threshold)
-   && is_scalar_zero(b(), scalar_zero_threshold)
-   && is_scalar_zero(c(), scalar_zero_threshold)
-   && is_scalar_zero(d(), scalar_zero_threshold);
- }
+  /**
+   * The l2 norm of the quaternion.
+   */
+  T l2() const {
+    return norm();
+  }
 
- /**
-  * Return true if this quaternion is one, false otherwise.
-  */
- bool is_one() const {
-   return is_scalar_zero(a()-1, scalar_zero_threshold)
-   && is_scalar_zero(b()-1, scalar_zero_threshold)
-   && is_scalar_zero(c()-1, scalar_zero_threshold)
-   && is_scalar_zero(d()-1, scalar_zero_threshold);
- }
+  /**
+   * The value of the largest components of the quaternion.
+   */
+  T sup() const {
+    return std::max(std::max(std::abs(_a),std::abs(_b)),
+                    std::max(std::abs(_c),std::abs(_d)));
+  }
 
- /**
-  * Return true if this quaternion has norm 1, false otherwise.
-  */
- bool is_unit() const {
-   return is_scalar_zero(norm() - 1);
- }
+  /**
+   * Return true if this quaternion has norm 1, false otherwise.
+   */
+  bool is_unit() const {
+    return is_scalar_zero(norm() - T(1), scalar_zero_threshold);
+  }
 
- /**
-  * Return true if this quaternion is real, false otherwise.
-  */
- bool is_real() const {
-   return is_scalar_zero(b(), scalar_zero_threshold)
-   && is_scalar_zero(c(), scalar_zero_threshold)
-   && is_scalar_zero(d(), scalar_zero_threshold);
- }
+  /**
+   * Return true if this quaternion is real, false otherwise.
+   */
+  bool is_real() const {
+    return is_scalar_zero(_b, scalar_zero_threshold)
+           && is_scalar_zero(_c, scalar_zero_threshold)
+           && is_scalar_zero(_d, scalar_zero_threshold);
+  }
 
- /**
-  * Return true if this quaternion is complex, false otherwise.
-  */
- bool is_complex() const {
-   return is_scalar_zero(c(), scalar_zero_threshold)
-   && is_scalar_zero(d(), scalar_zero_threshold);
- }
+  /**
+   * Return true if this quaternion is complex, false otherwise.
+   */
+  bool is_complex() const {
+    return is_scalar_zero(_c, scalar_zero_threshold)
+           && is_scalar_zero(_d, scalar_zero_threshold);
+  }
 
- /**
-  * Return true if this quaternion is real, false otherwise.
-  */
- bool is_unreal() const {
-   return !is_scalar_zero(b(), scalar_zero_threshold)
-   && is_scalar_zero(c(), scalar_zero_threshold)
-   && is_scalar_zero(d(), scalar_zero_threshold);
- }
+  /**
+   * Return true if this quaternion is real, false otherwise.
+   */
+  bool is_unreal() const {
+    return !is_scalar_zero(_b, scalar_zero_threshold)
+           && is_scalar_zero(_c, scalar_zero_threshold)
+           && is_scalar_zero(_d, scalar_zero_threshold);
+  }
 
- /**
-  * Unary minus.
-  */
- Quaternion operator -() const {
-   return Quaternion(-a(), -b(), -c(), -d());
- }
+  /**
+   * Unary minus.
+   */
+  Quaternion operator -() const {
+    return Quaternion(-_a, -_b, -_c, -_d);
+  }
 
- /**
-  * Unary +=.
-  */
- Quaternion operator +=(const Quaternion& y)
- {
-   _a = a()+y.a();
-   _b = b()+y.b();
-   _c = c()+y.c();
-   _d = d()+y.d();
-   return *this;
- }
+  /**
+   * Unary +=.
+   */
+  Quaternion operator +=(const Quaternion& y)
+  {
+    _a += y._a;
+    _b += y._b;
+    _c += y._c;
+    _d += y._d;
+    return *this;
+  }
 
- /**
-  * Unary -=.
-  */
- Quaternion operator -=(const Quaternion& y)
- {
-   _a = a()-y.a();
-   _b = b()-y.b();
-   _c = c()-y.c();
-   _d = d()-y.d();
-   return *this;
- }
+  /**
+   * Unary -=.
+   */
+  Quaternion operator -=(const Quaternion& y)
+  {
+    _a -= y._a;
+    _b -= y._b;
+    _c -= y._c;
+    _d -= y._d;
+    return *this;
+  }
 
- /**
-  * Scaling by a constant.
-  */
- Quaternion operator *=(T k)
- {
-   if (k == 0) {
-     _a = _b = _c = _d = 0;
-   }
-   if (k != 1) {
-     _a = k * _a;
-     _b = k * _b;
-     _c = k * _c;
-     _d = k * _d;
-   }
-   return *this;
- }
+  /**
+   * Scaling by a constant.
+   */
+  Quaternion operator *=(T k)
+  {
+    if (k == 0) {
+      _a = _b = _c = _d = 0;
+    }
+    if (k != 1) {
+      _a = k * _a;
+      _b = k * _b;
+      _c = k * _c;
+      _d = k * _d;
+    }
+    return *this;
+  }
 
- /**
-  * Scaling by a constant.
-  */
- Quaternion operator /=(T k)
- {
-   if (k != 1) {
-     _a = _a / k;
-     _b = _b / k;
-     _c = _c / k;
-     _d = _d / k;
-   }
-   return *this;
- }
+  /**
+   * Scaling by a constant.
+   */
+  Quaternion operator /=(T k)
+  {
+    if (k != 1) {
+      _a /= k;
+      _b /= k;
+      _c /= k;
+      _d /= k;
+    }
+    return *this;
+  }
 
- /**
-  * Unary multiplication.
-  * 28 operations
-  */
- Quaternion operator *=(const Quaternion& y)
- {
-   // TODO: if 0 == y, if 1  == y, optional
-   T ta = a() * y.a() - b() * y.b() - c() * y.c() - d() * y.d();
-   T tb = a() * y.b() + b() * y.a() + c() * y.d() - d() * y.c();
-   T tc = a() * y.c() - b() * y.d() + c() * y.a() + d() * y.b();
-   T td = a() * y.d() + b() * y.c() - c() * y.b() + d() * y.a();
-   _a = ta;
-   _b = tb;
-   _c = tc;
-   _d = td;
-   return *this;
- }
+  /**
+   * Unary multiplication.
+   * 28 operations
+   */
+  Quaternion operator *=(const Quaternion& y)
+  {
+    T ar = static_cast<T>(y._a);
+    T br = static_cast<T>(y._b);
+    T cr = static_cast<T>(y._c);
+    T dr = static_cast<T>(y._d);
 
- /**
-  * The polar representation of a quaternion.
-  * WIP.
-  * TODO: handle theta = 0 correctly
-  */
- polar_representation to_polar_representation() const {
-   T n = norm();
-   T theta = std::acos(a() / n);
-   T ns = n*std::sin(theta);
-   return {{n, theta, n*std::cos(theta), b()/ns, c()/ns, d()/ns}};
- }
+    T at = _a*ar-_b*br-_c*cr-_d*dr;
+    T bt = _a*br+_b*ar+_c*dr-_d*cr;
+    T ct = _a*cr-_b*dr+_c*ar+_d*br;
+    T dt = _a*dr+_b*cr-_c*br+_d*ar;
 
- /**
-  * Returns a matrix representation of a quaternion.
-  */
- matrix_representation to_matrix_representation() const {
-   std::array<std::complex<T>,2> r0{{std::complex<T>(a(),b()), std::complex<T>(c(),d())}};
-   std::array<std::complex<T>,2> r1{{std::complex<T>(-c(),d()), std::complex<T>(a(),-b())}};
-   return matrix_representation{{r0, r1}};
- }
+    _a = at;
+    _b = bt;
+    _c = ct;
+    _d = dt;
 
- /**
-  * Print format control flags.
-  */
- static T scalar_zero_threshold; // if 0, does "hard" equality tests for zero
- static int print_style;
+    return *this;
+  }
 
- /**
-  * Print a quaternion to a stream in various formats.
-  */
- std::ostream& print(std::ostream& out) const {
-   if (print_style == 0) {
-     if (is_zero())
-       return out << 0;
-     if (is_one())
-       return out << 1;
-     if (*this == Quaternion<T>(-1))
-       return out << -1;
-     if (*this == Quaternion<T>(0, 1))
-       return out << "i";
-     if (*this == Quaternion<T>(0, -1))
-       return out << "-i";
-     if (*this == Quaternion<T>(0, 0, 1))
-       return out << "j";
-     if (*this == Quaternion<T>(0, 0, -1))
-       return out << "-j";
-     if (*this == Quaternion<T>(0, 0, 0, 1))
-       return out << "k";
-     if (*this == Quaternion<T>(0, 0, 0, -1))
-       return out << "-k";
-     auto s = [](T x) { return x < 0 ? "" : "+"; }; // print out the sign correctly
-     if (!is_scalar_zero(a(), scalar_zero_threshold))
-       out << a();
-     if (!is_scalar_zero(b(), scalar_zero_threshold))
-       out << s(b()) << b() << "i";
-     if (!is_scalar_zero(c(), scalar_zero_threshold))
-       out << s(c()) << c() << "j";
-     if (!is_scalar_zero(d(), scalar_zero_threshold))
-       out << s(d()) << d() << "k";
-   } else if (print_style == 1) {
-     out << "{" << a() << "," << b() << "," << c() << "," << d() << "}";
-   }
-   return out;
- }
+  /**
+   * The polar representation of a quaternion.
+   * Returns 5 numbers:
+   * - the Euclidean norm of the quaternion,
+   * - the polar angle theta,
+   * - and each of the components of the "unreal unit direction".
+   */
+  polar_representation to_polar_representation() const {
+    T n = norm();
+    T theta = std::acos(_a / n);
+    T nu = _b*_b + _c*_c + _d*_d;
+    if (nu != 0) {
+      T ns = 1.0/std::sqrt(nu); //n*std::sin(theta);
+      return {{n, theta, _b/ns, _c/ns, _d/ns}};
+    }
+    const T pi = std::atan2(+0., -0.);
+    // theta = 0 or pi, because n = +/- a().
+    return {{n, n == _a ? 0 : pi, 0, 0, 0}};
+  }
 
- // TODO: read from stream
+  /**
+   * Returns a matrix representation of a quaternion.
+   */
+  matrix_representation to_matrix_representation() const {
+    std::array<std::complex<T>,2> r0{{std::complex<T>(a(),b()), std::complex<T>(c(),d())}};
+    std::array<std::complex<T>,2> r1{{std::complex<T>(-c(),d()), std::complex<T>(a(),-b())}};
+    return matrix_representation{{r0, r1}};
+  }
 
- private:
- T _a,_b,_c,_d;
+  /**
+   * Print format control flags.
+   */
+  static T scalar_zero_threshold; // if 0, does "hard" equality tests for zero
+  static int print_style;
+
+  /**
+   * Print a quaternion to a stream in various formats.
+   * TODO: introduce eps and make faster with constants?
+   */
+  std::ostream& print(std::ostream& out) const {
+    if (print_style == 0) {
+      if (*this == 0)
+        return out << 0;
+      if (*this == Quaternion<T>(1))
+        return out << 1;
+      if (*this == Quaternion<T>(-1))
+        return out << -1;
+      if (*this == Quaternion<T>(0, 1))
+        return out << "i";
+      if (*this == Quaternion<T>(0, -1))
+        return out << "-i";
+      if (*this == Quaternion<T>(0, 0, 1))
+        return out << "j";
+      if (*this == Quaternion<T>(0, 0, -1))
+        return out << "-j";
+      if (*this == Quaternion<T>(0, 0, 0, 1))
+        return out << "k";
+      if (*this == Quaternion<T>(0, 0, 0, -1))
+        return out << "-k";
+      auto s = [](T x) { return x < 0 ? "" : "+"; }; // print out the sign correctly
+      if (!is_scalar_zero(a(), scalar_zero_threshold))
+        out << a();
+      if (!is_scalar_zero(b(), scalar_zero_threshold))
+        out << s(b()) << b() << "i";
+      if (!is_scalar_zero(c(), scalar_zero_threshold))
+        out << s(c()) << c() << "j";
+      if (!is_scalar_zero(d(), scalar_zero_threshold))
+        out << s(d()) << d() << "k";
+    } else if (print_style == 1) {
+      out << "{" << a() << "," << b() << "," << c() << "," << d() << "}";
+    }
+    return out;
+  }
+
+  // TODO: read from stream
+
+private:
+  T _a,_b,_c,_d;
 };
 
 /**
@@ -455,13 +472,13 @@ inline std::ostream& operator<<(std::ostream& out, const Quaternion<T>& q) {
  * Multiplication by a constant on the left.
  */
 template <typename T, typename T1>
-  inline Quaternion<T> operator*(T1 k, const Quaternion<T>& x) {
+inline Quaternion<T> operator*(T1 k, const Quaternion<T>& x) {
   return Quaternion<T>(x) *= k;
 }
 
 // Same, swapping the lhs and rhs.
 template <typename T, typename T1>
-  inline Quaternion<T> operator*(const Quaternion<T>& x, T1 k) {
+inline Quaternion<T> operator*(const Quaternion<T>& x, T1 k) {
   return k * x;
 }
 
@@ -471,7 +488,7 @@ template <typename T, typename T1>
  * Division by a number.
  */
 template <typename T, typename T1>
-  inline Quaternion<T> operator/(const Quaternion<T>& x, T1 k) {
+inline Quaternion<T> operator/(const Quaternion<T>& x, T1 k) {
   return x * T(1)/k;
 }
 
@@ -556,10 +573,10 @@ inline bool operator==(const Quaternion<T>& x, const Quaternion<T>& y) {
   if (eps)
     return x.a() == y.a() && x.b() == y.b() && x.c() == y.c() && x.d() == y.d();
   else
-    return is_scalar_zero(a(), eps)
-      && is_scalar_zero(b(), eps)
-      && is_scalar_zero(c(), eps)
-      && is_scalar_zero(d(), eps); 
+    return is_scalar_zero(x.a()-y.a(), eps)
+           && is_scalar_zero(x.b()-y.b(), eps)
+           && is_scalar_zero(x.c()-y.c(), eps)
+           && is_scalar_zero(x.d()-y.d(), eps);
 }
 
 template <typename T>
@@ -571,23 +588,23 @@ inline bool operator!=(const Quaternion<T>& x, const Quaternion<T>& y) {
  * Equality of a quaternion and a real, or at least a number that can converted to a real.
  */
 template <typename T, typename T2>
-  inline bool operator==(const Quaternion<T>& x, T2 y) {
+inline bool operator==(const Quaternion<T>& x, T2 y) {
   return is_real(x) && x.a() == static_cast<T>(y);
 }
 
 template <typename T, typename T2>
-  inline bool operator!=(const Quaternion<T>& x, T2 y) {
+inline bool operator!=(const Quaternion<T>& x, T2 y) {
   return !(x == y);
 }
 
 // Same, swapping the lhs and rhs.
 template <typename T, typename T2>
-  inline bool operator==(T2 y, const Quaternion<T>& x) {
+inline bool operator==(T2 y, const Quaternion<T>& x) {
   return x == y;
 }
 
 template <typename T, typename T2>
-  inline bool operator!=(T2 y, const Quaternion<T>& x) {
+inline bool operator!=(T2 y, const Quaternion<T>& x) {
   return x != y;
 }
 
@@ -595,12 +612,12 @@ template <typename T, typename T2>
 
 template <typename T>
 inline Quaternion<T> operator+(const Quaternion<T>& x, const Quaternion<T>& y) {
-  return Quaternion<T>(x.a()+y.a(),x.b()+y.b(),x.c()+y.c(),x.d()+y.d());
+  return Quaternion<T>(x) += y;
 }
 
 template <typename T>
 inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T>& y) {
-  return Quaternion<T>(x.a()-y.a(),x.b()-y.b(),x.c()-y.c(),x.d()-y.d());
+  return Quaternion<T>(x) -= y;
 }
 
 /**
@@ -619,7 +636,7 @@ inline Quaternion<T> inverse(const Quaternion<T>& x) {
 }
 
 template <typename T, typename T1>
-  inline Quaternion<T> operator/(T1 k, const Quaternion<T>& x) {
+inline Quaternion<T> operator/(T1 k, const Quaternion<T>& x) {
   return k * inverse(x);
 }
 
@@ -701,49 +718,46 @@ inline Quaternion<T> pow4(const Quaternion<T>& x) {
   T n1 = x.b()*x.b() + x.c()*x.c() + x.d()*x.d();
   T n2 = 4 * x.a() * (a2 - n1);
   return {a2*a2 - 6 * a2 * n1 + n1 * n1,
-      x.b()*n2,
-      x.c()*n2,
-      x.d()*n2};
+          x.b()*n2,
+          x.c()*n2,
+          x.d()*n2};
 }
 
-template <typename T, typename T2>
-  inline Quaternion<T> pow(const Quaternion<T>& x, T2 expt) {
+/**
+ * I benchmarked that method written via the polar representation,
+ * and it turned out to be much slower, and less numerically stable,
+ * than this implementation. This implementation is also much faster
+ * than the boost implementation. However, via the polar representation
+ * I could compute pow for any real exponent, whereas this method is
+ * limited to integer exponents.
+ */
+template <typename T>
+inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
 
-  typename Quaternion<T>::polar_representation pr = x.to_polar_representation();
+  if (expt < 0)
+    return inverse(pow(x, -expt));
+  if (expt == 0)
+    return Quaternion<T>(1);
+  if (expt == 1)
+    return x;
+  if (expt == 2)
+    return pow2(x);
+  if (expt == 3)
+    return pow3(x);
+  if (expt == 4)
+    return pow4(x);
 
-  T n = pr[0], theta = pr[1];
-  T ui = pr[3], uj = pr[4], uk = pr[5];
-  T ne = std::pow(n,expt), nes = ne * std::sin(expt*theta);
-
-  return {ne*std::cos(expt*theta),
-      nes*ui,
-      nes*uj,
-      nes*uk};
-  //
-  //  //This code works, and it seems to be faster than boost
-  //  if (expt < 0)
-  //    return inverse(pow(x, -expt));
-  //  if (expt == 0)
-  //    return Quaternion<T>(1);
-  //  if (expt == 1)
-  //    return x;
-  //  if (expt == 2)
-  //    return pow2(x);
-  //  if (expt == 3)
-  //    return pow3(x);
-  //  if (expt == 4)
-  //    return pow4(x);
-  //
-  //  Quaternion<T> x4 = pow4(x), y = x4;
-  //  for (size_t i = 1; i < expt / 4; ++i)
-  //    y *= x4;
-  //  if (expt % 4 == 3)
-  //    y *= pow3(x);
-  //  if (expt % 4 == 2)
-  //    y *= pow2(x);
-  //  if (expt % 4 == 1)
-  //    y *= x;
-  //  return y;
+  assert(0 < expt);
+  Quaternion<T> x4 = pow4(x), y = x4;
+  for (size_t i = 1; i < expt / 4; ++i)
+    y *= x4;
+  if (expt % 4 == 3)
+    y *= pow3(x);
+  if (expt % 4 == 2)
+    y *= pow2(x);
+  if (expt % 4 == 1)
+    y *= x;
+  return y;
 }
 
 template <typename T>

@@ -9,7 +9,7 @@ message("Using:  " ${CMAKE_CXX_COMPILER})
 find_package(Boost 1.5.9 REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3 -msse4.1 -march=native -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
 
 set(SOURCE_FILES src/main.cpp src/Quaternion.h)
 
