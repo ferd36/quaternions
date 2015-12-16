@@ -181,6 +181,14 @@ public:
   }
 
   /**
+   * The L2 norm of the "unreal" components of the quaternion,
+   * comes back often in computations.
+   */
+  T unreal_norm2() const {
+    return _b*_b + _c*_c + _d*_d;
+  }
+
+  /**
    * Return true if this quaternion has norm 1, false otherwise.
    */
   bool is_unit() const {
@@ -534,16 +542,6 @@ inline T sup(const Quaternion<T>& x) {
  * Quaternion tests.
  */
 template <typename T>
-inline bool is_zero(const Quaternion<T>& x) {
-  return x.is_zero();
-}
-
-template <typename T>
-inline bool is_one(const Quaternion<T>& x) {
-  return x.is_one();
-}
-
-template <typename T>
 inline bool is_unit(const Quaternion<T>& x) {
   return x.is_unit();
 }
@@ -681,7 +679,7 @@ inline Quaternion<T> normalize(const Quaternion<T>& x) {
 template <typename T>
 inline Quaternion<T> pow2(const Quaternion<T>& x) {
   T aa = 2*x.a();
-  return Quaternion<T>(x.a()*x.a() - x.b()*x.b() - x.c()*x.c() - x.d()*x.d(),
+  return Quaternion<T>(x.a()*x.a() - x.unreal_norm2(),
                        aa*x.b(),
                        aa*x.c(),
                        aa*x.d());
@@ -697,7 +695,7 @@ inline Quaternion<T> pow2(const Quaternion<T>& x) {
 template <typename T>
 inline Quaternion<T> pow3(const Quaternion<T>& x) {
   T a2 = x.a()*x.a();
-  T n1 = x.b()*x.b() + x.c()*x.c() + x.d()*x.d();
+  T n1 = x.unreal_norm2();
   T n2 = 3 * a2 - n1;
   return Quaternion<T>(x.a() * (a2 - 3 * n1),
                        x.b()*n2,
@@ -715,7 +713,7 @@ inline Quaternion<T> pow3(const Quaternion<T>& x) {
 template <typename T>
 inline Quaternion<T> pow4(const Quaternion<T>& x) {
   T a2 = x.a()*x.a();
-  T n1 = x.b()*x.b() + x.c()*x.c() + x.d()*x.d();
+  T n1 = x.unreal_norm2();
   T n2 = 4 * x.a() * (a2 - n1);
   return {a2*a2 - 6 * a2 * n1 + n1 * n1,
           x.b()*n2,
@@ -760,11 +758,20 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
   return y;
 }
 
+/**
+ * Exponential of a quaternion.
+ * This code seems to be quite a bit faster than boost, while giving
+ * the same results.
+ */
 template <typename T>
 inline Quaternion<T> exp(const Quaternion<T>& x) {
-  T n1 = sqrt(x.b()*x.b() + x.c()*x.c() + x.d()*x.d());
-  T n2 = exp(x.a())*sin(n1)/n1;
-  return Quaternion<T>(exp(x.a())*cos(n1),
+  T un = x.unreal_norm2();
+  if (un == 0)
+    return Quaternion<T>(std::exp(x.a()),0,0,0);
+  T n1 = std::sqrt(un);
+  T ea = std::exp(x.a());
+  T n2 = ea*std::sin(n1)/n1;
+  return Quaternion<T>(ea*std::cos(n1),
                        n2*x.b(),
                        n2*x.c(),
                        n2*x.d());

@@ -22,6 +22,17 @@ inline ostream& operator<<(ostream& out, const array<T,n>& x) {
   return out << "}";
 }
 
+/**
+ * Compare a boost quaternion to Quaternion, relatively, with epsilon.
+ */
+template <typename T, typename T1>
+inline bool equals(const Quaternion<T>& us, const quaternion<T>& them, T1 eps) {
+  T teps = static_cast<T>(eps);
+  return std::abs((us.a() - them.R_component_1())) < teps
+         && std::abs((us.b() - them.R_component_2())) < teps
+         && std::abs((us.c() - them.R_component_3())) < teps
+         && std::abs((us.d() - them.R_component_4())) < teps;
+}
 
 /**
  * A random number generator.
@@ -45,9 +56,9 @@ inline Quaternion<T> random_quaternion(G& g) {
  */
 bool operator==(const Quaternion<float>& x, const quaternion<float>& boost_y) {
   return x.a() == boost_y.R_component_1()
-    && x.b() == boost_y.R_component_2()
-    && x.c() == boost_y.R_component_3()
-    && x.d() == boost_y.R_component_4();
+         && x.b() == boost_y.R_component_2()
+         && x.c() == boost_y.R_component_3()
+         && x.d() == boost_y.R_component_4();
 }
 
 bool operator==(const quaternion<float>& boost_y, const Quaternion<float>& x) {
@@ -56,9 +67,9 @@ bool operator==(const quaternion<float>& boost_y, const Quaternion<float>& x) {
 
 bool operator==(const Quaternion<double>& x, const quaternion<double>& boost_y) {
   return x.a() == boost_y.R_component_1()
-    && x.b() == boost_y.R_component_2()
-    && x.c() == boost_y.R_component_3()
-    && x.d() == boost_y.R_component_4();
+         && x.b() == boost_y.R_component_2()
+         && x.c() == boost_y.R_component_3()
+         && x.d() == boost_y.R_component_4();
 }
 
 bool operator==(const quaternion<double>& boost_y, const Quaternion<double>& x) {
@@ -67,9 +78,9 @@ bool operator==(const quaternion<double>& boost_y, const Quaternion<double>& x) 
 
 bool operator==(const Quaternion<long double>& x, const quaternion<long double>& boost_y) {
   return x.a() == boost_y.R_component_1()
-    && x.b() == boost_y.R_component_2()
-    && x.c() == boost_y.R_component_3()
-    && x.d() == boost_y.R_component_4();
+         && x.b() == boost_y.R_component_2()
+         && x.c() == boost_y.R_component_3()
+         && x.d() == boost_y.R_component_4();
 }
 
 bool operator==(const quaternion<long double>& boost_y, const Quaternion<long double>& x) {
@@ -141,11 +152,20 @@ void test_to_matrix() {
 
 void test_exp() {
   cout << "Testing exp" << endl;
-  Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
-  quaternion<long double> bx(x.a(),x.b(),x.c(),x.d());
-  cout << exp(x) << endl;
-  cout << exp(bx) << endl;
-  //assert(exp(x) == exp(bx)); TODO: failing because of precision issues.
+
+  { // Make sure it works for reals
+    Qld x(2,0,0,0);
+    assert(std::abs(exp(x).real() - std::exp(2)) < 1e-10);
+  }
+
+  size_t N = 100000;
+  for (size_t i = 0; i < N; ++i) {
+    Qld x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
+    quaternion<long double> bx(x.a(), x.b(), x.c(), x.d());
+    Qld y = exp(x);
+    quaternion<long double> by = exp(bx);
+    assert(equals(y, by, 1e-6));
+  }
 }
 
 void test_addition() {
@@ -315,14 +335,50 @@ void test_pow_speed() {
   // TODO: match results
 }
 
+void test_exp_speed() {
+  cout << "Testing exp speed" << endl;
+
+  size_t N = 100000;
+
+  {
+    float certificate = 0.0;
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < N; ++i) {
+      quaternion<long double> x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
+      quaternion<long double> r = exp(x);
+      certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
+    }
+    auto end = std::chrono::system_clock::now();
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Boost: " << (diff.count() / N) << "ns" << endl;
+    cout << "Certificate=" << certificate << endl;
+  }
+
+  {
+    float certificate = 0.0;
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < N; ++i) {
+      Qld x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
+      Qld r = exp(x);
+      certificate += r.a() + r.b() + r.c() + r.d();
+    }
+    auto end = std::chrono::system_clock::now();
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Quaternion: " << (diff.count() / N) << "ns" << endl;
+    cout << "Certificate=" << certificate << endl;
+  }
+}
+
+
 int main() {
-  test_IJK();
-  test_pow2();
-  test_pow3();
-  test_pow();
+//  test_IJK();
+//  test_pow2();
+//  test_pow3();
+//  test_pow();
   test_exp();
-  test_multiplication_speed();
-  test_pow_speed();
+  test_exp_speed();
+//  test_multiplication_speed();
+//  test_pow_speed();
   // test_to_polar_representation();
   // test_to_matrix();
   // test_io_eps();
