@@ -6,7 +6,7 @@ CXX               = g++
 CXX_FLAGS         = -std=c++11 -Wall -DNDEBUG -O3
 DEPS              = src/Quaternion.h
 OBJS              = main.o
-LIBS              = -lstdc++
+#LIBS              = -lstdc++
 
 all: quaternions
 

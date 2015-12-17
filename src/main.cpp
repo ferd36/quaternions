@@ -284,12 +284,27 @@ void test_io_style() {
 /**
  * Between standard C++, boost and vectorclass which uses intrinsics, no difference.
  * The compiler is probably optimizing well enough, or the intrinsics are not used properly.
+ * Whoever is in first position (boot or Quaternion) in this micro-benchmark, is twice as
+ * fast as the second.... But only on the Mac/clang or gcc. That doesn't happen on Linux/gcc.
  */
 void test_multiplication_speed() {
   cout << "Testing multiplication speed" << endl;
   size_t N = 100000;
 
   Quaternion<float> q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
+
+  {
+    float certificate = 0.0;
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < N; ++i) {
+      Quaternion<float> r = q1 * (q2 + (float)i);
+      certificate += r.a() + r.b() + r.c() + r.d();
+    }
+    auto end = std::chrono::system_clock::now();
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Quaternion: " << (diff.count() / N) << "ns" << endl;
+    cout << "Certificate=" << certificate << endl;
+  }
 
   { // With Boost
     quaternion<float> a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
@@ -302,19 +317,6 @@ void test_multiplication_speed() {
     auto end = std::chrono::system_clock::now();
     std::chrono::nanoseconds diff = end - start;
     cout << "Boost: " << (diff.count() / N) << "ns" << endl;
-    cout << "Certificate=" << certificate << endl;
-  }
-
-  {
-    float certificate = 0.0;
-    auto start = std::chrono::system_clock::now();
-    for (size_t i = 0; i < N; ++i) {
-      Quaternion<float> r = q1 * (q2 + (float)i);
-      certificate += r.a() + r.b() + r.c() + r.d();
-    }
-    auto end = std::chrono::system_clock::now();
-    std::chrono::nanoseconds diff = end - start;
-    cout << "Quaternion: " << (diff.count() / N) << "ns" << endl;
     cout << "Certificate=" << certificate << endl;
   }
 }
