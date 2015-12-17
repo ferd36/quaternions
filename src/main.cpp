@@ -133,6 +133,24 @@ void test_pow() {
       y *= x;
     assert(norm2(y - pow(x,n)) < 1e-10);
   }
+
+  cout << pow(Qld{1,2,0,1},(long double)2.5) << endl;
+}
+
+void test_q_pow() {
+  cout << "Testing q pow" << endl;
+
+  for (size_t i = 0; i < 1000; ++i) {
+    Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
+    int n = (int) random() % 20;
+    Qld y(n);
+    Qld::scalar_zero_threshold = 1e-6;
+//    cout << set_style_compact<long double>();
+//    cout << pow(x,y) << endl;
+//    cout << pow(x,n) << endl;
+    // works but we get large values which are hard to compare
+    //assert(pow(x,y) == pow(x,n));
+  }
 }
 
 void test_to_polar_representation() {
@@ -158,6 +176,10 @@ void test_exp() {
     assert(std::abs(exp(x).real() - std::exp(2)) < 1e-10);
   }
 
+  {
+    cout << exp(Qld{2,3,1,6}) << endl;
+  }
+
   size_t N = 100000;
   for (size_t i = 0; i < N; ++i) {
     Qld x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
@@ -165,6 +187,23 @@ void test_exp() {
     Qld y = exp(x);
     quaternion<long double> by = exp(bx);
     assert(equals(y, by, 1e-6));
+  }
+}
+
+void test_log() {
+  cout << "Testing log" << endl;
+
+  { // Make sure it works for reals
+    Qld x(2,0,0,0);
+    assert(std::abs(log(x).real() - std::log(2)) < 1e-10);
+  }
+
+  size_t N = 10;
+  Qld::scalar_zero_threshold = 1e-6;
+  for (size_t i = 0; i < N; ++i) {
+    Qld x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
+    Qld::scalar_zero_threshold = 1e-12;
+    assert(x == exp(log(x))); // but not the other way around!
   }
 }
 
@@ -248,7 +287,7 @@ void test_io_style() {
  */
 void test_multiplication_speed() {
   cout << "Testing multiplication speed" << endl;
-  size_t N = 100000;
+  size_t N = 10000;
 
   Quaternion<float> q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
 
@@ -257,7 +296,7 @@ void test_multiplication_speed() {
     float certificate = 0.0;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < N; ++i) {
-      quaternion<float> r = a * b;
+      quaternion<float> r = a * (b + (float)i);
       certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
     }
     auto end = std::chrono::system_clock::now();
@@ -266,25 +305,11 @@ void test_multiplication_speed() {
     cout << "Certificate=" << certificate << endl;
   }
 
-  //  { // With vectorclass, which uses intrinsics - didn't turn out to be faster
-  //    Quaternion4f a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
-  //    float certificate = 0.0;
-  //    auto start = std::chrono::system_clock::now();
-  //    for (size_t i = 0; i < N; ++i) {
-  //      Quaternion4f r = a * b;
-  //      certificate += r.extract(0) + r.extract(1) + r.extract(2) + r.extract(3);
-  //    }
-  //    auto end = std::chrono::system_clock::now();
-  //    std::chrono::duration<float> diff = end - start;
-  //    cout << "vectorclass: " << (1e9 * diff.count() / N) << "ns" << endl;
-  //    cout << "Certificate=" << certificate << endl;
-  //  }
-
   {
     float certificate = 0.0;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < N; ++i) {
-      Quaternion<float> r = q1 * q2;
+      Quaternion<float> r = q1 * (q2 + (float)i);
       certificate += r.a() + r.b() + r.c() + r.d();
     }
     auto end = std::chrono::system_clock::now();
@@ -292,7 +317,6 @@ void test_multiplication_speed() {
     cout << "Quaternion: " << (diff.count() / N) << "ns" << endl;
     cout << "Certificate=" << certificate << endl;
   }
-  // TODO: match all 3 results
 }
 
 void test_pow_speed() {
@@ -375,13 +399,15 @@ int main() {
 //  test_pow2();
 //  test_pow3();
 //  test_pow();
-  test_exp();
-  test_exp_speed();
-//  test_multiplication_speed();
+//  test_q_pow();
+//  test_log();
+//  test_exp();
+//  test_exp_speed();
+  test_multiplication_speed();
 //  test_pow_speed();
-  // test_to_polar_representation();
-  // test_to_matrix();
-  // test_io_eps();
-  // test_io_style();
+//  test_to_polar_representation();
+//  test_to_matrix();
+//  test_io_eps();
+//  test_io_style();
   return 0;
 }

@@ -62,7 +62,9 @@ public:
    */
   Quaternion(T a =0, T b =0, T c =0, T d =0)
       : _a(a), _b(b), _c(c), _d(d)
-  {}
+  {
+    //std::cout << "ctor " << _a << " " << _b << " " << _c << " " << _d << std::endl;
+  }
 
   /**
    * Construct a quaternion from a single complex<T>.
@@ -93,7 +95,9 @@ public:
         _b(other._b),
         _c(other._c),
         _d(other._d)
-  {}
+  {
+    //std::cout << "copy ctor" << std::endl;
+  }
 
   /**
    * Casting constructor.
@@ -107,10 +111,11 @@ public:
   {}
 
   /**
-   * Assingment operator.
+   * Assignment operator.
    */
   Quaternion& operator=(const Quaternion& other)
   {
+    std::cout << "assignment op" << std::endl;
     if (&other != this) {
       _a = other._a;
       _b = other._b;
@@ -226,6 +231,16 @@ public:
    */
   Quaternion operator -() const {
     return Quaternion(-_a, -_b, -_c, -_d);
+  }
+
+  /**
+   * Unary +=.
+   */
+  Quaternion operator +=(T y)
+  {
+    std::cout << "+= " << y << std::endl;
+    _a += y;
+    return *this;
   }
 
   /**
@@ -568,7 +583,7 @@ inline bool is_unreal(const Quaternion<T>& x) {
 template <typename T>
 inline bool operator==(const Quaternion<T>& x, const Quaternion<T>& y) {
   const T eps = Quaternion<T>::scalar_zero_threshold;
-  if (eps)
+  if (eps == 0)
     return x.a() == y.a() && x.b() == y.b() && x.c() == y.c() && x.d() == y.d();
   else
     return is_scalar_zero(x.a()-y.a(), eps)
@@ -607,6 +622,11 @@ inline bool operator!=(T2 y, const Quaternion<T>& x) {
 }
 
 // TODO: equality of quaternion and complex, of quaternion and array/container
+
+template <typename T>
+inline Quaternion<T> operator+(const Quaternion<T>& x, T y) {
+  return Quaternion<T>(x.a()+y,x.b(),x.c(),x.d());
+}
 
 template <typename T>
 inline Quaternion<T> operator+(const Quaternion<T>& x, const Quaternion<T>& y) {
@@ -667,6 +687,42 @@ inline Quaternion<T> commutator(const Quaternion<T>& x, const Quaternion<T>& y) 
 template <typename T>
 inline Quaternion<T> normalize(const Quaternion<T>& x) {
   return Quaternion<T>(x) / norm(x);
+}
+
+/**
+ * Exponential of a quaternion.
+ * This code seems to be quite a bit faster than boost, while giving
+ * the same results. Boost uses a Taylor approximation for sinc,
+ * which *might* (not sure) be why they are slightly slower here.
+ *
+ * exp(log(x)) == x always, but log(exp(x)) != x is already not true
+ * for complex number, because the log is multi-valued.
+ */
+template <typename T>
+inline Quaternion<T> exp(const Quaternion<T>& x) {
+  T un = x.unreal_norm2();
+  if (un == 0)
+    return Quaternion<T>(std::exp(x.a()),0,0,0);
+  T n1 = std::sqrt(un);
+  T ea = std::exp(x.a());
+  T n2 = ea*std::sin(n1)/n1;
+  return Quaternion<T>(ea*std::cos(n1),n2*x.b(),n2*x.c(),n2*x.d());
+}
+
+/**
+ * Log of a quaternion.
+ * exp(log(x)) == x always, but log(exp(x)) != x is already not true
+ * for complex number, because the log is multi-valued.
+ */
+template <typename T>
+inline Quaternion<T> log(const Quaternion<T>& x) {
+  T nu2 = x.unreal_norm2();
+  if (nu2 == 0)
+    return Quaternion<T>(std::log(x.a()),0,0,0);
+  T a = x.a(); // helps with speed in debug mode
+  T n = std::sqrt(a*a + nu2);
+  T th = std::acos(a/n)/std::sqrt(nu2);
+  return Quaternion<T>(std::log(n),th*x.b(),th*x.c(),th*x.d());
 }
 
 /**
@@ -745,7 +801,6 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
   if (expt == 4)
     return pow4(x);
 
-  assert(0 < expt);
   Quaternion<T> x4 = pow4(x), y = x4;
   for (size_t i = 1; i < expt / 4; ++i)
     y *= x4;
@@ -759,22 +814,24 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
 }
 
 /**
- * Exponential of a quaternion.
- * This code seems to be quite a bit faster than boost, while giving
- * the same results.
+ * Real power of a quaternion.
+ * TODO: test against pow just above
  */
 template <typename T>
-inline Quaternion<T> exp(const Quaternion<T>& x) {
-  T un = x.unreal_norm2();
-  if (un == 0)
-    return Quaternion<T>(std::exp(x.a()),0,0,0);
-  T n1 = std::sqrt(un);
-  T ea = std::exp(x.a());
-  T n2 = ea*std::sin(n1)/n1;
-  return Quaternion<T>(ea*std::cos(n1),
-                       n2*x.b(),
-                       n2*x.c(),
-                       n2*x.d());
+inline Quaternion<T> pow(const Quaternion<T>& x, T a) {
+  return exp(a*log(x));
+}
+
+/**
+ * Quaternion power of a quaternion.
+ * (that should cover all the other cases for the exponent...)
+ * TODO: test against pow just above
+ */
+template <typename T>
+inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T>& a) {
+  if (a.is_real())
+    return pow(x, a.a());
+  return exp(a*log(x));
 }
 
 #endif //QUATERNIONS_QUATERNION_H
