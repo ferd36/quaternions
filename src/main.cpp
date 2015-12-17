@@ -287,7 +287,7 @@ void test_io_style() {
  */
 void test_multiplication_speed() {
   cout << "Testing multiplication speed" << endl;
-  size_t N = 10000;
+  size_t N = 100000;
 
   Quaternion<float> q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
 

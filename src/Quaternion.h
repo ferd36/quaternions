@@ -62,9 +62,7 @@ public:
    */
   Quaternion(T a =0, T b =0, T c =0, T d =0)
       : _a(a), _b(b), _c(c), _d(d)
-  {
-    //std::cout << "ctor " << _a << " " << _b << " " << _c << " " << _d << std::endl;
-  }
+  {}
 
   /**
    * Construct a quaternion from a single complex<T>.
@@ -95,9 +93,7 @@ public:
         _b(other._b),
         _c(other._c),
         _d(other._d)
-  {
-    //std::cout << "copy ctor" << std::endl;
-  }
+  {}
 
   /**
    * Casting constructor.
@@ -115,7 +111,6 @@ public:
    */
   Quaternion& operator=(const Quaternion& other)
   {
-    std::cout << "assignment op" << std::endl;
     if (&other != this) {
       _a = other._a;
       _b = other._b;
@@ -132,6 +127,9 @@ public:
   T b() const { return _b; }
   T c() const { return _c; }
   T d() const { return _d; }
+
+  std::complex<T> c1() const { return std::complex<T>(_a, _b); }
+  std::complex<T> c2() const { return std::complex<T>(_c, _d); }
 
   /**
    * The real and "unreal" parts of the quaternion.
@@ -238,7 +236,6 @@ public:
    */
   Quaternion operator +=(T y)
   {
-    std::cout << "+= " << y << std::endl;
     _a += y;
     return *this;
   }
@@ -304,15 +301,10 @@ public:
    */
   Quaternion operator *=(const Quaternion& y)
   {
-    T ar = static_cast<T>(y._a);
-    T br = static_cast<T>(y._b);
-    T cr = static_cast<T>(y._c);
-    T dr = static_cast<T>(y._d);
-
-    T at = _a*ar-_b*br-_c*cr-_d*dr;
-    T bt = _a*br+_b*ar+_c*dr-_d*cr;
-    T ct = _a*cr-_b*dr+_c*ar+_d*br;
-    T dt = _a*dr+_b*cr-_c*br+_d*ar;
+    T at = _a*y._a-_b*y._b-_c*y._c-_d*y._d;
+    T bt = _a*y._b+_b*y._a+_c*y._d-_d*y._c;
+    T ct = _a*y._c-_b*y._d+_c*y._a+_d*y._b;
+    T dt = _a*y._d+_b*y._c-_c*y._b+_d*y._a;
 
     _a = at;
     _b = bt;
@@ -641,7 +633,8 @@ inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T>& y) {
 /**
  * SSE operations: tried 2 implementations (SO and vectorclass): not faster.
  * Boost: as fast as boost implementation.
- * TODO: threads?
+ * TODO: micro-threads?
+ * TODO: on Mac/clang and only there, this is twice as slow as boost?
  */
 template <typename T>
 inline Quaternion<T> operator*(const Quaternion<T>& x, const Quaternion<T>& y) {

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0)
 project(quaternions)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -Wall -std=c++11")
 
 message("System        : " ${CMAKE_SYSTEM})
 message("CMake dir     : " ${CMAKE_ROOT})
