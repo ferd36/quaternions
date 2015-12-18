@@ -30,12 +30,11 @@ inline bool is_scalar_zero(T x, T eps =0) {
 /**
  * A quaternion class.
  * TODO: add precise requirements on numeric types
- * TODO: policy to compress
- * TODO: byte type, as policy, to optimize mult
  * TODO: threads, as policy
- * TODO: combine operations
+ * TODO: combine operations: axby...
  * TODO: provide same operations as boost
  * TODO: provide round to zero as optional
+ * TODO: check with std algos
  */
 template <typename T =double> // assert operations for numeric
 class Quaternion {
@@ -135,12 +134,10 @@ public:
   Quaternion unreal() const { return Quaternion(0,_b,_c,_d); }
 
   /**
-   * Transforms this quaternion into its conjugate.
+   * The conjugate of this quaternion.
    */
-  void conjugate() {
-    _b = -_b;
-    _c = -_c;
-    _d = -_d;
+  Quaternion conjugate() {
+    return Quaternion(_a,-_b,-_c,-_d);
   }
 
   /**
@@ -161,21 +158,14 @@ public:
   /**
    * The l1 norm of the quaternion.
    */
-  T l1() const {
+  T norm_l1() const {
     return std::abs(_a) + std::abs(_b) + std::abs(_c) + std::abs(_d);
-  }
-
-  /**
-   * The l2 norm of the quaternion.
-   */
-  T l2() const {
-    return norm();
   }
 
   /**
    * The value of the largest components of the quaternion.
    */
-  T sup() const {
+  T norm_sup() const {
     return std::max(std::max(std::abs(_a),std::abs(_b)),
                     std::max(std::abs(_c),std::abs(_d)));
   }
@@ -192,7 +182,7 @@ public:
    * Return true if this quaternion has norm 1, false otherwise.
    */
   bool is_unit() const {
-    return is_scalar_zero(norm() - T(1), scalar_zero_threshold);
+    return is_scalar_zero(norm2() - T(1), scalar_zero_threshold);
   }
 
   /**
@@ -240,12 +230,24 @@ public:
   /**
    * Unary +=.
    */
-  Quaternion operator +=(const Quaternion& y)
+  template <typename T1>
+  Quaternion operator +=(std::complex<T1>& y)
   {
-    _a += y._a;
-    _b += y._b;
-    _c += y._c;
-    _d += y._d;
+    _a += static_cast<T>(y.real());
+    _b += static_cast<T>(y.imag());
+    return *this;
+  }
+
+  /**
+   * Unary +=.
+   */
+  template <typename T1>
+  Quaternion operator +=(const Quaternion<T1>& y)
+  {
+    _a += static_cast<T>(y.a());
+    _b += static_cast<T>(y.b());
+    _c += static_cast<T>(y.c());
+    _d += static_cast<T>(y.d());
     return *this;
   }
 
@@ -266,15 +268,10 @@ public:
    */
   Quaternion operator *=(T k)
   {
-    if (k == 0) {
-      _a = _b = _c = _d = 0;
-    }
-    if (k != 1) {
-      _a = k * _a;
-      _b = k * _b;
-      _c = k * _c;
-      _d = k * _d;
-    }
+    _a = k * _a;
+    _b = k * _b;
+    _c = k * _c;
+    _d = k * _d;
     return *this;
   }
 
@@ -283,12 +280,10 @@ public:
    */
   Quaternion operator /=(T k)
   {
-    if (k != 1) {
-      _a /= k;
-      _b /= k;
-      _c /= k;
-      _d /= k;
-    }
+    _a /= k;
+    _b /= k;
+    _c /= k;
+    _d /= k;
     return *this;
   }
 
@@ -584,6 +579,7 @@ inline bool is_unreal(const Quaternion<T>& x) {
 /**
  * Equality of two quaternions.
  * TODO: for very large values, equality is a classic floating point problem
+ * TODO: comparison method, together with scalar_zero_threshold
  */
 template <typename T>
 inline bool operator==(const Quaternion<T>& x, const Quaternion<T>& y) {
