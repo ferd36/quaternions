@@ -1,5 +1,6 @@
 #include "Quaternion.h"
 
+#include <set>
 #include <random>
 #include <chrono>
 #include <boost/math/quaternion.hpp>
@@ -180,6 +181,67 @@ void test_constructors_accessors() {
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
     assert(x.c1() == complex<double>(1,2));
     assert(x.c2() == complex<double>(3,4));
+  }
+
+  {
+    int d[4] = {1,2,3,4};
+    Qf x(d);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+  }
+
+  {
+    vector<int> d{1,2,3,4};
+    Qf x(d.begin());
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+  }
+
+  {
+    set<int> d{1,2,3,4};
+    Qf x(d.begin());
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+  }
+
+  {
+    Qf x{1,0,2,0};
+    assert(x.a() == 1 && x.b() == 0 && x.c() == 2 && x.d() == 0);
+  }
+}
+
+void test_trigonometric_constructors() {
+
+  {
+    Qf x; x.spherical(0,0,0,0);
+    assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+  }
+
+  {
+    Qd x = Qf::spherical((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
+    cout << x << endl;
+    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+  }
+
+  {
+    Qd x = Qf::semipolar((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
+    cout << x << endl;
+    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+  }
+
+  {
+    Qd x = Qf::multipolar((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
+    cout << x << endl;
+    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+  }
+
+  {
+    Qd x = Qf::cylindrospherical((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
+    cout << x << endl;
+    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+  }
+
+  {
+    Qd x = Qf::cylindrical((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
+    cout << x << endl;
+    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 }
 
@@ -528,6 +590,7 @@ void test_axby_speed() {
 
 int main() {
   test_constructors_accessors();
+  test_trigonometric_constructors();
 //  test_IJK();
 //  test_pow2();
 //  test_pow3();

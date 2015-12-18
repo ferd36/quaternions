@@ -6,26 +6,13 @@
 #define QUATERNIONS_QUATERNION_H
 
 #include <iostream>
-#include <cmath>
 #include <limits>
 #include <array>
 #include <complex>
+#include <iterator>
 #include <assert.h>
 
-/**
- * Utility function to work with numbers approximately equal to zero.
- * If eps == 0, does a "hard" comparison to 0.
- * Otherwise, uses a ball of radius eps around 0. If the scalar is inside
- * that ball, it is equivalent to 0.
- * TODO: refine for large floating point numbers
- */
-template <typename T>
-inline bool is_scalar_zero(T x, T eps =0) {
-  if (eps > 0)
-    return std::fabs(x) < eps;
-  else
-    return x == 0;
-}
+#include "utils.h"
 
 /**
  * A quaternion class.
@@ -36,7 +23,7 @@ inline bool is_scalar_zero(T x, T eps =0) {
  * TODO: provide round to zero as optional
  * TODO: check with std algos
  */
-template <typename T =double> // assert operations for numeric
+template<typename T =double> // assert operations for numeric
 class Quaternion {
 public:
   /**
@@ -47,65 +34,82 @@ public:
   /**
    * The polar representation of a quaternion.
    */
-  typedef std::array<T,5> polar_representation;
+  typedef std::array<T, 5> polar_representation;
 
   /**
    * The type used for matrix representations of quaternions.
+   * TODO: array or valarray? - maybe make template parameters, and polar_representation too
    */
-  typedef std::array<std::array<std::complex<T>,2>,2> matrix_representation;
+  typedef std::array<std::array<std::complex<T>, 2>, 2> matrix_representation;
 
   /**
   * Construct a quaternion from at most 4 components of type T.
   * Specifying only a != 0 makes the quaternion a real.
   * Specifying only a != and b != 0 makes the quaternion an ordinary complex number.
   */
-  Quaternion(T a =0, T b =0, T c =0, T d =0)
-      : _a(a), _b(b), _c(c), _d(d)
-  {}
+  Quaternion(T a = 0, T b = 0, T c = 0, T d = 0)
+      : _a(a), _b(b), _c(c), _d(d) { }
 
   /**
    * Construct a quaternion from at most 4 components of type T.
    * Specifying only a != 0 makes the quaternion a real.
    * Specifying only a != and b != 0 makes the quaternion an ordinary complex number.
    */
-  template <typename T1>
-  Quaternion(T1 a =0, T1 b =0, T1 c =0, T1 d =0)
+  template<typename T1 = T, IS_NOT_ITERATOR(T1)>
+  Quaternion(T1 a = 0, T1 b = 0, T1 c = 0, T1 d = 0)
       : _a(static_cast<T>(a)),
         _b(static_cast<T>(b)),
         _c(static_cast<T>(c)),
-        _d(static_cast<T>(d))
-  {}
+        _d(static_cast<T>(d)) { }
 
   /**
    * Construct a quaternion from 2 complex<T>.
    * This will set all 4 components of the quaternion.
    */
-  template <typename T1>
-  Quaternion(const std::complex<T1>& x, const std::complex<T1>& y = std::complex<T1>(0,0))
+  template<typename T1>
+  Quaternion(const std::complex<T1> &x, const std::complex<T1> &y = std::complex<T1>(0, 0))
       : _a(static_cast<T>(x.real())),
         _b(static_cast<T>(x.imag())),
         _c(static_cast<T>(y.real())),
-        _d(static_cast<T>(y.imag()))
+        _d(static_cast<T>(y.imag())) { }
 
+  /**
+   * Construct from a pointer to a range of 4 elements ("float[4]").
+   */
+  template <typename T1 = T>
+  Quaternion(T1* it)
+      : _a(static_cast<T>(*it)),
+        _b(static_cast<T>(*++it)),
+        _c(static_cast<T>(*++it)),
+        _d(static_cast<T>(*++it))
+  {}
+
+  /**
+   * Construct from an iterator to a range of 4 elements.
+   */
+  template <typename It, IS_ITERATOR(It)>
+  Quaternion(It it)
+      : _a(static_cast<T>(*it)),
+        _b(static_cast<T>(*++it)),
+        _c(static_cast<T>(*++it)),
+        _d(static_cast<T>(*++it))
   {}
 
   /**
    * Copy constructor.
    */
-  template <typename T1>
-  Quaternion(const Quaternion<T1>& y)
+  template<typename T1>
+  Quaternion(const Quaternion<T1> &y)
       : _a(static_cast<T>(y.a())),
         _b(static_cast<T>(y.b())),
         _c(static_cast<T>(y.c())),
-        _d(static_cast<T>(y.d()))
-  {}
+        _d(static_cast<T>(y.d())) { }
 
   /**
    * Assignment operator.
    */
-  template <typename T1>
-  Quaternion& operator=(const Quaternion<T1>& other)
-  {
+  template<typename T1>
+  Quaternion &operator=(const Quaternion<T1> &other) {
     _a = static_cast<T>(other.a());
     _b = static_cast<T>(other.b());
     _c = static_cast<T>(other.c());
@@ -113,31 +117,106 @@ public:
     return *this;
   }
 
+  template<typename T1>
+  static Quaternion spherical(T1 rho, T1 theta, T1 phi1, T1 phi2) {
+
+    T cr = static_cast<T>(1);
+    T d = std::sin(phi2);
+    cr *= std::cos(phi2);
+    T c = cr * std::sin(phi1);
+    cr *= std::cos(phi1);
+    T b = cr * std::sin(theta);
+    T a = cr * std::cos(theta);
+
+    return Quaternion(rho*a, rho*b, rho*c, rho*d);
+  }
+
+  template <typename T1>
+  static Quaternion semipolar(T1 rho,
+                              T1 alpha,
+                              T1 theta1,
+                              T1 theta2) {
+
+    T ca = std::cos(alpha);
+    T sa = std::sin(alpha);
+    T a = ca * std::cos(theta1);
+    T b = ca * std::sin(theta1);
+    T c = sa * std::cos(theta2);
+    T d = sa * std::sin(theta2);
+
+    return Quaternion(rho*a, rho*b, rho*c, rho*d);
+  }
+
+  template <typename T1>
+  static Quaternion multipolar(T1 rho1,
+                               T1 theta1,
+                               T1 rho2,
+                               T1 theta2) {
+
+    T a = rho1 * std::cos(theta1);
+    T b = rho1 * std::sin(theta1);
+    T c = rho2 * std::cos(theta2);
+    T d = rho2 * std::sin(theta2);
+
+    return Quaternion(a, b, c, d);
+  }
+
+  template <typename T1>
+  static Quaternion cylindrospherical(T1 t,
+                                      T1 radius,
+                                      T1 longitude,
+                                      T1 latitude) {
+
+    T cl = std::cos(latitude);
+    T b = radius * cl * std::cos(longitude);
+    T c = radius * cl * std::sin(longitude);
+    T d = radius * std::sin(latitude);
+
+    return Quaternion(t, b, c, d);
+  }
+
+  template <typename T1>
+  static Quaternion cylindrical(T1 r,
+                                T1 angle,
+                                T1 h1,
+                                T1 h2) {
+
+    T a = r * std::cos(angle);
+    T b = r * std::sin(angle);
+
+    return Quaternion(a, b, h1, h2);
+  }
+
   /**
    * Accessors for all 4 components of the quaternion.
    */
   T a() const { return _a; }
+
   T b() const { return _b; }
+
   T c() const { return _c; }
+
   T d() const { return _d; }
 
   /**
    * The complex components of this quaternion.
    */
   std::complex<T> c1() const { return std::complex<T>(_a, _b); }
+
   std::complex<T> c2() const { return std::complex<T>(_c, _d); }
 
   /**
    * The real and "unreal" parts of the quaternion.
    */
   T real() const { return _a; }
-  Quaternion unreal() const { return Quaternion(0,_b,_c,_d); }
+
+  Quaternion unreal() const { return Quaternion(0, _b, _c, _d); }
 
   /**
    * The conjugate of this quaternion.
    */
   Quaternion conjugate() {
-    return Quaternion(_a,-_b,-_c,-_d);
+    return Quaternion(_a, -_b, -_c, -_d);
   }
 
   /**
@@ -145,7 +224,7 @@ public:
    * (The square is sometimes useful, and it avoids paying for a sqrt).
    */
   T norm2() const {
-    return _a*_a + _b*_b + _c*_c + _d*_d;
+    return _a * _a + _b * _b + _c * _c + _d * _d;
   }
 
   /**
@@ -166,8 +245,8 @@ public:
    * The value of the largest components of the quaternion.
    */
   T norm_sup() const {
-    return std::max(std::max(std::abs(_a),std::abs(_b)),
-                    std::max(std::abs(_c),std::abs(_d)));
+    return std::max(std::max(std::abs(_a), std::abs(_b)),
+                    std::max(std::abs(_c), std::abs(_d)));
   }
 
   /**
@@ -175,7 +254,7 @@ public:
    * comes back often in computations.
    */
   T unreal_norm2() const {
-    return _b*_b + _c*_c + _d*_d;
+    return _b * _b + _c * _c + _d * _d;
   }
 
   /**
@@ -214,15 +293,14 @@ public:
   /**
    * Unary minus.
    */
-  Quaternion operator -() const {
+  Quaternion operator-() const {
     return Quaternion(-_a, -_b, -_c, -_d);
   }
 
   /**
    * Unary +=.
    */
-  Quaternion operator +=(T y)
-  {
+  Quaternion operator+=(T y) {
     _a += y;
     return *this;
   }
@@ -230,9 +308,8 @@ public:
   /**
    * Unary +=.
    */
-  template <typename T1>
-  Quaternion operator +=(std::complex<T1>& y)
-  {
+  template<typename T1>
+  Quaternion operator+=(std::complex<T1> &y) {
     _a += static_cast<T>(y.real());
     _b += static_cast<T>(y.imag());
     return *this;
@@ -241,9 +318,8 @@ public:
   /**
    * Unary +=.
    */
-  template <typename T1>
-  Quaternion operator +=(const Quaternion<T1>& y)
-  {
+  template<typename T1>
+  Quaternion operator+=(const Quaternion<T1> &y) {
     _a += static_cast<T>(y.a());
     _b += static_cast<T>(y.b());
     _c += static_cast<T>(y.c());
@@ -254,8 +330,7 @@ public:
   /**
    * Unary -=.
    */
-  Quaternion operator -=(const Quaternion& y)
-  {
+  Quaternion operator-=(const Quaternion &y) {
     _a -= y._a;
     _b -= y._b;
     _c -= y._c;
@@ -266,8 +341,7 @@ public:
   /**
    * Scaling by a constant.
    */
-  Quaternion operator *=(T k)
-  {
+  Quaternion operator*=(T k) {
     _a = k * _a;
     _b = k * _b;
     _c = k * _c;
@@ -278,8 +352,7 @@ public:
   /**
    * Scaling by a constant.
    */
-  Quaternion operator /=(T k)
-  {
+  Quaternion operator/=(T k) {
     _a /= k;
     _b /= k;
     _c /= k;
@@ -291,12 +364,11 @@ public:
    * Unary multiplication.
    * 28 operations
    */
-  Quaternion operator *=(const Quaternion& y)
-  {
-    T at = _a*y._a-_b*y._b-_c*y._c-_d*y._d;
-    T bt = _a*y._b+_b*y._a+_c*y._d-_d*y._c;
-    T ct = _a*y._c-_b*y._d+_c*y._a+_d*y._b;
-    T dt = _a*y._d+_b*y._c-_c*y._b+_d*y._a;
+  Quaternion operator*=(const Quaternion &y) {
+    T at = _a * y._a - _b * y._b - _c * y._c - _d * y._d;
+    T bt = _a * y._b + _b * y._a + _c * y._d - _d * y._c;
+    T ct = _a * y._c - _b * y._d + _c * y._a + _d * y._b;
+    T dt = _a * y._d + _b * y._c - _c * y._b + _d * y._a;
 
     _a = at;
     _b = bt;
@@ -310,15 +382,14 @@ public:
    * k1 * this quaternion + k2 * y
    * Improves performance by reducing number of constructions/copies.
    */
-  template <typename K>
-  Quaternion axby(K _k1, K _k2, const Quaternion& y)
-  {
+  template<typename K>
+  Quaternion axby(K _k1, K _k2, const Quaternion &y) {
     T k1 = static_cast<T>(_k1);
     T k2 = static_cast<T>(_k2);
-    _a = k1*_a + k2*y._a;
-    _b = k1*_b + k2*y._b;
-    _c = k1*_c + k2*y._c;
-    _d = k1*_d + k2*y._d;
+    _a = k1 * _a + k2 * y._a;
+    _b = k1 * _b + k2 * y._b;
+    _c = k1 * _c + k2 * y._c;
+    _d = k1 * _d + k2 * y._d;
     return *this;
   }
 
@@ -332,10 +403,10 @@ public:
   polar_representation to_polar_representation() const {
     T n = norm();
     T theta = std::acos(_a / n);
-    T nu = _b*_b + _c*_c + _d*_d;
+    T nu = _b * _b + _c * _c + _d * _d;
     if (nu != 0) {
-      T ns = 1.0/std::sqrt(nu); //n*std::sin(theta);
-      return {{n, theta, _b/ns, _c/ns, _d/ns}};
+      T ns = 1.0 / std::sqrt(nu); //n*std::sin(theta);
+      return {{n, theta, _b / ns, _c / ns, _d / ns}};
     }
     const T pi = std::atan2(+0., -0.);
     // theta = 0 or pi, because n = +/- a().
@@ -346,8 +417,8 @@ public:
    * Returns a matrix representation of a quaternion.
    */
   matrix_representation to_matrix_representation() const {
-    std::array<std::complex<T>,2> r0{{std::complex<T>(a(),b()), std::complex<T>(c(),d())}};
-    std::array<std::complex<T>,2> r1{{std::complex<T>(-c(),d()), std::complex<T>(a(),-b())}};
+    std::array<std::complex<T>, 2> r0{{std::complex<T>(a(), b()), std::complex<T>(c(), d())}};
+    std::array<std::complex<T>, 2> r1{{std::complex<T>(-c(), d()), std::complex<T>(a(), -b())}};
     return matrix_representation{{r0, r1}};
   }
 
@@ -361,7 +432,7 @@ public:
    * Print a quaternion to a stream in various formats.
    * TODO: introduce eps and make faster with constants?
    */
-  std::ostream& print(std::ostream& out) const {
+  std::ostream &print(std::ostream &out) const {
     if (print_style == 0) {
       if (*this == 0)
         return out << 0;
@@ -399,83 +470,87 @@ public:
   // TODO: read from stream
 
 private:
-  T _a,_b,_c,_d;
+  T _a, _b, _c, _d;
 };
 
 /**
  * Predefined quaternions on floats.
  */
 typedef Quaternion<float> Qf;
-const Qf Qf_0 = Qf();
-const Qf Qf_1 = Qf(1);
-const Qf Qf_i = Qf(0,1);
-const Qf Qf_j = Qf(0,0,1);
-const Qf Qf_k = Qf(0,0,0,1);
+const Qf Qf_0;
+const Qf Qf_1(1);
+const Qf Qf_i(0,1);
+const Qf Qf_j(0,0,1);
+const Qf Qf_k(0,0,0,1);
 
 /**
  * Predefined quaternions on doubles.
  */
 typedef Quaternion<double> Qd;
-const Qd Qd_0 = Qd();
-const Qd Qd_1 = Qd(1);
-const Qd Qd_i = Qd(0,1);
-const Qd Qd_j = Qd(0,0,1);
-const Qd Qd_k = Qd(0,0,0,1);
+const Qd Qd_0;
+const Qd Qd_1(1);
+const Qd Qd_i(0, 1);
+const Qd Qd_j(0, 0, 1);
+const Qd Qd_k(0, 0, 0, 1);
 
 /**
  * Predefined quaternions on long doubles.
  */
 typedef Quaternion<long double> Qld;
-const Qld Qld_0 = Qld();
-const Qld Qld_1 = Qld(1);
-const Qld Qld_i = Qld(0,1);
-const Qld Qld_j = Qld(0,0,1);
-const Qld Qld_k = Qld(0,0,0,1);
+const Qld Qld_0;
+const Qld Qld_1(1);
+const Qld Qld_i(0, 1);
+const Qld Qld_j(0, 0, 1);
+const Qld Qld_k(0, 0, 0, 1);
 
 /**
  * IO manipulators to control the format when printing quaternions out to a stream.
  */
-template <typename T>
+template<typename T>
 T Quaternion<T>::scalar_zero_threshold;
 
-template <typename T>
+template<typename T>
 int Quaternion<T>::print_style;
 
-template <typename T>
-struct SetScalarZeroThreshold { T eps = 0; };
+template<typename T>
+struct SetScalarZeroThreshold {
+  T eps = 0;
+};
 
-template <typename T>
+template<typename T>
 inline SetScalarZeroThreshold<T> set_eps(T eps) {
   SetScalarZeroThreshold<T> sszt;
   sszt.eps = eps;
   return sszt;
 }
 
-template <typename T>
-inline std::ostream& operator<<(std::ostream& out, SetScalarZeroThreshold<T> sszt) {
+template<typename T>
+inline std::ostream &operator<<(std::ostream &out, SetScalarZeroThreshold<T> sszt) {
   Quaternion<T>::scalar_zero_threshold = sszt.eps;
   return out;
 }
 
-template <typename T>
-struct SetPrintStyle { int style; };
+template<typename T>
+struct SetPrintStyle {
+  int style;
+};
 
-template <typename T>
+template<typename T>
 inline SetPrintStyle<T> set_style_nice() {
   SetPrintStyle<T> sps;
   sps.style = 0;
   return sps;
 }
 
-template <typename T>
+template<typename T>
 inline SetPrintStyle<T> set_style_compact() {
   SetPrintStyle<T> sps;
   sps.style = 1;
   return sps;
 }
 
-template <typename T>
-inline std::ostream& operator<<(std::ostream& out, SetPrintStyle<T> sps) {
+template<typename T>
+inline std::ostream &operator<<(std::ostream &out, SetPrintStyle<T> sps) {
   Quaternion<T>::print_style = sps.style;
   return out;
 }
@@ -486,22 +561,22 @@ inline std::ostream& operator<<(std::ostream& out, SetPrintStyle<T> sps) {
  * turned out not worthwhile (see CQuaternion).
  * TODO: control format for file or human readable. Also write operator>>
  */
-template <typename T>
-inline std::ostream& operator<<(std::ostream& out, const Quaternion<T>& q) {
+template<typename T>
+inline std::ostream &operator<<(std::ostream &out, const Quaternion<T> &q) {
   return q.print(out);
 }
 
 /**
  * Multiplication by a constant on the left.
  */
-template <typename T, typename T1>
-inline Quaternion<T> operator*(T1 k, const Quaternion<T>& x) {
+template<typename T, typename T1>
+inline Quaternion<T> operator*(T1 k, const Quaternion<T> &x) {
   return Quaternion<T>(x) *= k;
 }
 
 // Same, swapping the lhs and rhs.
-template <typename T, typename T1>
-inline Quaternion<T> operator*(const Quaternion<T>& x, T1 k) {
+template<typename T, typename T1>
+inline Quaternion<T> operator*(const Quaternion<T> &x, T1 k) {
   return k * x;
 }
 
@@ -510,16 +585,16 @@ inline Quaternion<T> operator*(const Quaternion<T>& x, T1 k) {
 /**
  * Division by a number.
  */
-template <typename T, typename T1>
-inline Quaternion<T> operator/(const Quaternion<T>& x, T1 k) {
-  return x * T(1)/k;
+template<typename T, typename T1>
+inline Quaternion<T> operator/(const Quaternion<T> &x, T1 k) {
+  return x * T(1) / k;
 }
 
 /**
  * Returns the conjugate of x, as a new quaternion (x is unchanged).
  */
-template <typename T>
-inline Quaternion<T> conjugate(const Quaternion<T>& x) {
+template<typename T>
+inline Quaternion<T> conjugate(const Quaternion<T> &x) {
   Quaternion<T> r(x);
   r.conjugate();
   return r;
@@ -528,51 +603,51 @@ inline Quaternion<T> conjugate(const Quaternion<T>& x) {
 /**
  * The norms on a quaternion.
  */
-template <typename T>
-inline T norm2(const Quaternion<T>& x) {
+template<typename T>
+inline T norm2(const Quaternion<T> &x) {
   return x.norm2();
 }
 
-template <typename T>
-inline T norm(const Quaternion<T>& x) {
+template<typename T>
+inline T norm(const Quaternion<T> &x) {
   return x.norm();
 }
 
-template <typename T>
-inline T l1(const Quaternion<T>& x) {
+template<typename T>
+inline T l1(const Quaternion<T> &x) {
   return x.l1();
 }
 
-template <typename T>
-inline T l2(const Quaternion<T>& x) {
+template<typename T>
+inline T l2(const Quaternion<T> &x) {
   return x.l2();
 }
 
-template <typename T>
-inline T sup(const Quaternion<T>& x) {
+template<typename T>
+inline T sup(const Quaternion<T> &x) {
   return x.sup();
 }
 
 /**
  * Quaternion tests.
  */
-template <typename T>
-inline bool is_unit(const Quaternion<T>& x) {
+template<typename T>
+inline bool is_unit(const Quaternion<T> &x) {
   return x.is_unit();
 }
 
-template <typename T>
-inline bool is_real(const Quaternion<T>& x) {
+template<typename T>
+inline bool is_real(const Quaternion<T> &x) {
   return x.is_real();
 }
 
-template <typename T>
-inline bool is_complex(const Quaternion<T>& x) {
+template<typename T>
+inline bool is_complex(const Quaternion<T> &x) {
   return x.is_complex();
 }
 
-template <typename T>
-inline bool is_unreal(const Quaternion<T>& x) {
+template<typename T>
+inline bool is_unreal(const Quaternion<T> &x) {
   return x.is_unreal();
 }
 
@@ -581,61 +656,61 @@ inline bool is_unreal(const Quaternion<T>& x) {
  * TODO: for very large values, equality is a classic floating point problem
  * TODO: comparison method, together with scalar_zero_threshold
  */
-template <typename T>
-inline bool operator==(const Quaternion<T>& x, const Quaternion<T>& y) {
+template<typename T>
+inline bool operator==(const Quaternion<T> &x, const Quaternion<T> &y) {
   const T eps = Quaternion<T>::scalar_zero_threshold;
   if (eps == 0)
     return x.a() == y.a() && x.b() == y.b() && x.c() == y.c() && x.d() == y.d();
   else
-    return is_scalar_zero(x.a()-y.a(), eps)
-           && is_scalar_zero(x.b()-y.b(), eps)
-           && is_scalar_zero(x.c()-y.c(), eps)
-           && is_scalar_zero(x.d()-y.d(), eps);
+    return is_scalar_zero(x.a() - y.a(), eps)
+           && is_scalar_zero(x.b() - y.b(), eps)
+           && is_scalar_zero(x.c() - y.c(), eps)
+           && is_scalar_zero(x.d() - y.d(), eps);
 }
 
-template <typename T>
-inline bool operator!=(const Quaternion<T>& x, const Quaternion<T>& y) {
+template<typename T>
+inline bool operator!=(const Quaternion<T> &x, const Quaternion<T> &y) {
   return !(x == y);
 }
 
 /**
  * Equality of a quaternion and a real, or at least a number that can converted to a real.
  */
-template <typename T, typename T2>
-inline bool operator==(const Quaternion<T>& x, T2 y) {
+template<typename T, typename T2>
+inline bool operator==(const Quaternion<T> &x, T2 y) {
   return is_real(x) && x.a() == static_cast<T>(y);
 }
 
-template <typename T, typename T2>
-inline bool operator!=(const Quaternion<T>& x, T2 y) {
+template<typename T, typename T2>
+inline bool operator!=(const Quaternion<T> &x, T2 y) {
   return !(x == y);
 }
 
 // Same, swapping the lhs and rhs.
-template <typename T, typename T2>
-inline bool operator==(T2 y, const Quaternion<T>& x) {
+template<typename T, typename T2>
+inline bool operator==(T2 y, const Quaternion<T> &x) {
   return x == y;
 }
 
-template <typename T, typename T2>
-inline bool operator!=(T2 y, const Quaternion<T>& x) {
+template<typename T, typename T2>
+inline bool operator!=(T2 y, const Quaternion<T> &x) {
   return x != y;
 }
 
 // TODO: equality of quaternion and complex, of quaternion and array/container
 
-template <typename T>
-inline Quaternion<T> operator+(const Quaternion<T>& x, T y) {
-  return Quaternion<T>(x.a()+y,x.b(),x.c(),x.d());
+template<typename T>
+inline Quaternion<T> operator+(const Quaternion<T> &x, T y) {
+  return Quaternion<T>(x.a() + y, x.b(), x.c(), x.d());
 }
 
-template <typename T>
-inline Quaternion<T> operator+(const Quaternion<T>& x, const Quaternion<T>& y) {
+template<typename T>
+inline Quaternion<T> operator+(const Quaternion<T> &x, const Quaternion<T> &y) {
   return Quaternion<T>(x) += y;
 }
 
-template <typename T>
-inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T>& y) {
+template<typename T>
+inline Quaternion<T> operator-(const Quaternion<T> &x, const Quaternion<T> &y) {
   return Quaternion<T>(x) -= y;
 }
 
@@ -645,49 +720,49 @@ inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T>& y) {
  * TODO: micro-threads?
  * TODO: on Mac/clang and only there, this is twice as slow as boost?
  */
-template <typename T>
-inline Quaternion<T> operator*(const Quaternion<T>& x, const Quaternion<T>& y) {
+template<typename T>
+inline Quaternion<T> operator*(const Quaternion<T> &x, const Quaternion<T> &y) {
   return Quaternion<T>(x) *= y;
 }
 
-template <typename T>
-inline Quaternion<T> inverse(const Quaternion<T>& x) {
+template<typename T>
+inline Quaternion<T> inverse(const Quaternion<T> &x) {
   return conjugate(x) / norm2(x);
 }
 
-template <typename T, typename T1>
-inline Quaternion<T> operator/(T1 k, const Quaternion<T>& x) {
+template<typename T, typename T1>
+inline Quaternion<T> operator/(T1 k, const Quaternion<T> &x) {
   return k * inverse(x);
 }
 
-template <typename T>
-inline Quaternion<T> operator/(const Quaternion<T>& x, const Quaternion<T>& y) {
+template<typename T>
+inline Quaternion<T> operator/(const Quaternion<T> &x, const Quaternion<T> &y) {
   return x * inverse(y);
 }
 
-template <typename T>
-inline T dot(const Quaternion<T>& x, const Quaternion<T>& y) {
-  return x.b()*y.b() + x.c()*y.c() + x.d() * y.d();
+template<typename T>
+inline T dot(const Quaternion<T> &x, const Quaternion<T> &y) {
+  return x.b() * y.b() + x.c() * y.c() + x.d() * y.d();
 }
 
 /**
  * 9 operations
  */
-template <typename T>
-inline Quaternion<T> cross(const Quaternion<T>& x, const Quaternion<T>& y) {
+template<typename T>
+inline Quaternion<T> cross(const Quaternion<T> &x, const Quaternion<T> &y) {
   return Quaternion<T>(0,
-                       x.c()*y.d() - x.d()*y.c(),
-                       x.d()*y.b() - x.b()*y.d(),
-                       x.b()*y.c() - x.c()*y.b());
+                       x.c() * y.d() - x.d() * y.c(),
+                       x.d() * y.b() - x.b() * y.d(),
+                       x.b() * y.c() - x.c() * y.b());
 }
 
-template <typename T>
-inline Quaternion<T> commutator(const Quaternion<T>& x, const Quaternion<T>& y) {
+template<typename T>
+inline Quaternion<T> commutator(const Quaternion<T> &x, const Quaternion<T> &y) {
   return x * y - y * x;
 }
 
-template <typename T>
-inline Quaternion<T> normalize(const Quaternion<T>& x) {
+template<typename T>
+inline Quaternion<T> normalize(const Quaternion<T> &x) {
   return Quaternion<T>(x) / norm(x);
 }
 
@@ -700,15 +775,15 @@ inline Quaternion<T> normalize(const Quaternion<T>& x) {
  * exp(log(x)) == x always, but log(exp(x)) != x is already not true
  * for complex number, because the log is multi-valued.
  */
-template <typename T>
-inline Quaternion<T> exp(const Quaternion<T>& x) {
+template<typename T>
+inline Quaternion<T> exp(const Quaternion<T> &x) {
   T un = x.unreal_norm2();
   if (un == 0)
-    return Quaternion<T>(std::exp(x.a()),0,0,0);
+    return Quaternion<T>(std::exp(x.a()), 0, 0, 0);
   T n1 = std::sqrt(un);
   T ea = std::exp(x.a());
-  T n2 = ea*std::sin(n1)/n1;
-  return Quaternion<T>(ea*std::cos(n1),n2*x.b(),n2*x.c(),n2*x.d());
+  T n2 = ea * std::sin(n1) / n1;
+  return Quaternion<T>(ea * std::cos(n1), n2 * x.b(), n2 * x.c(), n2 * x.d());
 }
 
 /**
@@ -716,15 +791,15 @@ inline Quaternion<T> exp(const Quaternion<T>& x) {
  * exp(log(x)) == x always, but log(exp(x)) != x is already not true
  * for complex number, because the log is multi-valued.
  */
-template <typename T>
-inline Quaternion<T> log(const Quaternion<T>& x) {
+template<typename T>
+inline Quaternion<T> log(const Quaternion<T> &x) {
   T nu2 = x.unreal_norm2();
   if (nu2 == 0)
-    return Quaternion<T>(std::log(x.a()),0,0,0);
+    return Quaternion<T>(std::log(x.a()), 0, 0, 0);
   T a = x.a(); // helps with speed in debug mode
-  T n = std::sqrt(a*a + nu2);
-  T th = std::acos(a/n)/std::sqrt(nu2);
-  return Quaternion<T>(std::log(n),th*x.b(),th*x.c(),th*x.d());
+  T n = std::sqrt(a * a + nu2);
+  T th = std::acos(a / n) / std::sqrt(nu2);
+  return Quaternion<T>(std::log(n), th * x.b(), th * x.c(), th * x.d());
 }
 
 /**
@@ -734,13 +809,13 @@ inline Quaternion<T> log(const Quaternion<T>& x) {
  * 2 a c
  * 2 a d
  */
-template <typename T>
-inline Quaternion<T> pow2(const Quaternion<T>& x) {
-  T aa = 2*x.a();
-  return Quaternion<T>(x.a()*x.a() - x.unreal_norm2(),
-                       aa*x.b(),
-                       aa*x.c(),
-                       aa*x.d());
+template<typename T>
+inline Quaternion<T> pow2(const Quaternion<T> &x) {
+  T aa = 2 * x.a();
+  return Quaternion<T>(x.a() * x.a() - x.unreal_norm2(),
+                       aa * x.b(),
+                       aa * x.c(),
+                       aa * x.d());
 }
 
 /**
@@ -750,15 +825,15 @@ inline Quaternion<T> pow2(const Quaternion<T>& x) {
  * -c (-3 a^2 + b^2 + c^2 + d^2)
  * -d (-3 a^2 + b^2 + c^2 + d^2)
  */
-template <typename T>
-inline Quaternion<T> pow3(const Quaternion<T>& x) {
-  T a2 = x.a()*x.a();
+template<typename T>
+inline Quaternion<T> pow3(const Quaternion<T> &x) {
+  T a2 = x.a() * x.a();
   T n1 = x.unreal_norm2();
   T n2 = 3 * a2 - n1;
   return Quaternion<T>(x.a() * (a2 - 3 * n1),
-                       x.b()*n2,
-                       x.c()*n2,
-                       x.d()*n2);
+                       x.b() * n2,
+                       x.c() * n2,
+                       x.d() * n2);
 }
 
 /**
@@ -768,15 +843,15 @@ inline Quaternion<T> pow3(const Quaternion<T>& x) {
  * -4 a c (-a^2 + b^2 + c^2 + d^2)
  * -4 a d (-a^2 + b^2 + c^2 + d^2)
  */
-template <typename T>
-inline Quaternion<T> pow4(const Quaternion<T>& x) {
-  T a2 = x.a()*x.a();
+template<typename T>
+inline Quaternion<T> pow4(const Quaternion<T> &x) {
+  T a2 = x.a() * x.a();
   T n1 = x.unreal_norm2();
   T n2 = 4 * x.a() * (a2 - n1);
-  return {a2*a2 - 6 * a2 * n1 + n1 * n1,
-          x.b()*n2,
-          x.c()*n2,
-          x.d()*n2};
+  return {a2 * a2 - 6 * a2 * n1 + n1 * n1,
+          x.b() * n2,
+          x.c() * n2,
+          x.d() * n2};
 }
 
 /**
@@ -787,8 +862,8 @@ inline Quaternion<T> pow4(const Quaternion<T>& x) {
  * I could compute pow for any real exponent, whereas this method is
  * limited to integer exponents.
  */
-template <typename T>
-inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
+template<typename T>
+inline Quaternion<T> pow(const Quaternion<T> &x, int expt) {
 
   if (expt < 0)
     return inverse(pow(x, -expt));
@@ -819,9 +894,9 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
  * Real power of a quaternion.
  * TODO: test against pow just above
  */
-template <typename T>
-inline Quaternion<T> pow(const Quaternion<T>& x, T a) {
-  return exp(a*log(x));
+template<typename T>
+inline Quaternion<T> pow(const Quaternion<T> &x, T a) {
+  return exp(a * log(x));
 }
 
 /**
@@ -829,18 +904,18 @@ inline Quaternion<T> pow(const Quaternion<T>& x, T a) {
  * (that should cover all the other cases for the exponent...)
  * TODO: test against pow just above
  */
-template <typename T>
-inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T>& a) {
+template<typename T>
+inline Quaternion<T> pow(const Quaternion<T> &x, const Quaternion<T> &a) {
   if (a.is_real())
     return pow(x, a.a());
-  return exp(a*log(x));
+  return exp(a * log(x));
 }
 
 /**
  * result = a*x + b*y
  */
-template <typename T, typename K>
-inline Quaternion<T> axby(K k1, const Quaternion<T>& x, K k2, const Quaternion<T>& y) {
+template<typename T, typename K>
+inline Quaternion<T> axby(K k1, const Quaternion<T> &x, K k2, const Quaternion<T> &y) {
   return Quaternion<T>(x).axby(k1, k2, y);
 }
 
