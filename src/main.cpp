@@ -94,7 +94,8 @@ bool operator==(const quaternion<long double>& boost_y, const Quaternion<long do
 //----------------------------------------------------------------------------------------------------------------------
 // Unit tests
 //----------------------------------------------------------------------------------------------------------------------
-void test_constructors_accessors() {
+void test_constructors() {
+  cout << "Tesing constructors" << endl;
   {
     Qf x;
     assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
@@ -125,9 +126,7 @@ void test_constructors_accessors() {
   {
     Qf x((float)1, (float)2, (float)3, (float)4);
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
-    assert(x.real() == 1);
-    assert(x.unreal() != 0); // TODO: check what is happening here exactly
-    assert(x.unreal() == Qf(0,2,3,4));
+
   }
 
   {
@@ -208,7 +207,7 @@ void test_constructors_accessors() {
 }
 
 void test_trigonometric_constructors() {
-
+  cout << "Testing trigonometric constructors" << endl;
   {
     Qf x; x.spherical(0,0,0,0);
     assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
@@ -253,7 +252,40 @@ void test_IJK() {
   assert(Qf_j * Qf_j == -1);
   assert(Qf_k * Qf_k == -1);
   assert(Qf_i * Qf_j * Qf_k == -1);
+
+  assert(Qd_0 == 0);
+  assert(Qd_1 == 1);
+  assert(Qd_i * Qd_i == -1);
+  assert(Qd_j * Qd_j == -1);
+  assert(Qd_k * Qd_k == -1);
+  assert(Qd_i * Qd_j * Qd_k == -1);
+
+  assert(Qld_0 == 0);
+  assert(Qld_1 == 1);
+  assert(Qld_i * Qld_i == -1);
+  assert(Qld_j * Qld_j == -1);
+  assert(Qld_k * Qld_k == -1);
+  assert(Qld_i * Qld_j * Qld_k == -1);
 }
+
+void test_accessors() {
+  cout << "Testing accessors" << endl;
+  {
+    Qf x(1, 2, 3, 4);
+    assert(x.real() == 1);
+    assert(x.unreal() != 0); // TODO: check what is happening here exactly
+    assert(x.unreal() == Qf(0, 2, 3, 4));
+    assert(x.conjugate() == Qf(1, -2, -3, -4));
+    assert(x.conjugate().conjugate() == x);
+    assert(x.conjugate() + x == Qf(2,0,0,0));
+    assert(x - x.conjugate() == Qf(0,4,6,8));
+    assert(!x.is_real());
+    assert(!x.is_complex());
+    assert(!x.is_unreal());
+    assert(!x.is_unit());
+  }
+}
+
 
 void test_pow2() {
   cout << "Testing pow2" << endl;
@@ -589,9 +621,10 @@ void test_axby_speed() {
 
 
 int main() {
-  test_constructors_accessors();
+  test_constructors();
   test_trigonometric_constructors();
-//  test_IJK();
+  test_IJK();
+  test_accessors();
 //  test_pow2();
 //  test_pow3();
 //  test_pow();
