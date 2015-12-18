@@ -8,6 +8,9 @@
 using namespace std;
 using namespace boost::math;
 
+//----------------------------------------------------------------------------------------------------------------------
+// Test utilities
+//----------------------------------------------------------------------------------------------------------------------
 /**
  * Prints out arrays to streams
  */
@@ -85,6 +88,99 @@ bool operator==(const Quaternion<long double>& x, const quaternion<long double>&
 
 bool operator==(const quaternion<long double>& boost_y, const Quaternion<long double>& x) {
   return x == boost_y;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+// Unit tests
+//----------------------------------------------------------------------------------------------------------------------
+void test_constructors_accessors() {
+  {
+    Qf x;
+    assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    assert(x.real() == 0);
+    assert(x.unreal() == 0);
+  }
+
+  {
+    Qf x((float)0, (float)0, (float)0, (float)0);
+    assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+  }
+
+  {
+    Qf x((float)1);
+    assert(x.a() == 1 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+  }
+
+  {
+    Qf x((float)1, (float)2);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
+  }
+
+  {
+    Qf x((float)1, (float)2, (float)3);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 0);
+  }
+
+  {
+    Qf x((float)1, (float)2, (float)3, (float)4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.real() == 1);
+    assert(x.unreal() != 0); // TODO: check what is happening here exactly
+    assert(x.unreal() == Qf(0,2,3,4));
+  }
+
+  {
+    Qf x((int)1,(int)2);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
+  }
+
+  {
+    Qf x((int)1,(int)2,(int)3,(int)4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+  }
+
+  {
+    Qf x(complex<float>(1,2));
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
+  }
+
+  {
+    Qf x(complex<float>(1,2), complex<float>(3,4));
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.c1() == complex<float>(1,2));
+    assert(x.c2() == complex<float>(3,4));
+  }
+
+  {
+    Qd x(complex<float>(1,2), complex<float>(3,4));
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+  }
+
+  {
+    Qd y(complex<float>(1,2), complex<float>(3,4));
+    Qd x(y);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+  }
+
+  {
+    Qf y((int)1,(int)2,(int)3,(int)4);
+    Qd x(y);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+  }
+
+  {
+    Qd y(complex<float>(1,2), complex<float>(3,4));
+    Qd x = y;
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+  }
+
+  {
+    Qf y((int)1,(int)2,(int)3,(int)4);
+    Qd x = y;
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.c1() == complex<double>(1,2));
+    assert(x.c2() == complex<double>(3,4));
+  }
 }
 
 void test_IJK() {
@@ -395,8 +491,43 @@ void test_exp_speed() {
   }
 }
 
+void test_axby_speed() {
+  cout << "Testing axby speed" << endl;
+  size_t N = 100000;
+
+  Quaternion<float> q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
+
+  { // With Boost
+    quaternion<float> a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
+    float certificate = 0.0;
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < N; ++i) {
+      quaternion<float> r = ((float) i) * a + ((float) i+1) * b;
+      certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
+    }
+    auto end = std::chrono::system_clock::now();
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Boost: " << (diff.count() / N) << "ns" << endl;
+    cout << "Certificate=" << certificate << endl;
+  }
+
+  {
+    float certificate = 0.0;
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < N; ++i) {
+      Quaternion<float> r = axby(i, q1, i+1, q2);
+      certificate += r.a() + r.b() + r.c() + r.d();
+    }
+    auto end = std::chrono::system_clock::now();
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Quaternion: " << (diff.count() / N) << "ns" << endl;
+    cout << "Certificate=" << certificate << endl;
+  }
+}
+
 
 int main() {
+  test_constructors_accessors();
 //  test_IJK();
 //  test_pow2();
 //  test_pow3();
@@ -405,8 +536,9 @@ int main() {
 //  test_log();
 //  test_exp();
 //  test_exp_speed();
-  test_multiplication_speed();
+//  test_multiplication_speed();
 //  test_pow_speed();
+//  test_axby_speed();
 //  test_to_polar_representation();
 //  test_to_matrix();
 //  test_io_eps();

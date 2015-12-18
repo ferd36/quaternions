@@ -56,67 +56,61 @@ public:
   typedef std::array<std::array<std::complex<T>,2>,2> matrix_representation;
 
   /**
-   * Construct a quaternion from at most 4 components of type T.
-   * Specifying only a != 0 makes the quaternion a real.
-   * Specifying only a != and b != 0 makes the quaternion an ordinary complex number.
-   */
+  * Construct a quaternion from at most 4 components of type T.
+  * Specifying only a != 0 makes the quaternion a real.
+  * Specifying only a != and b != 0 makes the quaternion an ordinary complex number.
+  */
   Quaternion(T a =0, T b =0, T c =0, T d =0)
       : _a(a), _b(b), _c(c), _d(d)
   {}
 
   /**
-   * Construct a quaternion from a single complex<T>.
-   * The j and k components are 0.
+   * Construct a quaternion from at most 4 components of type T.
+   * Specifying only a != 0 makes the quaternion a real.
+   * Specifying only a != and b != 0 makes the quaternion an ordinary complex number.
    */
-  Quaternion(const std::complex<T>& x)
-      : _a(const_cast<std::complex<T>&>(x).real()),
-        _b(const_cast<std::complex<T>&>(x).imag()),
-        _c(0), _d(0)
+  template <typename T1>
+  Quaternion(T1 a =0, T1 b =0, T1 c =0, T1 d =0)
+      : _a(static_cast<T>(a)),
+        _b(static_cast<T>(b)),
+        _c(static_cast<T>(c)),
+        _d(static_cast<T>(d))
   {}
 
   /**
    * Construct a quaternion from 2 complex<T>.
    * This will set all 4 components of the quaternion.
    */
-  Quaternion(const std::complex<T>& x, const std::complex<T>& y)
-      : _a(const_cast<std::complex<T>&>(x).real()),
-        _b(const_cast<std::complex<T>&>(x).imag()),
-        _c(const_cast<std::complex<T>&>(x).real()),
-        _d(const_cast<std::complex<T>&>(x).imag())
+  template <typename T1>
+  Quaternion(const std::complex<T1>& x, const std::complex<T1>& y = std::complex<T1>(0,0))
+      : _a(static_cast<T>(x.real())),
+        _b(static_cast<T>(x.imag())),
+        _c(static_cast<T>(y.real())),
+        _d(static_cast<T>(y.imag()))
+
   {}
 
   /**
    * Copy constructor.
    */
-  Quaternion(const Quaternion& other)
-      : _a(other._a),
-        _b(other._b),
-        _c(other._c),
-        _d(other._d)
-  {}
-
-  /**
-   * Casting constructor.
-   */
   template <typename T1>
-  explicit Quaternion(Quaternion<T1>& y)
-      : _a(static_cast<T>(y._a)),
-        _b(static_cast<T>(y._b)),
-        _c(static_cast<T>(y._c)),
-        _d(static_cast<T>(y._d))
+  Quaternion(const Quaternion<T1>& y)
+      : _a(static_cast<T>(y.a())),
+        _b(static_cast<T>(y.b())),
+        _c(static_cast<T>(y.c())),
+        _d(static_cast<T>(y.d()))
   {}
 
   /**
    * Assignment operator.
    */
-  Quaternion& operator=(const Quaternion& other)
+  template <typename T1>
+  Quaternion& operator=(const Quaternion<T1>& other)
   {
-    if (&other != this) {
-      _a = other._a;
-      _b = other._b;
-      _c = other._c;
-      _d = other._d;
-    }
+    _a = static_cast<T>(other.a());
+    _b = static_cast<T>(other.b());
+    _c = static_cast<T>(other.c());
+    _d = static_cast<T>(other.d());
     return *this;
   }
 
@@ -128,6 +122,9 @@ public:
   T c() const { return _c; }
   T d() const { return _d; }
 
+  /**
+   * The complex components of this quaternion.
+   */
   std::complex<T> c1() const { return std::complex<T>(_a, _b); }
   std::complex<T> c2() const { return std::complex<T>(_c, _d); }
 
@@ -311,6 +308,22 @@ public:
     _c = ct;
     _d = dt;
 
+    return *this;
+  }
+
+  /**
+   * k1 * this quaternion + k2 * y
+   * Improves performance by reducing number of constructions/copies.
+   */
+  template <typename K>
+  Quaternion axby(K _k1, K _k2, const Quaternion& y)
+  {
+    T k1 = static_cast<T>(_k1);
+    T k2 = static_cast<T>(_k2);
+    _a = k1*_a + k2*y._a;
+    _b = k1*_b + k2*y._b;
+    _c = k1*_c + k2*y._c;
+    _d = k1*_d + k2*y._d;
     return *this;
   }
 
@@ -825,6 +838,14 @@ inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T>& a) {
   if (a.is_real())
     return pow(x, a.a());
   return exp(a*log(x));
+}
+
+/**
+ * result = a*x + b*y
+ */
+template <typename T, typename K>
+inline Quaternion<T> axby(K k1, const Quaternion<T>& x, K k2, const Quaternion<T>& y) {
+  return Quaternion<T>(x).axby(k1, k2, y);
 }
 
 #endif //QUATERNIONS_QUATERNION_H
