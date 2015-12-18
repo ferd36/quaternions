@@ -8,8 +8,5 @@ A library to work with quaternions.
   higher powers.
 - I have tried to use intrinsics (SSE), but didn't find it to be faster than "naive" code.
 
-## TODO
-- Check if the multiplication in ASM uses SSE instructions correctly.
-
 ## Others
 - *vectorclass* from Agner Fog, can be found at: http://www.agner.org/optimize/, and provides quaternion classes.
