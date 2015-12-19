@@ -16,12 +16,12 @@
 
 /**
  * A quaternion class.
- * TODO: add precise requirements on numeric types
- * TODO: threads, as policy
  * TODO: combine operations: axby...
  * TODO: provide same operations as boost
- * TODO: provide round to zero as optional
+ * TODO: provide round to zero, floor, ceil
+ * TODO: check if 0 detection is worth doing in *
  * TODO: check with std algos
+ * TODO: remove copies/constructions in expressions
  */
 template<typename T =double> // assert operations for numeric
 class Quaternion {
@@ -186,6 +186,8 @@ public:
 
     return Quaternion(a, b, h1, h2);
   }
+
+  // TODO: copy to valarray, array, vector...
 
   /**
    * Accessors for all 4 components of the quaternion.
@@ -384,7 +386,7 @@ public:
    */
   template<typename K>
   Quaternion axby(K _k1, K _k2, const Quaternion &y) {
-    T k1 = static_cast<T>(_k1);
+    T k1 = static_cast<T>(_k1); // TODO: static cast needed?
     T k2 = static_cast<T>(_k2);
     _a = k1 * _a + k2 * y._a;
     _b = k1 * _b + k2 * y._b;
