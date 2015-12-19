@@ -76,24 +76,22 @@ public:
   /**
    * Construct from a pointer to a range of 4 elements ("float[4]").
    */
-  template <typename T1 = T>
-  Quaternion(T1* it)
+  template<typename T1 = T>
+  Quaternion(T1 *it)
       : _a(static_cast<T>(*it)),
         _b(static_cast<T>(*++it)),
         _c(static_cast<T>(*++it)),
-        _d(static_cast<T>(*++it))
-  {}
+        _d(static_cast<T>(*++it)) { }
 
   /**
    * Construct from an iterator to a range of 4 elements.
    */
-  template <typename It, IS_ITERATOR(It)>
+  template<typename It, IS_ITERATOR(It)>
   Quaternion(It it)
       : _a(static_cast<T>(*it)),
         _b(static_cast<T>(*++it)),
         _c(static_cast<T>(*++it)),
-        _d(static_cast<T>(*++it))
-  {}
+        _d(static_cast<T>(*++it)) { }
 
   /**
    * Copy constructor.
@@ -120,22 +118,18 @@ public:
   template<typename T1>
   static Quaternion spherical(T1 rho, T1 theta, T1 phi1, T1 phi2) {
 
-    T cr = static_cast<T>(1);
     T d = std::sin(phi2);
-    cr *= std::cos(phi2);
+    T cr = std::cos(phi2);
     T c = cr * std::sin(phi1);
     cr *= std::cos(phi1);
     T b = cr * std::sin(theta);
     T a = cr * std::cos(theta);
 
-    return Quaternion(rho*a, rho*b, rho*c, rho*d);
+    return {rho * a, rho * b, rho * c, rho * d};
   }
 
-  template <typename T1>
-  static Quaternion semipolar(T1 rho,
-                              T1 alpha,
-                              T1 theta1,
-                              T1 theta2) {
+  template<typename T1>
+  static Quaternion semipolar(T1 rho, T1 alpha, T1 theta1, T1 theta2) {
 
     T ca = std::cos(alpha);
     T sa = std::sin(alpha);
@@ -144,47 +138,42 @@ public:
     T c = sa * std::cos(theta2);
     T d = sa * std::sin(theta2);
 
-    return Quaternion(rho*a, rho*b, rho*c, rho*d);
+    return {rho * a, rho * b, rho * c, rho * d};
   }
 
-  template <typename T1>
-  static Quaternion multipolar(T1 rho1,
-                               T1 theta1,
-                               T1 rho2,
-                               T1 theta2) {
+  template<typename T1>
+  static Quaternion multipolar(T1 rho1, T1 theta1, T1 rho2, T1 theta2) {
 
     T a = rho1 * std::cos(theta1);
     T b = rho1 * std::sin(theta1);
     T c = rho2 * std::cos(theta2);
     T d = rho2 * std::sin(theta2);
 
-    return Quaternion(a, b, c, d);
+    return {a, b, c, d};
   }
 
-  template <typename T1>
-  static Quaternion cylindrospherical(T1 t,
-                                      T1 radius,
-                                      T1 longitude,
-                                      T1 latitude) {
+  template<typename T1>
+  static Quaternion cylindrospherical(T1 t, T1 radius, T1 longitude, T1 latitude) {
 
     T cl = std::cos(latitude);
     T b = radius * cl * std::cos(longitude);
     T c = radius * cl * std::sin(longitude);
     T d = radius * std::sin(latitude);
 
-    return Quaternion(t, b, c, d);
+    return {t, b, c, d};
   }
 
-  template <typename T1>
-  static Quaternion cylindrical(T1 r,
-                                T1 angle,
-                                T1 h1,
-                                T1 h2) {
+  template<typename T1>
+  static Quaternion cylindrical(T1 r, T1 angle, T1 h1, T1 h2) {
 
     T a = r * std::cos(angle);
     T b = r * std::sin(angle);
 
-    return Quaternion(a, b, h1, h2);
+    return {a, b, h1, h2};
+  }
+
+  std::array<T,4> to_array() const {
+    return {{_a, _b, _c, _d}};
   }
 
   // TODO: copy to valarray, array, vector...
@@ -193,26 +182,21 @@ public:
    * Accessors for all 4 components of the quaternion.
    */
   T a() const { return _a; }
-
   T b() const { return _b; }
-
   T c() const { return _c; }
-
   T d() const { return _d; }
 
   /**
    * The complex components of this quaternion.
    */
-  std::complex<T> c1() const { return std::complex<T>(_a, _b); }
-
-  std::complex<T> c2() const { return std::complex<T>(_c, _d); }
+  std::complex<T> c1() const { return {_a,_b}; }
+  std::complex<T> c2() const { return {_c,_d}; }
 
   /**
    * The real and "unreal" parts of the quaternion.
    */
   T real() const { return _a; }
-
-  Quaternion unreal() const { return Quaternion(0, _b, _c, _d); }
+  Quaternion unreal() const { return {0, _b, _c, _d}; }
 
   /**
    * The conjugate of this quaternion.
@@ -481,9 +465,9 @@ private:
 typedef Quaternion<float> Qf;
 const Qf Qf_0;
 const Qf Qf_1(1);
-const Qf Qf_i(0,1);
-const Qf Qf_j(0,0,1);
-const Qf Qf_k(0,0,0,1);
+const Qf Qf_i(0, 1);
+const Qf Qf_j(0, 0, 1);
+const Qf Qf_k(0, 0, 0, 1);
 
 /**
  * Predefined quaternions on doubles.

@@ -3,6 +3,7 @@
 #include <set>
 #include <random>
 #include <chrono>
+#include <array>
 #include <boost/math/quaternion.hpp>
 #include <iomanip>
 
@@ -95,7 +96,7 @@ bool operator==(const quaternion<long double>& boost_y, const Quaternion<long do
 // Unit tests
 //----------------------------------------------------------------------------------------------------------------------
 void test_constructors() {
-  cout << "Tesing constructors" << endl;
+  cout << "Testing constructors" << endl;
   {
     Qf x;
     assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
@@ -277,13 +278,58 @@ void test_accessors() {
     assert(x.unreal() == Qf(0, 2, 3, 4));
     assert(x.conjugate() == Qf(1, -2, -3, -4));
     assert(x.conjugate().conjugate() == x);
-    assert(x.conjugate() + x == Qf(2,0,0,0));
-    assert(x - x.conjugate() == Qf(0,4,6,8));
+    assert(x.conjugate() + x == Qf(2, 0, 0, 0));
+    assert(x - x.conjugate() == Qf(0, 4, 6, 8));
     assert(!x.is_real());
     assert(!x.is_complex());
     assert(!x.is_unreal());
     assert(!x.is_unit());
+    assert(-x == Qf(-1,-2,-3,-4));
   }
+
+  {
+    Qf x(1,2,3,4);
+    auto a = x.to_array();
+    array<float,4> r{{1,2,3,4}};
+    assert(a == r);
+  }
+}
+
+void test_to_matrix() {
+  cout << "Testing to_matrix" << endl;
+  typedef std::complex<double> CD;
+  Qd x(1,2,3,4);
+  Qd::matrix_representation r;
+  r[0] = {{CD(1,2),CD(3,4)}};
+  r[1] = {{CD(-3,4),CD(1,-2)}};
+  assert(x.to_matrix_representation() == r);
+}
+
+void test_to_polar_representation() {
+  cout << "Testing polar representation" << endl;
+  Qd x(1);
+  cout << Qd(1,0,0,0).to_polar_representation() << endl;
+  cout << Qd(0,1,0,0).to_polar_representation() << endl;
+  cout << Qd(0,0,1,0).to_polar_representation() << endl;
+  cout << Qd(0,0,0,1).to_polar_representation() << endl;
+}
+
+void test_norms() {
+  cout << "Testing norms" << endl;
+  {
+    Qf x{1,2,3,4};
+    assert(norm2(x) == 1+4+9+16);
+    assert(std::abs(norm(x) - std::sqrt(1+4+9+16)) < 1e-6);
+    assert(normalize(x).is_unit());
+    assert(normalize(x) == x/std::sqrt(1+4+9+16));
+  }
+}
+
+void test_equality() {
+  cout << "Testing equality" << endl;
+  assert(Qf(4, 3, 2, 1) == Qf(1, 2, 3, 4));
+  assert(Qf(1,2,3,4) != Qf(4,3,2,1));
+  //TODO: refine for precision
 }
 
 
@@ -343,21 +389,6 @@ void test_q_pow() {
   }
 }
 
-void test_to_polar_representation() {
-  cout << "Testing polar represtantion" << endl;
-  Qd x(1);
-  cout << Qd(1,0,0,0).to_polar_representation() << endl;
-  cout << Qd(0,1,0,0).to_polar_representation() << endl;
-  cout << Qd(0,0,1,0).to_polar_representation() << endl;
-  cout << Qd(0,0,0,1).to_polar_representation() << endl;
-}
-
-void test_to_matrix() {
-  Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
-  auto X = x.to_matrix_representation();
-  cout << X << endl;
-}
-
 void test_exp() {
   cout << "Testing exp" << endl;
 
@@ -408,23 +439,6 @@ void test_multiplication() {
   cout << Qf(4, 3, 2, 1) * 1.5 << endl;
   cout << Qf(4, 3, 2, 1) * 0.0 << endl;
   cout << Qf_i * Qf_i << endl;
-}
-
-void test_equality() {
-  cout << (Qf(4, 3, 2, 1) == Qf(1, 2, 3, 4)) << endl;
-  cout << (Qf(4, 3, 2, 1) == Qf(4, 3, 2, 1)) << endl;
-}
-
-void test_unary_minus() {
-  cout << (Qf(4, 3, 2, 1) + -Qf(4, 3, 2, 1)) << endl;
-}
-
-void test_conjugate() {
-  cout << conjugate(Qf(1, 2, 3, 4)) << endl;
-}
-
-void test_norm() {
-  cout << norm(Qf(1, 2, 3, 4)) << " " << sqrt(30) << endl;
 }
 
 void test_inverse() {
@@ -625,6 +639,10 @@ int main() {
   test_trigonometric_constructors();
   test_IJK();
   test_accessors();
+  test_to_matrix();
+  test_to_polar_representation();
+  test_norms();
+  test_equality();
 //  test_pow2();
 //  test_pow3();
 //  test_pow();
@@ -635,8 +653,6 @@ int main() {
 //  test_multiplication_speed();
 //  test_pow_speed();
 //  test_axby_speed();
-//  test_to_polar_representation();
-//  test_to_matrix();
 //  test_io_eps();
 //  test_io_style();
   return 0;
