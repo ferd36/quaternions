@@ -28,6 +28,16 @@ inline ostream& operator<<(ostream& out, const array<T,n>& x) {
 }
 
 /**
+ * Prints out a vector of elements of type T
+ */
+template <typename T>
+inline ostream& operator<<(ostream& out, const vector<T>& x) {
+  for (T v : x)
+    out << v << " ";
+  return out;
+}
+
+/**
  * Compare a boost quaternion to Quaternion, relatively, with epsilon.
  */
 template <typename T, typename T1>
@@ -320,14 +330,15 @@ void test_norms() {
     Qf x{1,2,3,4};
     assert(norm2(x) == 1+4+9+16);
     assert(std::abs(norm(x) - std::sqrt(1+4+9+16)) < 1e-6);
-    assert(normalize(x).is_unit());
+    assert(normalize(x).is_unit(1e-6));
+    Qf::scalar_zero_threshold = 1e-6f;
     assert(normalize(x) == x/std::sqrt(1+4+9+16));
   }
 }
 
 void test_equality() {
   cout << "Testing equality" << endl;
-  assert(Qf(4, 3, 2, 1) == Qf(1, 2, 3, 4));
+  assert(Qf(1,2,3,4) == Qf(1, 2, 3, 4));
   assert(Qf(1,2,3,4) != Qf(4,3,2,1));
   //TODO: refine for precision
 }
@@ -483,6 +494,13 @@ void test_io_style() {
   Qd x(1,2,3,4);
   cout << set_style_nice<double>() << x << endl;
   cout << set_style_compact<double>() << x << endl;
+}
+
+void test_stl() {
+  cout << "Testing STL" << endl;
+  vector<Qf> qs{{1,2,3,4},{5,6,7,8},{1,3,5,7},{2,4,6,8}};
+  auto v = accumulate(qs.begin(), qs.end(), Qf_1, multiplies<Qf>());
+  assert(v == Qf_1 * Qf(1,2,3,4) * Qf(5,6,7,8) * Qf(1,3,5,7) * Qf(2,4,6,8));
 }
 
 /**
@@ -643,6 +661,7 @@ int main() {
   test_to_polar_representation();
   test_norms();
   test_equality();
+  test_stl();
 //  test_pow2();
 //  test_pow3();
 //  test_pow();

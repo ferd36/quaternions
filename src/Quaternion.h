@@ -22,6 +22,8 @@
  * TODO: check if 0 detection is worth doing in *
  * TODO: check with std algos
  * TODO: remove copies/constructions in expressions
+ * TODO: fast sinus? Sinus in CPU instruction?
+ * TODO: study matrix representation and isomorphism
  */
 template<typename T =double> // assert operations for numeric
 class Quaternion {
@@ -67,7 +69,7 @@ public:
    * This will set all 4 components of the quaternion.
    */
   template<typename T1>
-  Quaternion(const std::complex<T1> &x, const std::complex<T1> &y = std::complex<T1>(0, 0))
+  Quaternion(const std::complex<T1>& x, const std::complex<T1> &y = std::complex<T1>(0, 0))
       : _a(static_cast<T>(x.real())),
         _b(static_cast<T>(x.imag())),
         _c(static_cast<T>(y.real())),
@@ -246,8 +248,8 @@ public:
   /**
    * Return true if this quaternion has norm 1, false otherwise.
    */
-  bool is_unit() const {
-    return is_scalar_zero(norm2() - T(1), scalar_zero_threshold);
+  bool is_unit(T eps =0) const {
+    return is_scalar_zero(norm2() - T(1), eps);
   }
 
   /**
@@ -286,7 +288,8 @@ public:
   /**
    * Unary +=.
    */
-  Quaternion operator+=(T y) {
+  template <typename T1>
+  Quaternion operator+=(T1 y) {
     _a += y;
     return *this;
   }
@@ -316,7 +319,8 @@ public:
   /**
    * Unary -=.
    */
-  Quaternion operator-=(const Quaternion &y) {
+  template <typename T1>
+  Quaternion operator-=(const Quaternion<T1> &y) {
     _a -= y._a;
     _b -= y._b;
     _c -= y._c;
@@ -327,7 +331,8 @@ public:
   /**
    * Scaling by a constant.
    */
-  Quaternion operator*=(T k) {
+  template <typename T1>
+  Quaternion operator*=(T1 k) {
     _a = k * _a;
     _b = k * _b;
     _c = k * _c;
@@ -338,7 +343,8 @@ public:
   /**
    * Scaling by a constant.
    */
-  Quaternion operator/=(T k) {
+  template <typename T1>
+  Quaternion operator/=(T1 k) {
     _a /= k;
     _b /= k;
     _c /= k;
@@ -350,7 +356,10 @@ public:
    * Unary multiplication.
    * 28 operations
    */
-  Quaternion operator*=(const Quaternion &y) {
+  // TODO: look how it's done with complex (copy or not)
+  template <typename T1>
+  Quaternion operator*=(const Quaternion<T1>& y) {
+
     T at = _a * y._a - _b * y._b - _c * y._c - _d * y._d;
     T bt = _a * y._b + _b * y._a + _c * y._d - _d * y._c;
     T ct = _a * y._c - _b * y._d + _c * y._a + _d * y._b;
@@ -556,13 +565,13 @@ inline std::ostream &operator<<(std::ostream &out, const Quaternion<T> &q) {
  * Multiplication by a constant on the left.
  */
 template<typename T, typename T1>
-inline Quaternion<T> operator*(T1 k, const Quaternion<T> &x) {
+inline Quaternion<T> operator*(T1 k, const Quaternion<T>& x) {
   return Quaternion<T>(x) *= k;
 }
 
 // Same, swapping the lhs and rhs.
 template<typename T, typename T1>
-inline Quaternion<T> operator*(const Quaternion<T> &x, T1 k) {
+inline Quaternion<T> operator*(const Quaternion<T>& x, T1 k) {
   return k * x;
 }
 
@@ -572,15 +581,15 @@ inline Quaternion<T> operator*(const Quaternion<T> &x, T1 k) {
  * Division by a number.
  */
 template<typename T, typename T1>
-inline Quaternion<T> operator/(const Quaternion<T> &x, T1 k) {
-  return x * T(1) / k;
+inline Quaternion<T> operator/(const Quaternion<T>& x, T1 k) {
+  return Quaternion<T>(x) /= k;
 }
 
 /**
  * Returns the conjugate of x, as a new quaternion (x is unchanged).
  */
 template<typename T>
-inline Quaternion<T> conjugate(const Quaternion<T> &x) {
+inline Quaternion<T> conjugate(const Quaternion<T>& x) {
   Quaternion<T> r(x);
   r.conjugate();
   return r;
@@ -590,50 +599,45 @@ inline Quaternion<T> conjugate(const Quaternion<T> &x) {
  * The norms on a quaternion.
  */
 template<typename T>
-inline T norm2(const Quaternion<T> &x) {
+inline T norm2(const Quaternion<T>& x) {
   return x.norm2();
 }
 
 template<typename T>
-inline T norm(const Quaternion<T> &x) {
+inline T norm(const Quaternion<T>& x) {
   return x.norm();
 }
 
 template<typename T>
-inline T l1(const Quaternion<T> &x) {
-  return x.l1();
+inline T nom_l1(const Quaternion<T>& x) {
+  return x.norm_l1();
 }
 
 template<typename T>
-inline T l2(const Quaternion<T> &x) {
-  return x.l2();
-}
-
-template<typename T>
-inline T sup(const Quaternion<T> &x) {
-  return x.sup();
+inline T norm_sup(const Quaternion<T>& x) {
+  return x.norm_sup();
 }
 
 /**
  * Quaternion tests.
  */
 template<typename T>
-inline bool is_unit(const Quaternion<T> &x) {
+inline bool is_unit(const Quaternion<T>& x) {
   return x.is_unit();
 }
 
 template<typename T>
-inline bool is_real(const Quaternion<T> &x) {
+inline bool is_real(const Quaternion<T>& x) {
   return x.is_real();
 }
 
 template<typename T>
-inline bool is_complex(const Quaternion<T> &x) {
+inline bool is_complex(const Quaternion<T>& x) {
   return x.is_complex();
 }
 
 template<typename T>
-inline bool is_unreal(const Quaternion<T> &x) {
+inline bool is_unreal(const Quaternion<T>& x) {
   return x.is_unreal();
 }
 
@@ -641,9 +645,11 @@ inline bool is_unreal(const Quaternion<T> &x) {
  * Equality of two quaternions.
  * TODO: for very large values, equality is a classic floating point problem
  * TODO: comparison method, together with scalar_zero_threshold
+ * TODO: this is kind of annoying in application - might need a function where eps
+ * specified each time
  */
 template<typename T>
-inline bool operator==(const Quaternion<T> &x, const Quaternion<T> &y) {
+inline bool operator==(const Quaternion<T>& x, const Quaternion<T> &y) {
   const T eps = Quaternion<T>::scalar_zero_threshold;
   if (eps == 0)
     return x.a() == y.a() && x.b() == y.b() && x.c() == y.c() && x.d() == y.d();
@@ -655,7 +661,7 @@ inline bool operator==(const Quaternion<T> &x, const Quaternion<T> &y) {
 }
 
 template<typename T>
-inline bool operator!=(const Quaternion<T> &x, const Quaternion<T> &y) {
+inline bool operator!=(const Quaternion<T>& x, const Quaternion<T> &y) {
   return !(x == y);
 }
 
@@ -663,40 +669,40 @@ inline bool operator!=(const Quaternion<T> &x, const Quaternion<T> &y) {
  * Equality of a quaternion and a real, or at least a number that can converted to a real.
  */
 template<typename T, typename T2>
-inline bool operator==(const Quaternion<T> &x, T2 y) {
+inline bool operator==(const Quaternion<T>& x, T2 y) {
   return is_real(x) && x.a() == static_cast<T>(y);
 }
 
 template<typename T, typename T2>
-inline bool operator!=(const Quaternion<T> &x, T2 y) {
+inline bool operator!=(const Quaternion<T>& x, T2 y) {
   return !(x == y);
 }
 
 // Same, swapping the lhs and rhs.
 template<typename T, typename T2>
-inline bool operator==(T2 y, const Quaternion<T> &x) {
+inline bool operator==(T2 y, const Quaternion<T>& x) {
   return x == y;
 }
 
 template<typename T, typename T2>
-inline bool operator!=(T2 y, const Quaternion<T> &x) {
+inline bool operator!=(T2 y, const Quaternion<T>& x) {
   return x != y;
 }
 
 // TODO: equality of quaternion and complex, of quaternion and array/container
 
 template<typename T>
-inline Quaternion<T> operator+(const Quaternion<T> &x, T y) {
-  return Quaternion<T>(x.a() + y, x.b(), x.c(), x.d());
+inline Quaternion<T> operator+(const Quaternion<T>& x, T y) {
+  return {x.a() + y, x.b(), x.c(), x.d()};
 }
 
 template<typename T>
-inline Quaternion<T> operator+(const Quaternion<T> &x, const Quaternion<T> &y) {
+inline Quaternion<T> operator+(const Quaternion<T>& x, const Quaternion<T> &y) {
   return Quaternion<T>(x) += y;
 }
 
 template<typename T>
-inline Quaternion<T> operator-(const Quaternion<T> &x, const Quaternion<T> &y) {
+inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T> &y) {
   return Quaternion<T>(x) -= y;
 }
 
@@ -707,27 +713,27 @@ inline Quaternion<T> operator-(const Quaternion<T> &x, const Quaternion<T> &y) {
  * TODO: on Mac/clang and only there, this is twice as slow as boost?
  */
 template<typename T>
-inline Quaternion<T> operator*(const Quaternion<T> &x, const Quaternion<T> &y) {
+inline Quaternion<T> operator*(const Quaternion<T>& x, const Quaternion<T> &y) {
   return Quaternion<T>(x) *= y;
 }
 
 template<typename T>
-inline Quaternion<T> inverse(const Quaternion<T> &x) {
+inline Quaternion<T> inverse(const Quaternion<T>& x) {
   return conjugate(x) / norm2(x);
 }
 
 template<typename T, typename T1>
-inline Quaternion<T> operator/(T1 k, const Quaternion<T> &x) {
+inline Quaternion<T> operator/(T1 k, const Quaternion<T>& x) {
   return k * inverse(x);
 }
 
 template<typename T>
-inline Quaternion<T> operator/(const Quaternion<T> &x, const Quaternion<T> &y) {
+inline Quaternion<T> operator/(const Quaternion<T>& x, const Quaternion<T> &y) {
   return x * inverse(y);
 }
 
 template<typename T>
-inline T dot(const Quaternion<T> &x, const Quaternion<T> &y) {
+inline T dot(const Quaternion<T>& x, const Quaternion<T> &y) {
   return x.b() * y.b() + x.c() * y.c() + x.d() * y.d();
 }
 
@@ -735,21 +741,21 @@ inline T dot(const Quaternion<T> &x, const Quaternion<T> &y) {
  * 9 operations
  */
 template<typename T>
-inline Quaternion<T> cross(const Quaternion<T> &x, const Quaternion<T> &y) {
-  return Quaternion<T>(0,
-                       x.c() * y.d() - x.d() * y.c(),
-                       x.d() * y.b() - x.b() * y.d(),
-                       x.b() * y.c() - x.c() * y.b());
+inline Quaternion<T> cross(const Quaternion<T>& x, const Quaternion<T> &y) {
+  return {0,
+          x.c() * y.d() - x.d() * y.c(),
+          x.d() * y.b() - x.b() * y.d(),
+          x.b() * y.c() - x.c() * y.b()};
 }
 
 template<typename T>
-inline Quaternion<T> commutator(const Quaternion<T> &x, const Quaternion<T> &y) {
+inline Quaternion<T> commutator(const Quaternion<T>& x, const Quaternion<T> &y) {
   return x * y - y * x;
 }
 
 template<typename T>
-inline Quaternion<T> normalize(const Quaternion<T> &x) {
-  return Quaternion<T>(x) / norm(x);
+inline Quaternion<T> normalize(const Quaternion<T>& x) {
+  return x / norm(x);
 }
 
 /**
@@ -762,7 +768,7 @@ inline Quaternion<T> normalize(const Quaternion<T> &x) {
  * for complex number, because the log is multi-valued.
  */
 template<typename T>
-inline Quaternion<T> exp(const Quaternion<T> &x) {
+inline Quaternion<T> exp(const Quaternion<T>& x) {
   T un = x.unreal_norm2();
   if (un == 0)
     return Quaternion<T>(std::exp(x.a()), 0, 0, 0);
@@ -778,7 +784,7 @@ inline Quaternion<T> exp(const Quaternion<T> &x) {
  * for complex number, because the log is multi-valued.
  */
 template<typename T>
-inline Quaternion<T> log(const Quaternion<T> &x) {
+inline Quaternion<T> log(const Quaternion<T>& x) {
   T nu2 = x.unreal_norm2();
   if (nu2 == 0)
     return Quaternion<T>(std::log(x.a()), 0, 0, 0);
@@ -796,7 +802,7 @@ inline Quaternion<T> log(const Quaternion<T> &x) {
  * 2 a d
  */
 template<typename T>
-inline Quaternion<T> pow2(const Quaternion<T> &x) {
+inline Quaternion<T> pow2(const Quaternion<T>& x) {
   T aa = 2 * x.a();
   return Quaternion<T>(x.a() * x.a() - x.unreal_norm2(),
                        aa * x.b(),
@@ -812,7 +818,7 @@ inline Quaternion<T> pow2(const Quaternion<T> &x) {
  * -d (-3 a^2 + b^2 + c^2 + d^2)
  */
 template<typename T>
-inline Quaternion<T> pow3(const Quaternion<T> &x) {
+inline Quaternion<T> pow3(const Quaternion<T>& x) {
   T a2 = x.a() * x.a();
   T n1 = x.unreal_norm2();
   T n2 = 3 * a2 - n1;
@@ -830,7 +836,7 @@ inline Quaternion<T> pow3(const Quaternion<T> &x) {
  * -4 a d (-a^2 + b^2 + c^2 + d^2)
  */
 template<typename T>
-inline Quaternion<T> pow4(const Quaternion<T> &x) {
+inline Quaternion<T> pow4(const Quaternion<T>& x) {
   T a2 = x.a() * x.a();
   T n1 = x.unreal_norm2();
   T n2 = 4 * x.a() * (a2 - n1);
@@ -849,7 +855,7 @@ inline Quaternion<T> pow4(const Quaternion<T> &x) {
  * limited to integer exponents.
  */
 template<typename T>
-inline Quaternion<T> pow(const Quaternion<T> &x, int expt) {
+inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
 
   if (expt < 0)
     return inverse(pow(x, -expt));
@@ -881,7 +887,7 @@ inline Quaternion<T> pow(const Quaternion<T> &x, int expt) {
  * TODO: test against pow just above
  */
 template<typename T>
-inline Quaternion<T> pow(const Quaternion<T> &x, T a) {
+inline Quaternion<T> pow(const Quaternion<T>& x, T a) {
   return exp(a * log(x));
 }
 
@@ -891,7 +897,7 @@ inline Quaternion<T> pow(const Quaternion<T> &x, T a) {
  * TODO: test against pow just above
  */
 template<typename T>
-inline Quaternion<T> pow(const Quaternion<T> &x, const Quaternion<T> &a) {
+inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T> &a) {
   if (a.is_real())
     return pow(x, a.a());
   return exp(a * log(x));
@@ -901,7 +907,7 @@ inline Quaternion<T> pow(const Quaternion<T> &x, const Quaternion<T> &a) {
  * result = a*x + b*y
  */
 template<typename T, typename K>
-inline Quaternion<T> axby(K k1, const Quaternion<T> &x, K k2, const Quaternion<T> &y) {
+inline Quaternion<T> axby(K k1, const Quaternion<T>& x, K k2, const Quaternion<T> &y) {
   return Quaternion<T>(x).axby(k1, k2, y);
 }
 
