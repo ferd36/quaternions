@@ -903,6 +903,9 @@ inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T>& a) {
   return exp(a * log(x));
 }
 
+// TODO: sqrt
+// TOOD: sin, cos, tan ...
+
 /**
  * result = a*x + b*y
  */

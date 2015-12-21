@@ -314,7 +314,7 @@ void test_accessors() {
 
   {
     Qf x(1,2,3,4);
-    array<float,4> a = x;
+    array<float,4> a = x; // can cast to array directly
     array<float,4> r{{1,2,3,4}};
     assert(a == r);
   }
@@ -494,16 +494,17 @@ void test_pow() {
 
   assert(pow(Qf_1, 0.5f) == 1);
   assert(nearly_equal(pow(-Qf_1, 0.5f), Qf_i, 1e-6));
-  cout << pow(Qf_i, 0.5f) << endl;
-  cout << pow(-Qf_i, 0.5f) << endl;
-  cout << pow(Qf_j, 0.5f) << endl;
-  cout << pow(-Qf_j, 0.5f) << endl;
-  cout << pow(Qf_k, 0.5f) << endl;
-  cout << pow(-Qf_k, 0.5f) << endl;
-
-  cout << pow(Qf_1, -0.33f) << endl;
-  cout << pow(-Qf_1, -0.33f) << endl;
+  assert(nearly_equal(pow(Qf_i, 0.5f), sqrt(complex<float>(0,1)), 1e-6));
+  assert(nearly_equal(pow(-Qf_i, 0.5f), sqrt(complex<float>(0,-1)), 1e-6));
+  assert(nearly_equal(pow(Qf_j, 0.5f), Qf(1.0f/sqrt(2.0f), 0, 1.0f/sqrt(2.0f)), 1e-6));
+  assert(nearly_equal(pow(-Qf_j, 0.5f), Qf(1.0f/sqrt(2.0f), 0, -1.0f/sqrt(2.0f)), 1e-6));
+  assert(nearly_equal(pow(Qf_k, 0.5f), Qf(1.0f/sqrt(2.0f), 0, 0, 1.0f/sqrt(2.0f)), 1e-6));
+  assert(nearly_equal(pow(-Qf_k, 0.5f), Qf(1.0f/sqrt(2.0f), 0, 0, -1.0f/sqrt(2.0f)), 1e-6));
+  assert(pow(Qf_1, -0.33f) == 1);
+  assert(nearly_equal(pow(-Qf_1, -0.33f), pow(complex<float>(-1,0), -0.33f), 1e-6));
+  assert(nearly_equal(pow(Qf_i, -0.33f), pow(complex<float>(0,1), -0.33f), 1e-6));
   cout << pow(-Qf_i, -0.33f) << endl;
+  cout << pow(-Qf_j, -0.33f) << endl;
 
   for (size_t i = 0; i < 1000; ++i) {
     int n = (int) random() % 20;
@@ -514,12 +515,11 @@ void test_pow() {
     assert(norm2(y - pow(x,n)) < 1e-10);
   }
 
+  // Need Qld for precision, and even with Qld, not better than 1e-5...
   for (size_t i = 0; i < 1000; ++i) {
-    double n = double(random() % 20)/(1 + double(random() % 10));
-    Qd x(1+rand()%5,rand()%5,rand()%5,rand()%5);
-    double n1 = norm(pow(x,n)), n2 = norm(exp(n * log(x)));
-    double r = std::abs((n1 - n2) / n2);
-    assert(r < 1e-6);
+    long double n = ((long double)(random() % 20))/(1 + (long double)(random() % 15));
+    Qld x(1+rand()%5,rand()%5,rand()%5,rand()%5);
+    assert(nearly_equal(pow(x,n), exp(n * log(x)), 1e-5));
   }
 }
 
@@ -535,7 +535,7 @@ void test_q_pow() {
   for (size_t i = 0; i < 10; ++i) {
     Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
     Qld y(rand()%5,rand()%5,rand()%5,rand()%5);
-    assert(std::abs(norm(pow(x,y)) - norm(exp(y * log(x)))) < 1e-6);
+    assert(nearly_equal(pow(x,y), exp(y * log(x)), 1e-6));
   }
 }
 
