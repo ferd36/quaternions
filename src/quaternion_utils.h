@@ -23,7 +23,7 @@
  */
 
 /**
- * Utilities for working with Quaternion.
+ * Utilities for working with quaternion.
  */
 #ifndef QUATERNIONS_UTILS_H
 #define QUATERNIONS_UTILS_H
@@ -45,8 +45,8 @@
  * that ball, it is equivalent to 0.
  * TODO: refine for large floating point numbers
  */
-template<typename T>
-inline bool is_scalar_zero(T x, T eps = 0) {
+template<typename T, typename T1>
+inline bool is_scalar_zero(T x, T1 eps = 0) {
   if (eps > 0)
     return std::fabs(x) < eps;
   else

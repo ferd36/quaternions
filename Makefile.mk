@@ -4,7 +4,7 @@ BOOST_INCLUDE_DIR = /usr/local/include
 BOOST_LIB_DIR     = /usr/local/lib
 CXX               = g++
 CXX_FLAGS         = -std=c++11 -Wall -DNDEBUG -O3
-DEPS              = src/Quaternion.h
+DEPS              = src/quaternion.h
 OBJS              = unit_tests.o
 #LIBS              = -lstdc++
 

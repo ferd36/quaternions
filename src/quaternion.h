@@ -29,16 +29,15 @@
 #ifndef QUATERNIONS_QUATERNION_H
 #define QUATERNIONS_QUATERNION_H
 
-#include <iostream>
 #include <limits>
 #include <array>
 #include <complex>
 #include <iterator>
 #include <assert.h>
 
-#include "utils.h"
+#include "quaternion_utils.h"
 
-// TOOD: add namespace
+// TODO: add namespace
 
 /**
  * A quaternion class.
@@ -55,6 +54,8 @@
  * TODO: preconditions
  */
 template<typename T =double> // assert operations for numeric is_specialized??
+// T has to be real or integer for exp, log, can't accept e.g. complex
+// if custom type, check requirements
 class Quaternion {
 public:
   /**
@@ -214,7 +215,6 @@ public:
   std::complex<T> c2() const { return {_c,_d}; }
 
   operator T() const {
-    std::cout << "Casting" << std::endl;
     assert(_b == 0 && _c == 0 && _d == 0);
     return _a;
   }
@@ -254,7 +254,7 @@ public:
   matrix_representation to_matrix_representation() const {
     std::array<std::complex<T>, 2> r0{{std::complex<T>(a(), b()), std::complex<T>(c(), d())}};
     std::array<std::complex<T>, 2> r1{{std::complex<T>(-c(), d()), std::complex<T>(a(), -b())}};
-    return matrix_representation{{r0, r1}};
+    return {{r0, r1}};
   }
 
   /**
@@ -311,34 +311,37 @@ public:
   /**
    * Return true if this quaternion has norm 1, false otherwise.
    */
-  bool is_unit(T eps =0) const {
+  template <typename T1 =T>
+  bool is_unit(T1 eps =0) const {
     return is_scalar_zero(norm2() - T(1), eps);
   }
 
   /**
    * Return true if this quaternion is real, false otherwise.
    */
-  bool is_real() const {
-    return is_scalar_zero(_b, scalar_zero_threshold)
-           && is_scalar_zero(_c, scalar_zero_threshold)
-           && is_scalar_zero(_d, scalar_zero_threshold);
+  template <typename T1 =T>
+  bool is_real(T1 eps =0) const {
+    return is_scalar_zero(_b, eps)
+           && is_scalar_zero(_c, eps)
+           && is_scalar_zero(_d, eps);
   }
 
   /**
    * Return true if this quaternion is complex, false otherwise.
    */
-  bool is_complex() const {
-    return is_scalar_zero(_c, scalar_zero_threshold)
-           && is_scalar_zero(_d, scalar_zero_threshold);
+  template <typename T1 =T>
+  bool is_complex(T1 eps =0) const {
+    return is_scalar_zero(_c, eps) && is_scalar_zero(_d, eps);
   }
 
   /**
    * Return true if this quaternion is real, false otherwise.
    */
-  bool is_unreal() const {
-    return !is_scalar_zero(_b, scalar_zero_threshold)
-           && is_scalar_zero(_c, scalar_zero_threshold)
-           && is_scalar_zero(_d, scalar_zero_threshold);
+  template <typename T1 =T>
+  bool is_unreal(T1 eps =0) const {
+    return !is_scalar_zero(_b, eps)
+           && is_scalar_zero(_c, eps)
+           && is_scalar_zero(_d, eps);
   }
 
   /**
@@ -472,9 +475,7 @@ public:
    * Improves performance by reducing number of constructions/copies.
    */
   template<typename K>
-  Quaternion axby(K _k1, K _k2, const Quaternion &y) {
-    T k1 = static_cast<T>(_k1); // TODO: static cast needed?
-    T k2 = static_cast<T>(_k2);
+  Quaternion axby(K k1, K k2, const Quaternion &y) {
     _a = k1 * _a + k2 * y._a;
     _b = k1 * _b + k2 * y._b;
     _c = k1 * _c + k2 * y._c;
@@ -482,55 +483,9 @@ public:
     return *this;
   }
 
-  /**
-   * Print format control flags.
-   */
-  static T scalar_zero_threshold; // if 0, does "hard" equality tests for zero
-  static int print_style;
-
-  /**
-   * Print a quaternion to a stream in various formats.
-   * TODO: introduce eps and make faster with constants?
-   */
-  std::ostream &print(std::ostream &out) const {
-    if (print_style == 0) {
-      if (*this == 0)
-        return out << 0;
-      if (*this == Quaternion<T>(1))
-        return out << 1;
-      if (*this == Quaternion<T>(-1))
-        return out << -1;
-      if (*this == Quaternion<T>(0, 1))
-        return out << "i";
-      if (*this == Quaternion<T>(0, -1))
-        return out << "-i";
-      if (*this == Quaternion<T>(0, 0, 1))
-        return out << "j";
-      if (*this == Quaternion<T>(0, 0, -1))
-        return out << "-j";
-      if (*this == Quaternion<T>(0, 0, 0, 1))
-        return out << "k";
-      if (*this == Quaternion<T>(0, 0, 0, -1))
-        return out << "-k";
-      auto s = [](T x) { return x < 0 ? "" : "+"; }; // print out the sign correctly
-      if (!is_scalar_zero(a(), scalar_zero_threshold))
-        out << a();
-      if (!is_scalar_zero(b(), scalar_zero_threshold))
-        out << s(b()) << b() << "i";
-      if (!is_scalar_zero(c(), scalar_zero_threshold))
-        out << s(c()) << c() << "j";
-      if (!is_scalar_zero(d(), scalar_zero_threshold))
-        out << s(d()) << d() << "k";
-    } else if (print_style == 1) {
-      out << "{" << a() << "," << b() << "," << c() << "," << d() << "}";
-    }
-    return out;
-  }
-
-  // TODO: read from stream
 
 private:
-  T _a, _b, _c, _d;
+  T _a, _b, _c, _d; // the full state for a Quaternion
 };
 
 /**
@@ -562,69 +517,6 @@ const Qld Qld_1(1);
 const Qld Qld_i(0, 1);
 const Qld Qld_j(0, 0, 1);
 const Qld Qld_k(0, 0, 0, 1);
-
-/**
- * IO manipulators to control the format when printing quaternions out to a stream.
- */
-template<typename T>
-T Quaternion<T>::scalar_zero_threshold;
-
-template<typename T>
-int Quaternion<T>::print_style;
-
-template<typename T>
-struct SetScalarZeroThreshold {
-  T eps = 0;
-};
-
-template<typename T>
-inline SetScalarZeroThreshold<T> set_eps(T eps) {
-  SetScalarZeroThreshold<T> sszt;
-  sszt.eps = eps;
-  return sszt;
-}
-
-template<typename T>
-inline std::ostream &operator<<(std::ostream &out, SetScalarZeroThreshold<T> sszt) {
-  Quaternion<T>::scalar_zero_threshold = sszt.eps;
-  return out;
-}
-
-template<typename T>
-struct SetPrintStyle {
-  int style;
-};
-
-template<typename T>
-inline SetPrintStyle<T> set_style_nice() {
-  SetPrintStyle<T> sps;
-  sps.style = 0;
-  return sps;
-}
-
-template<typename T>
-inline SetPrintStyle<T> set_style_compact() {
-  SetPrintStyle<T> sps;
-  sps.style = 1;
-  return sps;
-}
-
-template<typename T>
-inline std::ostream &operator<<(std::ostream &out, SetPrintStyle<T> sps) {
-  Quaternion<T>::print_style = sps.style;
-  return out;
-}
-
-/**
- * This streaming operator made me wonder if I should sneak "smart" code
- * in the quaternion arithmetic, in order to optimize it for space, but that
- * turned out not worthwhile (see CQuaternion).
- * TODO: control format for file or human readable. Also write operator>>
- */
-template<typename T>
-inline std::ostream &operator<<(std::ostream &out, const Quaternion<T> &q) {
-  return q.print(out);
-}
 
 /**
  * Multiplication by a constant on the left.
@@ -682,26 +574,26 @@ inline T norm_sup(const Quaternion<T>& x) {
 }
 
 /**
- * Quaternion tests.
+ * quaternion tests.
  */
-template<typename T>
-inline bool is_unit(const Quaternion<T>& x) {
-  return x.is_unit();
+template<typename T, typename T1 =T>
+inline bool is_unit(const Quaternion<T>& x, T1 eps =0) {
+  return x.is_unit(eps);
 }
 
-template<typename T>
-inline bool is_real(const Quaternion<T>& x) {
-  return x.is_real();
+template<typename T, typename T1 =T>
+inline bool is_real(const Quaternion<T>& x, T1 eps =0) {
+  return x.is_real(eps);
 }
 
-template<typename T>
-inline bool is_complex(const Quaternion<T>& x) {
-  return x.is_complex();
+template<typename T, typename T1 =T>
+inline bool is_complex(const Quaternion<T>& x, T1 eps =0) {
+  return x.is_complex(eps);
 }
 
-template<typename T>
-inline bool is_unreal(const Quaternion<T>& x) {
-  return x.is_unreal();
+template<typename T, typename T1 =T>
+inline bool is_unreal(const Quaternion<T>& x, T1 eps =0) {
+  return x.is_unreal(eps);
 }
 
 /**
@@ -713,14 +605,7 @@ inline bool is_unreal(const Quaternion<T>& x) {
  */
 template<typename T>
 inline bool operator==(const Quaternion<T>& x, const Quaternion<T> &y) {
-  const T eps = Quaternion<T>::scalar_zero_threshold;
-  if (eps == 0)
-    return x.a() == y.a() && x.b() == y.b() && x.c() == y.c() && x.d() == y.d();
-  else
-    return is_scalar_zero(x.a() - y.a(), eps)
-           && is_scalar_zero(x.b() - y.b(), eps)
-           && is_scalar_zero(x.c() - y.c(), eps)
-           && is_scalar_zero(x.d() - y.d(), eps);
+  return x.a() == y.a() && x.b() == y.b() && x.c() == y.c() && x.d() == y.d();
 }
 
 template<typename T>
@@ -728,11 +613,14 @@ inline bool operator!=(const Quaternion<T>& x, const Quaternion<T> &y) {
   return !(x == y);
 }
 
-using namespace std;
+template <typename T, typename T1> // T1 allows eps to be the default type double
+inline bool nearly_equal(const Quaternion<T>& x, const Quaternion<T>& y, T1 eps) {
+  return is_scalar_zero(x.a() - y.a(), eps)
+         && is_scalar_zero(x.b() - y.b(), eps)
+         && is_scalar_zero(x.c() - y.c(), eps)
+         && is_scalar_zero(x.d() - y.d(), eps);
+}
 
-/**
- * Equality of a quaternion and a real, or at least a number that can converted to a real.
- */
 template<typename T, typename T2>
 inline bool operator==(const Quaternion<T>& x, T2 y) {
   return is_real(x) && x.a() == y;
@@ -741,6 +629,22 @@ inline bool operator==(const Quaternion<T>& x, T2 y) {
 template<typename T, typename T2>
 inline bool operator!=(const Quaternion<T>& x, T2 y) {
   return !(x == y);
+}
+
+// Same, swapping the lhs and rhs.
+template<typename T, typename T2>
+inline bool operator==(T2 y, const Quaternion<T>& x) {
+  return x == y;
+}
+
+template<typename T, typename T2>
+inline bool operator!=(T2 y, const Quaternion<T>& x) {
+  return x != y;
+}
+
+template <typename T, typename  T1>
+inline bool nearly_equal(const Quaternion<T>& x, T1 y, T1 eps) {
+  return is_real(x, eps) && is_scalar_zero(x.a() - y.a(), eps);
 }
 
 template<typename T, typename T2>
@@ -753,14 +657,21 @@ inline bool operator!=(const Quaternion<T>& x, const std::complex<T2>& y) {
   return !(x == y);
 }
 
+template <typename T, typename T1>
+inline bool nearly_equal(const Quaternion<T>& x, const std::complex<T>& y, T1 eps) {
+  return is_complex(x, eps)
+         && is_scalar_zero(x.a() - y.real(), eps)
+         && is_scalar_zero(x.b() - y.imag(), eps);
+}
+
 // Same, swapping the lhs and rhs.
 template<typename T, typename T2>
-inline bool operator==(T2 y, const Quaternion<T>& x) {
+inline bool operator==(const std::complex<T2>& y, const Quaternion<T>& x) {
   return x == y;
 }
 
 template<typename T, typename T2>
-inline bool operator!=(T2 y, const Quaternion<T>& x) {
+inline bool operator!=(const std::complex<T2>& y, const Quaternion<T>& x) {
   return x != y;
 }
 
@@ -841,32 +752,44 @@ inline Quaternion<T> normalize(const Quaternion<T>& x) {
  *
  * exp(log(x)) == x always, but log(exp(x)) != x is already not true
  * for complex number, because the log is multi-valued.
+ *
+ * NOTE: the precision is not great with so many floating point operations
  */
 template<typename T>
 inline Quaternion<T> exp(const Quaternion<T>& x) {
   T un = x.unreal_norm2();
   if (un == 0)
-    return Quaternion<T>(std::exp(x.a()), 0, 0, 0);
-  T n1 = std::sqrt(un);
+    return {std::exp(x.a())};
+  assert(un > 0);
+  T n1 = std::sqrt(un); // un > 0, no problem
   T ea = std::exp(x.a());
   T n2 = ea * std::sin(n1) / n1;
-  return Quaternion<T>(ea * std::cos(n1), n2 * x.b(), n2 * x.c(), n2 * x.d());
+  return {ea * std::cos(n1), n2 * x.b(), n2 * x.c(), n2 * x.d()};
 }
 
 /**
  * Log of a quaternion.
  * exp(log(x)) == x always, but log(exp(x)) != x is already not true
  * for complex number, because the log is multi-valued.
+ *
+ * NOTE: the precision is not great with so many floating point operations
  */
 template<typename T>
 inline Quaternion<T> log(const Quaternion<T>& x) {
   T nu2 = x.unreal_norm2();
-  if (nu2 == 0)
-    return Quaternion<T>(std::log(x.a()), 0, 0, 0); // BUG: if a == -1
+  if (nu2 == 0) {
+    if (x.a() > 0)
+      return {std::log(x.a())};
+    else { // TODO: reduce number of instructions
+      std::complex<T> l = log(std::complex<T>(x.a(),0)); // TODO: is that correct?
+      return {l.real(), l.imag()};
+    }
+  }
   T a = x.a();
-  T n = std::sqrt(a * a + nu2);
-  T th = std::acos(a / n) / std::sqrt(nu2);
-  return Quaternion<T>(std::log(n), th * x.b(), th * x.c(), th * x.d());
+  assert(nu2 > 0);
+  T n = std::sqrt(a * a + nu2); // n > 0
+  T th = std::acos(a / n) / std::sqrt(nu2); // -a <= a/n <= 1
+  return {std::log(n), th * x.b(), th * x.c(), th * x.d()}; // n > 0
 }
 
 /**
@@ -879,10 +802,10 @@ inline Quaternion<T> log(const Quaternion<T>& x) {
 template<typename T>
 inline Quaternion<T> pow2(const Quaternion<T>& x) {
   T aa = 2 * x.a();
-  return Quaternion<T>(x.a() * x.a() - x.unreal_norm2(),
-                       aa * x.b(),
-                       aa * x.c(),
-                       aa * x.d());
+  return {x.a() * x.a() - x.unreal_norm2(),
+          aa * x.b(),
+          aa * x.c(),
+          aa * x.d()};
 }
 
 /**
@@ -897,10 +820,10 @@ inline Quaternion<T> pow3(const Quaternion<T>& x) {
   T a2 = x.a() * x.a();
   T n1 = x.unreal_norm2();
   T n2 = 3 * a2 - n1;
-  return Quaternion<T>(x.a() * (a2 - 3 * n1),
+  return {x.a() * (a2 - 3 * n1),
                        x.b() * n2,
                        x.c() * n2,
-                       x.d() * n2);
+                       x.d() * n2};
 }
 
 /**
@@ -935,7 +858,7 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
   if (expt < 0)
     return inverse(pow(x, -expt));
   if (expt == 0)
-    return Quaternion<T>(1);
+    return {1};
   if (expt == 1)
     return x;
   if (expt == 2)
@@ -962,18 +885,21 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
  */
 template<typename T>
 inline Quaternion<T> pow(const Quaternion<T>& x, T a) {
+  if (std::floor(a) == a) // TODO: worth it for speed? helps with stability
+    return pow(x, (int)a);
   return exp(a * log(x));
 }
 
 /**
- * Quaternion power of a quaternion.
+ * quaternion power of a quaternion.
  * (that should cover all the other cases for the exponent...)
  * TODO: test against pow just above
  */
 template<typename T>
-inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T> &a) {
+inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T>& a) {
   if (a.is_real())
     return pow(x, a.a());
+  // if (a.is_complex()) // TODO: worth it?
   return exp(a * log(x));
 }
 

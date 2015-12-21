@@ -22,7 +22,8 @@
  * SOFTWARE.
  */
 
-#include "Quaternion.h"
+#include "quaternion.h"
+#include "quaternion_io.h"
 
 #include <set>
 #include <random>
@@ -68,10 +69,10 @@ inline ostream& operator<<(ostream& out, const vector<T>& x) {
 }
 
 /**
- * Compare a boost quaternion to Quaternion, within epsilon.
+ * Compare a boost quaternion to quaternion, within epsilon.
  */
 template <typename T, typename T1>
-inline bool equals(const Quaternion<T>& us, const quaternion<T>& them, T1 eps = 0) {
+inline bool nearly_equal(const Quaternion<T>& us, const boost::math::quaternion<T>& them, T1 eps) {
   T teps = static_cast<T>(eps);
   return std::abs((us.a() - them.R_component_1())) <= teps
          && std::abs((us.b() - them.R_component_2())) <= teps
@@ -85,32 +86,12 @@ inline bool equals(const Quaternion<T>& us, const quaternion<T>& them, T1 eps = 
  * NOTE: hard to compare large values, requires floating point relative comparison.
  */
 template <typename T>
-bool operator==(const Quaternion<T>& x, const quaternion<T>& boost_y) {
-  return equals(x, boost_y, 1e-6);
+bool operator==(const Quaternion<T>& x, const boost::math::quaternion<T>& boost_y) {
+  return nearly_equal(x, boost_y, 1e-6);
 }
 
 /**
- * Compare a std complex to Quaternion, within epsilon.
- */
-template <typename T, typename T1>
-inline bool equals(const Quaternion<T>& us, const std::complex<T>& them, T1 eps = 0) {
-  T teps = static_cast<T>(eps);
-  return us.is_complex()
-         && std::abs((us.a() - them.real())) <= teps
-         && std::abs((us.b() - them.imag())) <= teps;
-}
-
-/**
- * This method useful in unit tests, to compare against std.
- * NOTE: hard to compare large values, requires floating point relative comparison.
- */
-template <typename T>
-bool operator==(const Quaternion<T>& x, const std::complex<T>& y) {
-  return equals(x, y, 1e-6);
-}
-
-/**
- * A random number generator.
+ * A random number generator, for the speed tests.
  */
 std::default_random_engine generator;
 std::uniform_real_distribution<float> distribution(0.0,1.0);
@@ -121,7 +102,7 @@ auto rng = bind(distribution, generator);
  */
 template <typename T, typename G>
 inline Quaternion<T> random_quaternion(G& g) {
-  return Quaternion<T>(g(), g(), g(), g());
+  return {g(), g(), g(), g()};
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -365,8 +346,7 @@ void test_norms() {
     assert(norm2(x) == 1+4+9+16);
     assert(std::abs(norm(x) - std::sqrt(1+4+9+16)) < 1e-6);
     assert(normalize(x).is_unit(1e-6));
-    Qf::scalar_zero_threshold = 1e-6f;
-    assert(normalize(x) == x/std::sqrt(1+4+9+16));
+    assert(nearly_equal(normalize(x), x/std::sqrt(1+4+9+16), 1e-6));
   }
 }
 
@@ -431,7 +411,7 @@ void test_unary_operators() {
   {
     Qf x(1,2), y(3.14, 2.718);
     x += y;
-    assert(x == complex<float>(4.14,4.718));
+    assert(nearly_equal(x, complex<float>(4.14,4.718), 1e-6));
   }
 
   {
@@ -458,10 +438,10 @@ void test_unary_operators() {
     Qf x(1,2,3,4), y(5,6,7,8);
     quaternion<float> q1(1,2,3,4), q2(5,6,7,8);
     x /= y;
-    assert(equals(x, q1 / q2, 1e-6));
+    assert(nearly_equal(x, q1 / q2, 1e-6));
     Qd z(1,1,1,1);
     x /= z;
-    assert(equals(x, (q1/q2)/quaternion<float>(1,1,1,1), 1e-6));
+    assert(nearly_equal(x, (q1/q2)/quaternion<float>(1,1,1,1), 1e-6));
   }
 }
 
@@ -506,12 +486,28 @@ void test_pow() {
   assert(pow(Qf_i,2) == -1);
   assert(pow(Qf_j,2) == -1);
   assert(pow(Qf_k,2) == -1);
+
+  assert(pow(Qf_1, 0) == 1);
+  assert(pow(Qf_i, 0) == 1);
+  assert(pow(Qf_j, 0) == 1);
+  assert(pow(Qf_k, 0) == 1);
+
   assert(pow(Qf_1, 0.5f) == 1);
-  cout << pow(-Qf_1, 0.5f) << endl;
+  assert(nearly_equal(pow(-Qf_1, 0.5f), Qf_i, 1e-6));
+  cout << pow(Qf_i, 0.5f) << endl;
+  cout << pow(-Qf_i, 0.5f) << endl;
+  cout << pow(Qf_j, 0.5f) << endl;
+  cout << pow(-Qf_j, 0.5f) << endl;
+  cout << pow(Qf_k, 0.5f) << endl;
+  cout << pow(-Qf_k, 0.5f) << endl;
+
+  cout << pow(Qf_1, -0.33f) << endl;
+  cout << pow(-Qf_1, -0.33f) << endl;
+  cout << pow(-Qf_i, -0.33f) << endl;
 
   for (size_t i = 0; i < 1000; ++i) {
     int n = (int) random() % 20;
-    Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
+    Qld x(1+rand()%5,rand()%5,rand()%5,rand()%5);
     Qld y = Qld_1;
     for (int j = 0; j < n; ++j)
       y *= x;
@@ -520,19 +516,21 @@ void test_pow() {
 
   for (size_t i = 0; i < 1000; ++i) {
     double n = double(random() % 20)/(1 + double(random() % 10));
-    Qd x(rand()%5,rand()%5,rand()%5,rand()%5);
-    assert(std::abs(norm(pow(x,n)) - norm(exp(n * log(x)))) < 1e-6);
+    Qd x(1+rand()%5,rand()%5,rand()%5,rand()%5);
+    double n1 = norm(pow(x,n)), n2 = norm(exp(n * log(x)));
+    double r = std::abs((n1 - n2) / n2);
+    assert(r < 1e-6);
   }
 }
 
 void test_q_pow() {
   cout << "Testing q pow" << endl;
 
-  assert(pow(Qf_0,Qf(2)) == 0);
-  assert(pow(Qf_1,Qf(2)) == 1);
-  assert(pow(Qf_i,Qf(2)) == -1);
-  assert(pow(Qf_j,Qf(2)) == -1);
-  assert(pow(Qf_k,Qf(2)) == -1);
+  assert(pow(Qd_0,Qd(2)) == 0);
+  assert(pow(Qd_1,Qd(2)) == 1);
+  assert(pow(Qd_i,Qd(2)) == -1);
+  assert(pow(Qd_j,Qd(2)) == -1);
+  assert(pow(Qd_k,Qd(2)) == -1);
 
   for (size_t i = 0; i < 10; ++i) {
     Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
@@ -550,11 +548,9 @@ void test_log() {
   }
 
   size_t N = 10;
-  Qld::scalar_zero_threshold = 1e-6;
   for (size_t i = 0; i < N; ++i) {
     Qld x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
-    Qld::scalar_zero_threshold = 1e-12;
-    assert(x == exp(log(x))); // but not the other way around!
+    assert(nearly_equal(x, exp(log(x)), 1e-6)); // but not the other way around!
   }
 }
 
@@ -573,7 +569,7 @@ void test_exp() {
       quaternion<long double> bx(x.a(), x.b(), x.c(), x.d());
       Qld y = exp(x);
       quaternion<long double> by = exp(bx);
-      assert(equals(y, by, 1e-6));
+      assert(nearly_equal(y, by, 1e-6));
     }
   }
 }
@@ -658,20 +654,20 @@ void test_boost_rational() {
 /**
  * Between standard C++, boost and vectorclass which uses intrinsics, no difference.
  * The compiler is probably optimizing well enough, or the intrinsics are not used properly.
- * Whoever is in first position (boot or Quaternion) in this micro-benchmark, is twice as
+ * Whoever is in first position (boot or quaternion) in this micro-benchmark, is twice as
  * fast as the second.... But only on the Mac/clang or gcc. That doesn't happen on Linux/gcc.
  */
 void test_multiplication_speed() {
   cout << "Testing multiplication speed" << endl;
   size_t N = 100000;
 
-  Quaternion<float> q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
+  Qf q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
 
   {
     float certificate = 0.0;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < N; ++i) {
-      Quaternion<float> r = q1 * (q2 + (float)i);
+      Qf r = q1 * (q2 + (float)i);
       certificate += r.a() + r.b() + r.c() + r.d();
     }
     auto end = std::chrono::system_clock::now();
@@ -702,7 +698,7 @@ void test_pow_speed() {
   std::default_random_engine generator;
   std::lognormal_distribution<float> distribution(0.0,1.0);
   auto rng = bind(distribution, generator);
-  Quaternion<float> q1 = random_quaternion<float>(rng);
+  Qf q1 = random_quaternion<float>(rng);
 
 
   { // With Boost
@@ -723,12 +719,12 @@ void test_pow_speed() {
     float certificate = 0.0;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < N; ++i) {
-      Quaternion<float> r = pow(q1, 15);
+      Qf r = pow(q1, 15);
       certificate += r.a() + r.b() + r.c() + r.d();
     }
     auto end = std::chrono::system_clock::now();
     std::chrono::nanoseconds diff = end - start;
-    cout << "Quaternion: " << (diff.count() / N) << "ns" << endl;
+    cout << "quaternion: " << (diff.count() / N) << "ns" << endl;
     cout << "Certificate=" << certificate << endl;
   }
 
@@ -764,7 +760,7 @@ void test_exp_speed() {
     }
     auto end = std::chrono::system_clock::now();
     std::chrono::nanoseconds diff = end - start;
-    cout << "Quaternion: " << (diff.count() / N) << "ns" << endl;
+    cout << "quaternion: " << (diff.count() / N) << "ns" << endl;
     cout << "Certificate=" << certificate << endl;
   }
 }
@@ -773,7 +769,7 @@ void test_axby_speed() {
   cout << "Testing axby speed" << endl;
   size_t N = 100000;
 
-  Quaternion<float> q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
+  Qf q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
 
   { // With Boost
     quaternion<float> a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
@@ -793,7 +789,7 @@ void test_axby_speed() {
     float certificate = 0.0;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < N; ++i) {
-      Quaternion<float> r = axby(i, q1, i+1, q2);
+      Qf r = axby(i, q1, i + 1, q2);
       certificate += r.a() + r.b() + r.c() + r.d();
     }
     auto end = std::chrono::system_clock::now();

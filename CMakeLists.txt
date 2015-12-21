@@ -12,6 +12,6 @@ message("Flags         : " ${CMAKE_CXX_FLAGS})
 find_package(Boost 1.5.9 REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
-set(SOURCE_FILES src/unit_tests.cpp src/Quaternion.h src/utils.h)
+set(SOURCE_FILES src/unit_tests.cpp src/Quaternion.h src/quaternion_utils.h src/quaternion_io.h.h)
 
 add_executable(quaternions ${SOURCE_FILES})
