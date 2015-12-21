@@ -1,4 +1,28 @@
 /**
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 Frank Astier
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/**
  * A quaternion class.
  */
 
@@ -28,6 +52,7 @@
  * TODO: study matrix representation and isomorphism
  * TODO: do we need the static_cast?
  * TODO: check references to make sure functionality covered
+ * TODO: preconditions
  */
 template<typename T =double> // assert operations for numeric is_specialized??
 class Quaternion {
@@ -67,14 +92,11 @@ public:
 
   /**
    * Construct a quaternion from 2 complex<T>.
-   * This will set all 4 components of the quaternion.
+   * This sets all 4 components of the quaternion.
    */
   template<typename T1>
   Quaternion(const std::complex<T1>& x, const std::complex<T1> &y = std::complex<T1>(0, 0))
-      : _a(static_cast<T>(x.real())),
-        _b(static_cast<T>(x.imag())),
-        _c(static_cast<T>(y.real())),
-        _d(static_cast<T>(y.imag())) { }
+      : _a(x.real()), _b(x.imag()), _c(y.real()), _d(y.imag()) { }
 
   /**
    * Construct from a pointer to a range of 4 elements ("float[4]").
@@ -192,6 +214,7 @@ public:
   std::complex<T> c2() const { return {_c,_d}; }
 
   operator T() const {
+    std::cout << "Casting" << std::endl;
     assert(_b == 0 && _c == 0 && _d == 0);
     return _a;
   }
@@ -243,7 +266,7 @@ public:
   /**
    * The conjugate of this quaternion.
    */
-  Quaternion conjugate() {
+  Quaternion conjugate() const {
     return {_a, -_b, -_c, -_d};
   }
 
@@ -371,6 +394,40 @@ public:
   }
 
   /**
+   * Unary +=.
+   */
+  template<typename T1>
+  Quaternion operator+=(const std::complex<T1> &y) {
+    _a += y.real();
+    _b += y.imag();
+    return *this;
+  }
+
+  /**
+  * Unary +=.
+  */
+  template<typename T1>
+  Quaternion operator-=(const std::complex<T1> &y) {
+    _a -= y.real();
+    _b -= y.imag();
+    return *this;
+  }
+
+  // TODO *=, /= with complex
+
+  /**
+   * Unary +=.
+   */
+  template<typename T1>
+  Quaternion operator+=(const Quaternion<T1> &y) {
+    _a += y.a();
+    _b += y.b();
+    _c += y.c();
+    _d += y.d();
+    return *this;
+  }
+
+  /**
    * Unary -=.
    */
   template <typename T1>
@@ -383,39 +440,16 @@ public:
   }
 
   /**
-   * Unary +=.
-   */
-  template<typename T1>
-  Quaternion operator+=(const std::complex<T1> &y) {
-    _a += static_cast<T>(y.real());
-    _b += static_cast<T>(y.imag());
-    return *this;
-  }
-
-  /**
-   * Unary +=.
-   */
-  template<typename T1>
-  Quaternion operator+=(const Quaternion<T1> &y) {
-    _a += static_cast<T>(y.a());
-    _b += static_cast<T>(y.b());
-    _c += static_cast<T>(y.c());
-    _d += static_cast<T>(y.d());
-    return *this;
-  }
-
-  /**
    * Unary multiplication.
    * 28 operations
    */
-  // TODO: look how it's done with complex (copy or not)
   template <typename T1>
   Quaternion operator*=(const Quaternion<T1>& y) {
 
-    T at = _a * y._a - _b * y._b - _c * y._c - _d * y._d;
-    T bt = _a * y._b + _b * y._a + _c * y._d - _d * y._c;
-    T ct = _a * y._c - _b * y._d + _c * y._a + _d * y._b;
-    T dt = _a * y._d + _b * y._c - _c * y._b + _d * y._a;
+    T at = _a * y.a() - _b * y.b() - _c * y.c() - _d * y.d();
+    T bt = _a * y.b() + _b * y.a() + _c * y.d() - _d * y.c();
+    T ct = _a * y.c() - _b * y.d() + _c * y.a() + _d * y.b();
+    T dt = _a * y.d() + _b * y.c() - _c * y.b() + _d * y.a();
 
     _a = at;
     _b = bt;
@@ -423,6 +457,14 @@ public:
     _d = dt;
 
     return *this;
+  }
+
+  /**
+   * TODO: inline and reduce number of operations
+   */
+  template <typename T1>
+  Quaternion operator/=(const Quaternion<T1>& y) {
+    return operator*=(y.conjugate()/y.norm2());
   }
 
   /**
@@ -820,8 +862,8 @@ template<typename T>
 inline Quaternion<T> log(const Quaternion<T>& x) {
   T nu2 = x.unreal_norm2();
   if (nu2 == 0)
-    return Quaternion<T>(std::log(x.a()), 0, 0, 0);
-  T a = x.a(); // helps with speed in debug mode
+    return Quaternion<T>(std::log(x.a()), 0, 0, 0); // BUG: if a == -1
+  T a = x.a();
   T n = std::sqrt(a * a + nu2);
   T th = std::acos(a / n) / std::sqrt(nu2);
   return Quaternion<T>(std::log(n), th * x.b(), th * x.c(), th * x.d());

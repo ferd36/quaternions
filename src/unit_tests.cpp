@@ -1,9 +1,32 @@
+/**
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 Frank Astier
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "Quaternion.h"
 
 #include <set>
 #include <random>
 #include <chrono>
-#include <array>
 #include <iomanip>
 
 #include <boost/math/quaternion.hpp>
@@ -17,7 +40,7 @@ using namespace boost::math;
 // Test utilities
 //----------------------------------------------------------------------------------------------------------------------
 /**
- * Prints out arrays to streams
+ * Prints out arrays to a stream
  */
 template <typename T, size_t n>
 inline ostream& operator<<(ostream& out, const array<T,n>& x) {
@@ -31,35 +54,59 @@ inline ostream& operator<<(ostream& out, const array<T,n>& x) {
 }
 
 /**
- * Prints out a vector of elements of type T
+ * Prints out a vector of elements of type T to a stream
  */
 template <typename T>
 inline ostream& operator<<(ostream& out, const vector<T>& x) {
-  for (T v : x)
-    out << v << " ";
-  return out;
-}
-
-/**
- * Simple test function for the unit tests
- */
-void EXPECT(bool v) {
-  if (!v) {
-    cerr << "Test failed" << endl;
-    exit(EXIT_FAILURE);
+  out << "(";
+  for (size_t i = 0; i < x.size(); ++i) {
+    out << x[i];
+    if (i < x.size()-1)
+      out << ",";
   }
+  return out << ")";
 }
 
 /**
- * Compare a boost quaternion to Quaternion, relatively, with epsilon.
+ * Compare a boost quaternion to Quaternion, within epsilon.
  */
 template <typename T, typename T1>
-inline bool equals(const Quaternion<T>& us, const quaternion<T>& them, T1 eps) {
+inline bool equals(const Quaternion<T>& us, const quaternion<T>& them, T1 eps = 0) {
   T teps = static_cast<T>(eps);
-  return std::abs((us.a() - them.R_component_1())) < teps
-         && std::abs((us.b() - them.R_component_2())) < teps
-         && std::abs((us.c() - them.R_component_3())) < teps
-         && std::abs((us.d() - them.R_component_4())) < teps;
+  return std::abs((us.a() - them.R_component_1())) <= teps
+         && std::abs((us.b() - them.R_component_2())) <= teps
+         && std::abs((us.c() - them.R_component_3())) <= teps
+         && std::abs((us.d() - them.R_component_4())) <= teps;
+}
+
+/**
+ * This method useful in unit tests, to compare against boost, which has
+ * a (supposedly) well tested quaternion library.
+ * NOTE: hard to compare large values, requires floating point relative comparison.
+ */
+template <typename T>
+bool operator==(const Quaternion<T>& x, const quaternion<T>& boost_y) {
+  return equals(x, boost_y, 1e-6);
+}
+
+/**
+ * Compare a std complex to Quaternion, within epsilon.
+ */
+template <typename T, typename T1>
+inline bool equals(const Quaternion<T>& us, const std::complex<T>& them, T1 eps = 0) {
+  T teps = static_cast<T>(eps);
+  return us.is_complex()
+         && std::abs((us.a() - them.real())) <= teps
+         && std::abs((us.b() - them.imag())) <= teps;
+}
+
+/**
+ * This method useful in unit tests, to compare against std.
+ * NOTE: hard to compare large values, requires floating point relative comparison.
+ */
+template <typename T>
+bool operator==(const Quaternion<T>& x, const std::complex<T>& y) {
+  return equals(x, y, 1e-6);
 }
 
 /**
@@ -77,44 +124,6 @@ inline Quaternion<T> random_quaternion(G& g) {
   return Quaternion<T>(g(), g(), g(), g());
 }
 
-/**
- * This method useful in unit tests, to compare against boost, which has
- * a (supposedly) well tested quaternion library.
- * NOTE: hard to compare large values, requires floating point comparison.
- */
-bool operator==(const Quaternion<float>& x, const quaternion<float>& boost_y) {
-  return x.a() == boost_y.R_component_1()
-         && x.b() == boost_y.R_component_2()
-         && x.c() == boost_y.R_component_3()
-         && x.d() == boost_y.R_component_4();
-}
-
-bool operator==(const quaternion<float>& boost_y, const Quaternion<float>& x) {
-  return x == boost_y;
-}
-
-bool operator==(const Quaternion<double>& x, const quaternion<double>& boost_y) {
-  return x.a() == boost_y.R_component_1()
-         && x.b() == boost_y.R_component_2()
-         && x.c() == boost_y.R_component_3()
-         && x.d() == boost_y.R_component_4();
-}
-
-bool operator==(const quaternion<double>& boost_y, const Quaternion<double>& x) {
-  return x == boost_y;
-}
-
-bool operator==(const Quaternion<long double>& x, const quaternion<long double>& boost_y) {
-  return x.a() == boost_y.R_component_1()
-         && x.b() == boost_y.R_component_2()
-         && x.c() == boost_y.R_component_3()
-         && x.d() == boost_y.R_component_4();
-}
-
-bool operator==(const quaternion<long double>& boost_y, const Quaternion<long double>& x) {
-  return x == boost_y;
-}
-
 //----------------------------------------------------------------------------------------------------------------------
 // Unit tests
 //----------------------------------------------------------------------------------------------------------------------
@@ -122,111 +131,111 @@ void test_constructors() {
   cout << "Testing constructors" << endl;
   {
     Qf x;
-    EXPECT(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
-    EXPECT(x.real() == 0);
-    EXPECT(x.unreal() == 0);
+    assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    assert(x.real() == 0);
+    assert(x.unreal() == 0);
   }
 
   {
     Qf x((float)0, (float)0, (float)0, (float)0);
-    EXPECT(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 
   {
     Qf x((float)1);
-    EXPECT(x.a() == 1 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    assert(x.a() == 1 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 
   {
     Qf x((float)1, (float)2);
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
   }
 
   {
     Qf x((float)1, (float)2, (float)3);
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 0);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 0);
   }
 
   {
     Qf x((float)1, (float)2, (float)3, (float)4);
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
 
   }
 
   {
     Qf x((int)1,(int)2);
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
   }
 
   {
     Qf x((int)1,(int)2,(int)3,(int)4);
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
   {
     Qf x(complex<float>(1,2));
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
   }
 
   {
     Qf x(complex<float>(1,2), complex<float>(3,4));
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
-    EXPECT(x.c1() == complex<float>(1,2));
-    EXPECT(x.c2() == complex<float>(3,4));
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.c1() == complex<float>(1,2));
+    assert(x.c2() == complex<float>(3,4));
   }
 
   {
     Qd x(complex<float>(1,2), complex<float>(3,4));
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
   {
     Qd y(complex<float>(1,2), complex<float>(3,4));
     Qd x(y);
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
   {
     Qf y((int)1,(int)2,(int)3,(int)4);
     Qd x(y);
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
   {
     Qd y(complex<float>(1,2), complex<float>(3,4));
     Qd x = y;
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
   {
     Qf y((int)1,(int)2,(int)3,(int)4);
     Qd x = y;
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
-    EXPECT(x.c1() == complex<double>(1,2));
-    EXPECT(x.c2() == complex<double>(3,4));
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.c1() == complex<double>(1,2));
+    assert(x.c2() == complex<double>(3,4));
   }
 
   {
     int d[4] = {1,2,3,4};
     Qf x(d);
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
   {
     vector<int> d{1,2,3,4};
     Qf x(d.begin());
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
   {
     set<int> d{1,2,3,4};
     Qf x(d.begin());
-    EXPECT(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
   {
     Qf x{1,0,2,0};
-    EXPECT(x.a() == 1 && x.b() == 0 && x.c() == 2 && x.d() == 0);
+    assert(x.a() == 1 && x.b() == 0 && x.c() == 2 && x.d() == 0);
   }
 }
 
@@ -234,99 +243,99 @@ void test_trigonometric_constructors() {
   cout << "Testing trigonometric constructors" << endl;
   {
     Qf x; x.spherical(0,0,0,0);
-    EXPECT(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 
   {
     Qd x = Qf::spherical((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
     cout << x << endl;
-    //EXPECT(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 
   {
     Qd x = Qf::semipolar((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
     cout << x << endl;
-    //EXPECT(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 
   {
     Qd x = Qf::multipolar((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
     cout << x << endl;
-    //EXPECT(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 
   {
     Qd x = Qf::cylindrospherical((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
     cout << x << endl;
-    //EXPECT(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 
   {
     Qd x = Qf::cylindrical((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
     cout << x << endl;
-    //EXPECT(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 }
 
 void test_IJK() {
   cout << "Testing IJK" << endl;
-  EXPECT(Qf_0 == 0);
-  EXPECT(Qf_1 == 1);
-  EXPECT(Qf_i * Qf_i == -1);
-  EXPECT(Qf_j * Qf_j == -1);
-  EXPECT(Qf_k * Qf_k == -1);
-  EXPECT(Qf_i * Qf_j * Qf_k == -1);
+  assert(Qf_0 == 0);
+  assert(Qf_1 == 1);
+  assert(Qf_i * Qf_i == -1);
+  assert(Qf_j * Qf_j == -1);
+  assert(Qf_k * Qf_k == -1);
+  assert(Qf_i * Qf_j * Qf_k == -1);
 
-  EXPECT(Qd_0 == 0);
-  EXPECT(Qd_1 == 1);
-  EXPECT(Qd_i * Qd_i == -1);
-  EXPECT(Qd_j * Qd_j == -1);
-  EXPECT(Qd_k * Qd_k == -1);
-  EXPECT(Qd_i * Qd_j * Qd_k == -1);
+  assert(Qd_0 == 0);
+  assert(Qd_1 == 1);
+  assert(Qd_i * Qd_i == -1);
+  assert(Qd_j * Qd_j == -1);
+  assert(Qd_k * Qd_k == -1);
+  assert(Qd_i * Qd_j * Qd_k == -1);
 
-  EXPECT(Qld_0 == 0);
-  EXPECT(Qld_1 == 1);
-  EXPECT(Qld_i * Qld_i == -1);
-  EXPECT(Qld_j * Qld_j == -1);
-  EXPECT(Qld_k * Qld_k == -1);
-  EXPECT(Qld_i * Qld_j * Qld_k == -1);
+  assert(Qld_0 == 0);
+  assert(Qld_1 == 1);
+  assert(Qld_i * Qld_i == -1);
+  assert(Qld_j * Qld_j == -1);
+  assert(Qld_k * Qld_k == -1);
+  assert(Qld_i * Qld_j * Qld_k == -1);
 }
 
 void test_accessors() {
   cout << "Testing accessors" << endl;
   {
     Qf x(1, 2, 3, 4);
-    EXPECT(x.real() == 1);
-    EXPECT(x.unreal() != 0); // TODO: check what is happening here exactly
-    EXPECT(x.unreal() == Qf(0, 2, 3, 4));
-    EXPECT(x.conjugate() == Qf(1, -2, -3, -4));
-    EXPECT(x.conjugate().conjugate() == x);
-    EXPECT(x.conjugate() + x == Qf(2, 0, 0, 0));
-    EXPECT(x - x.conjugate() == Qf(0, 4, 6, 8));
-    EXPECT(!x.is_real());
-    EXPECT(!x.is_complex());
-    EXPECT(!x.is_unreal());
-    EXPECT(!x.is_unit());
-    EXPECT(-x == Qf(-1,-2,-3,-4));
+    assert(x.real() == 1);
+    assert(x.unreal() != 0); // TODO: check what is happening here exactly
+    assert(x.unreal() == Qf(0, 2, 3, 4));
+    assert(x.conjugate() == Qf(1, -2, -3, -4));
+    assert(x.conjugate().conjugate() == x);
+    assert(x.conjugate() + x == Qf(2, 0, 0, 0));
+    assert(x - x.conjugate() == Qf(0, 4, 6, 8));
+    assert(!x.is_real());
+    assert(!x.is_complex());
+    assert(!x.is_unreal());
+    assert(!x.is_unit());
+    assert(-x == Qf(-1,-2,-3,-4));
   }
 
   {
     Qf x(3.14);
     float a = x;
-    EXPECT(a == 3.14f);
+    assert(a == 3.14f);
   }
 
   {
     Qf x(3.14, 2.71);
     complex<float> c = x;
-    EXPECT(c.real() == 3.14f && c.imag() == 2.71f);
+    assert(c.real() == 3.14f && c.imag() == 2.71f);
   }
 
   {
     Qf x(1,2,3,4);
     array<float,4> a = x;
     array<float,4> r{{1,2,3,4}};
-    EXPECT(a == r);
+    assert(a == r);
   }
 }
 
@@ -337,7 +346,7 @@ void test_to_matrix() {
   Qd::matrix_representation r;
   r[0] = {{CD(1,2),CD(3,4)}};
   r[1] = {{CD(-3,4),CD(1,-2)}};
-  EXPECT(x.to_matrix_representation() == r);
+  assert(x.to_matrix_representation() == r);
 }
 
 void test_to_polar_representation() {
@@ -353,29 +362,29 @@ void test_norms() {
   cout << "Testing norms" << endl;
   {
     Qf x{1,2,3,4};
-    EXPECT(norm2(x) == 1+4+9+16);
-    EXPECT(std::abs(norm(x) - std::sqrt(1+4+9+16)) < 1e-6);
-    EXPECT(normalize(x).is_unit(1e-6));
+    assert(norm2(x) == 1+4+9+16);
+    assert(std::abs(norm(x) - std::sqrt(1+4+9+16)) < 1e-6);
+    assert(normalize(x).is_unit(1e-6));
     Qf::scalar_zero_threshold = 1e-6f;
-    EXPECT(normalize(x) == x/std::sqrt(1+4+9+16));
+    assert(normalize(x) == x/std::sqrt(1+4+9+16));
   }
 }
 
 void test_equality() {
   cout << "Testing equality" << endl;
-  EXPECT(Qf(1,2,3,4) == Qf(1, 2, 3, 4));
-  EXPECT(Qf(1,2,3,4) != Qf(4,3,2,1));
+  assert(Qf(1,2,3,4) == Qf(1, 2, 3, 4));
+  assert(Qf(1,2,3,4) != Qf(4,3,2,1));
   //TODO: refine for precision
 }
 
-void test_unaries() {
-  cout << "Testing unaries" << endl;
-  EXPECT(-Qf(1,2,3,4) == Qf(-1,-2,-3,-4));
-  EXPECT(- -Qf(1,2,3,4) == Qf(1,2,3,4));
-  EXPECT(- - -Qf(1,2,3,4) == Qf(-1,-2,-3,-4));
-  EXPECT(+Qf(1,2,3,4) == Qf(1,2,3,4));
-  EXPECT(+ +Qf(1,2,3,4) == Qf(1,2,3,4));
-  EXPECT(+ + +Qf(1,2,3,4) == Qf(1,2,3,4));
+void test_plus_minus() {
+  cout << "Testing +/-" << endl;
+  assert(-Qf(1,2,3,4) == Qf(-1,-2,-3,-4));
+  assert(- -Qf(1,2,3,4) == Qf(1,2,3,4));
+  assert(- - -Qf(1,2,3,4) == Qf(-1,-2,-3,-4));
+  assert(+Qf(1,2,3,4) == Qf(1,2,3,4));
+  assert(+ +Qf(1,2,3,4) == Qf(1,2,3,4));
+  assert(+ + +Qf(1,2,3,4) == Qf(1,2,3,4));
 }
 
 void test_unary_w_scalar() {
@@ -383,31 +392,76 @@ void test_unary_w_scalar() {
   {
     Qd x(1,2,3,4);
     x += (long double) 3;
-    EXPECT(x == Qd(4,2,3,4));
+    assert(x == Qd(4,2,3,4));
   }
 
   {
     Qd x(1,2,3,4);
     x -= 3;
-    EXPECT(x == Qd(-2,2,3,4));
+    assert(x == Qd(-2,2,3,4));
   }
 
   {
     Qd x(1,2,3,4);
     x *= -3.5;
-    EXPECT(x == Qd(-3.5,-3.5*2,-3.5*3,-3.5*4));
+    assert(x == Qd(-3.5,-3.5*2,-3.5*3,-3.5*4));
   }
 
   {
     Qd x(1,2,3,4);
     x /= 2;
-    EXPECT(x == Qd(1.0/2,2.0/2,3.0/2,4.0/2));
+    assert(x == Qd(1.0/2,2.0/2,3.0/2,4.0/2));
   }
 
   {
     Qd x(1,2);
     x /= 3;
-    EXPECT(x == complex<double>(1.0/3, 2.0/3));
+    assert(x == complex<double>(1.0/3, 2.0/3));
+  }
+}
+
+void test_unary_operators() {
+  cout << "Testing unary operators" << endl;
+  {
+    Qf x(1), y(3.14);
+    x += y;
+    assert(std::abs(x - 4.14f) < 1e-6);
+  }
+
+  {
+    Qf x(1,2), y(3.14, 2.718);
+    x += y;
+    assert(x == complex<float>(4.14,4.718));
+  }
+
+  {
+    Qf x(1,2,3,4), y(5,6,7,8);
+    x += y;
+    assert(x == Qf(6,8,10,12));
+    Qd z(1,1,1,1);
+    x += z;
+    assert(x == Qf(7,9,11,13));
+  }
+
+  {
+    Qf x(1,2,3,4), y(5,6,7,8);
+    quaternion<float> q1(1,2,3,4), q2(5,6,7,8);
+    x *= y;
+    assert(x == Qf(-60,12,30,24));
+    assert(q1 * q2 == x);
+    Qd z(1,1,1,1);
+    x *= z;
+    assert(x == Qf(-126,-42,-18,-54));
+  }
+
+  {
+    Qf x(1,2,3,4), y(5,6,7,8);
+    quaternion<float> q1(1,2,3,4), q2(5,6,7,8);
+    x /= y;
+    assert(equals(x, q1 / q2, 1e-6));
+    Qd z(1,1,1,1);
+    x /= z;
+    assert(equals(x, (q1/q2)/quaternion<float>(1,1,1,1), 1e-6));
   }
 }
 
@@ -415,34 +469,45 @@ void test_unary_w_scalar() {
 
 void test_pow2() {
   cout << "Testing pow2" << endl;
-  EXPECT(pow2(Qf_0) == 0);
-  EXPECT(pow2(Qf_1) == 1);
-  EXPECT(pow2(Qf_1) == Qf_1 * Qf_1);
-  EXPECT(pow2(Qf_i) == -1);
-  EXPECT(pow2(Qf_j) == -1);
-  EXPECT(pow2(Qf_k) == -1);
-  EXPECT(pow2(Qf(1,2,3,4)) == Qf(1,2,3,4) * Qf(1,2,3,4));
-  EXPECT(pow2(Qf(1,2)) == complex<float>(1,2) * complex<float>(1,2));
+
+  assert(pow2(Qf_0) == 0);
+  assert(pow2(Qf_1) == 1);
+  assert(pow2(Qf_1) == Qf_1 * Qf_1);
+  assert(pow2(Qf_i) == -1);
+  assert(pow2(Qf_j) == -1);
+  assert(pow2(Qf_k) == -1);
+  assert(pow2(Qf(1,2,3,4)) == Qf(1,2,3,4) * Qf(1,2,3,4));
+  assert(pow2(Qf(3.14)) == 3.14f * 3.14f);
+  assert(pow2(Qf(1,2)) == complex<float>(1,2) * complex<float>(1,2));
 }
 
 void test_pow3() {
   cout << "Testing pow3" << endl;
-  EXPECT(pow3(Qd_0) == 0);
-  EXPECT(pow3(Qd_1) == 1);
-  EXPECT(pow3(Qd_i) == -Qd_i);
-  EXPECT(pow3(Qd_j) == -Qd_j);
-  EXPECT(pow3(Qd_k) == -Qd_k);
 
-  EXPECT(pow3(Qld_0) == 0);
-  EXPECT(pow3(Qld_1) == 1);
-  EXPECT(pow3(Qld_i) == -Qld_i);
-  EXPECT(pow3(Qld_j) == -Qld_j);
-  EXPECT(pow3(Qld_k) == -Qld_k);
-  EXPECT(pow3(Qf(1,2,3,4)) == Qf(1,2,3,4) * Qf(1,2,3,4) * Qf(1,2,3,4));
+  assert(pow3(Qd_0) == 0);
+  assert(pow3(Qd_1) == 1);
+  assert(pow3(Qd_i) == -Qd_i);
+  assert(pow3(Qd_j) == -Qd_j);
+  assert(pow3(Qd_k) == -Qd_k);
+
+  assert(pow3(Qld_0) == 0);
+  assert(pow3(Qld_1) == 1);
+  assert(pow3(Qld_i) == -Qld_i);
+  assert(pow3(Qld_j) == -Qld_j);
+  assert(pow3(Qld_k) == -Qld_k);
+  assert(pow3(Qf(1,2,3,4)) == Qf(1,2,3,4) * Qf(1,2,3,4) * Qf(1,2,3,4));
 }
 
 void test_pow() {
   cout << "Testing pow" << endl;
+
+  assert(pow(Qf_0,2) == 0);
+  assert(pow(Qf_1,2) == 1);
+  assert(pow(Qf_i,2) == -1);
+  assert(pow(Qf_j,2) == -1);
+  assert(pow(Qf_k,2) == -1);
+  assert(pow(Qf_1, 0.5f) == 1);
+  cout << pow(-Qf_1, 0.5f) << endl;
 
   for (size_t i = 0; i < 1000; ++i) {
     int n = (int) random() % 20;
@@ -450,23 +515,29 @@ void test_pow() {
     Qld y = Qld_1;
     for (int j = 0; j < n; ++j)
       y *= x;
-    EXPECT(norm2(y - pow(x,n)) < 1e-10);
+    assert(norm2(y - pow(x,n)) < 1e-10);
   }
 
   for (size_t i = 0; i < 1000; ++i) {
     double n = double(random() % 20)/(1 + double(random() % 10));
     Qd x(rand()%5,rand()%5,rand()%5,rand()%5);
-    EXPECT(std::abs(norm(pow(x,n)) - norm(exp(n * log(x)))) < 1e-6);
+    assert(std::abs(norm(pow(x,n)) - norm(exp(n * log(x)))) < 1e-6);
   }
 }
 
 void test_q_pow() {
   cout << "Testing q pow" << endl;
 
+  assert(pow(Qf_0,Qf(2)) == 0);
+  assert(pow(Qf_1,Qf(2)) == 1);
+  assert(pow(Qf_i,Qf(2)) == -1);
+  assert(pow(Qf_j,Qf(2)) == -1);
+  assert(pow(Qf_k,Qf(2)) == -1);
+
   for (size_t i = 0; i < 10; ++i) {
     Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
     Qld y(rand()%5,rand()%5,rand()%5,rand()%5);
-    EXPECT(std::abs(norm(pow(x,y)) - norm(exp(y * log(x)))) < 1e-6);
+    assert(std::abs(norm(pow(x,y)) - norm(exp(y * log(x)))) < 1e-6);
   }
 }
 
@@ -475,7 +546,7 @@ void test_log() {
 
   { // Make sure it works for reals
     Qld x(2,0,0,0);
-    EXPECT(std::abs(log(x).real() - std::log(2)) < 1e-10);
+    assert(std::abs(log(x).real() - std::log(2)) < 1e-10);
   }
 
   size_t N = 10;
@@ -483,7 +554,7 @@ void test_log() {
   for (size_t i = 0; i < N; ++i) {
     Qld x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
     Qld::scalar_zero_threshold = 1e-12;
-    EXPECT(x == exp(log(x))); // but not the other way around!
+    assert(x == exp(log(x))); // but not the other way around!
   }
 }
 
@@ -492,7 +563,7 @@ void test_exp() {
 
   { // Make sure it works for reals
     Qld x(2,0,0,0);
-    EXPECT(std::abs(exp(x).real() - std::exp(2)) < 1e-10);
+    assert(std::abs(exp(x).real() - std::exp(2)) < 1e-10);
   }
 
   {
@@ -502,45 +573,43 @@ void test_exp() {
       quaternion<long double> bx(x.a(), x.b(), x.c(), x.d());
       Qld y = exp(x);
       quaternion<long double> by = exp(bx);
-      EXPECT(equals(y, by, 1e-6));
+      assert(equals(y, by, 1e-6));
     }
   }
 }
 
 void test_dot() {
   cout << "Testing dot product" << endl;
-  EXPECT(dot(Qf(1, 2, 3, 4), Qf(2, 2, 2, 2)) == 20);
-  EXPECT(dot(Qf(-1, 2, -3, 4), Qf(-1, 2, -3, 4)) == norm2(Qf(1,2,3,4)));
+  assert(dot(Qf(1, 2, 3, 4), Qf(2, 2, 2, 2)) == 20);
+  assert(dot(Qf(-1, 2, -3, 4), Qf(-1, 2, -3, 4)) == norm2(Qf(1,2,3,4)));
   // TODO: verify this works in general
   Qf a(1,2,3,4), b(5,6,7,8);
   Qf d1 = dot(a,b);
   Qf d2 = .5*(conjugate(b) * a + conjugate(a) * b);
-  EXPECT(d1 == d2);
+  assert(d1 == d2);
 }
 
 void test_cross() {
   cout << "Testing cross product" << endl;
   // TODO: verify
-  EXPECT(Qf(0,-2,4,-2) == cross(Qf(1, 2, 3, 4), Qf(2, 2, 2, 2)));
+  assert(Qf(0,-2,4,-2) == cross(Qf(1, 2, 3, 4), Qf(2, 2, 2, 2)));
   // TODO: verify this works in general
   Qf a(0,2,3,4), b(0,6,7,8);
   Qf p1 = cross(a,b);
   Qf p2 = .5*(a * b - conjugate(b) * conjugate(a));
-  cout << p1 << endl;
-  cout << p2 << endl;
-  EXPECT(p1 == p2);
+  assert(p1 == p2);
 }
 
 void test_commutator() {
   cout << "Testing commutator" << endl;
   Qf c = commutator(Qf(1,2,3,4), Qf(2,2,2,2));
-  EXPECT(c == Qf(0,-4,8,-4));
-  EXPECT(c == Qf(1,2,3,4) * Qf(2,2,2,2) - Qf(2,2,2,2) * Qf(1,2,3,4));
+  assert(c == Qf(0,-4,8,-4));
+  assert(c == Qf(1,2,3,4) * Qf(2,2,2,2) - Qf(2,2,2,2) * Qf(1,2,3,4));
   // TODO: verify this works in general
   Qf a(1,2,3,4), b(5,6,7,8);
   Qf c1 = commutator(a,b);
   Qf c2 = 2 * cross(a,b);
-  EXPECT(c1 == c2);
+  assert(c1 == c2);
 }
 
 void test_io_eps() {
@@ -565,7 +634,7 @@ void test_stl() {
   cout << "Testing STL" << endl;
   vector<Qf> qs{{1,2,3,4},{5,6,7,8},{1,3,5,7},{2,4,6,8}};
   auto v = accumulate(qs.begin(), qs.end(), Qf_1, multiplies<Qf>());
-  EXPECT(v == Qf_1 * Qf(1,2,3,4) * Qf(5,6,7,8) * Qf(1,3,5,7) * Qf(2,4,6,8));
+  assert(v == Qf_1 * Qf(1,2,3,4) * Qf(5,6,7,8) * Qf(1,3,5,7) * Qf(2,4,6,8));
 }
 
 /**
@@ -579,10 +648,10 @@ void test_boost_rational() {
   {
     Qrl x({1,2},{3,4},{5,6},{7,8}), y({2,3},{4,5},{6,7},{8,9});
     Qrl z = x * y;
-    EXPECT(z.a() == Rl(-554,315));
-    EXPECT(z.b() == Rl(481,540));
-    EXPECT(z.c() == Rl(641,630));
-    EXPECT(z.d() == Rl(253,252));
+    assert(z.a() == Rl(-554,315));
+    assert(z.b() == Rl(481,540));
+    assert(z.c() == Rl(641,630));
+    assert(z.d() == Rl(253,252));
   }
 }
 
@@ -743,8 +812,9 @@ int main() {
   test_to_polar_representation();
   test_norms();
   test_equality();
-  test_unaries();
+  test_plus_minus();
   test_unary_w_scalar();
+  test_unary_operators();
   test_stl();
   test_boost_rational();
   test_pow2();

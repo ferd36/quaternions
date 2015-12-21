@@ -1,5 +1,8 @@
 # Quaternions
-A library to work with quaternions.
+A library to work with quaternions, as a single header file.
+
+## Requirements
+- Requires boost (http://www.boost.org) for the unit tests, but not for the Quaternion class itself.
 
 ## Notes
 - Boost provides quaternions at: http://www.boost.org/doc/libs/1_59_0/libs/math/doc/html/quaternions.html
