@@ -5,7 +5,7 @@ BOOST_LIB_DIR     = /usr/local/lib
 CXX               = g++
 CXX_FLAGS         = -std=c++11 -Wall -DNDEBUG -O3
 DEPS              = src/Quaternion.h
-OBJS              = main.o
+OBJS              = unit_tests.o
 #LIBS              = -lstdc++
 
 all: quaternions

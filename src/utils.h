@@ -11,6 +11,8 @@
 #define IS_ITERATOR(X) typename std::enable_if<!std::is_same<typename std::iterator_traits<X>::value_type, void>::value>::type* =nullptr
 #define IS_NOT_ITERATOR(X) typename std::enable_if<std::is_same<typename std::iterator_traits<X>::value_type, void>::value>::type* =nullptr
 
+#define IS_NOT_COMPLEX(X) typename std::enable_if<std::is_same<
+
 /**
  * Utility function to work with numbers approximately equal to zero.
  * If eps == 0, does a "hard" comparison to 0.

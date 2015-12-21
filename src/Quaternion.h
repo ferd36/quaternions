@@ -14,6 +14,8 @@
 
 #include "utils.h"
 
+// TOOD: add namespace
+
 /**
  * A quaternion class.
  * TODO: combine operations: axby...
@@ -24,8 +26,10 @@
  * TODO: remove copies/constructions in expressions
  * TODO: fast sinus? Sinus in CPU instruction?
  * TODO: study matrix representation and isomorphism
+ * TODO: do we need the static_cast?
+ * TODO: check references to make sure functionality covered
  */
-template<typename T =double> // assert operations for numeric
+template<typename T =double> // assert operations for numeric is_specialized??
 class Quaternion {
 public:
   /**
@@ -174,10 +178,6 @@ public:
     return {a, b, h1, h2};
   }
 
-  std::array<T,4> to_array() const {
-    return {{_a, _b, _c, _d}};
-  }
-
   // TODO: copy to valarray, array, vector...
 
   /**
@@ -194,6 +194,49 @@ public:
   std::complex<T> c1() const { return {_a,_b}; }
   std::complex<T> c2() const { return {_c,_d}; }
 
+  operator T() const {
+    assert(_b == 0 && _c == 0 && _d == 0);
+    return _a;
+  }
+
+  operator std::complex<T>() const {
+    assert(_c == 0 && _d == 0);
+    return std::complex<T>(_a,_b);
+  }
+
+  operator std::array<T,4>() const {
+    return {{_a, _b, _c, _d}};
+  }
+
+  /**
+   * The polar representation of a quaternion.
+   * Returns 5 numbers:
+   * - the Euclidean norm of the quaternion,
+   * - the polar angle theta,
+   * - and each of the components of the "unreal unit direction".
+   */
+  polar_representation to_polar_representation() const {
+    T n = norm();
+    T theta = std::acos(_a / n);
+    T nu = _b * _b + _c * _c + _d * _d;
+    if (nu != 0) {
+      T ns = 1.0 / std::sqrt(nu); //n*std::sin(theta);
+      return {{n, theta, _b / ns, _c / ns, _d / ns}};
+    }
+    const T pi = std::atan2(+0., -0.);
+    // theta = 0 or pi, because n = +/- a().
+    return {{n, n == _a ? 0 : pi, 0, 0, 0}};
+  }
+
+  /**
+   * Returns a matrix representation of a quaternion.
+   */
+  matrix_representation to_matrix_representation() const {
+    std::array<std::complex<T>, 2> r0{{std::complex<T>(a(), b()), std::complex<T>(c(), d())}};
+    std::array<std::complex<T>, 2> r1{{std::complex<T>(-c(), d()), std::complex<T>(a(), -b())}};
+    return matrix_representation{{r0, r1}};
+  }
+
   /**
    * The real and "unreal" parts of the quaternion.
    */
@@ -204,7 +247,7 @@ public:
    * The conjugate of this quaternion.
    */
   Quaternion conjugate() {
-    return Quaternion(_a, -_b, -_c, -_d);
+    return {_a, -_b, -_c, -_d};
   }
 
   /**
@@ -286,33 +329,47 @@ public:
   }
 
   /**
+  * Unary plus.
+  */
+  Quaternion operator+() const {
+    return *this;
+  }
+
+  /**
    * Unary +=.
    */
-  template <typename T1>
-  Quaternion operator+=(T1 y) {
+  Quaternion operator+=(T y) {
     _a += y;
     return *this;
   }
 
   /**
-   * Unary +=.
-   */
-  template<typename T1>
-  Quaternion operator+=(std::complex<T1> &y) {
-    _a += static_cast<T>(y.real());
-    _b += static_cast<T>(y.imag());
+  * Unary +=.
+  */
+  Quaternion operator-=(T y) {
+    _a -= y;
     return *this;
   }
 
   /**
-   * Unary +=.
+  * Scaling by a constant.
+  */
+  Quaternion operator*=(T k) {
+    _a = k * _a;
+    _b = k * _b;
+    _c = k * _c;
+    _d = k * _d;
+    return *this;
+  }
+
+  /**
+   * Dividing by a constant.
    */
-  template<typename T1>
-  Quaternion operator+=(const Quaternion<T1> &y) {
-    _a += static_cast<T>(y.a());
-    _b += static_cast<T>(y.b());
-    _c += static_cast<T>(y.c());
-    _d += static_cast<T>(y.d());
+  Quaternion operator/=(T k) {
+    _a /= k;
+    _b /= k;
+    _c /= k;
+    _d /= k;
     return *this;
   }
 
@@ -329,26 +386,24 @@ public:
   }
 
   /**
-   * Scaling by a constant.
+   * Unary +=.
    */
-  template <typename T1>
-  Quaternion operator*=(T1 k) {
-    _a = k * _a;
-    _b = k * _b;
-    _c = k * _c;
-    _d = k * _d;
+  template<typename T1>
+  Quaternion operator+=(const std::complex<T1> &y) {
+    _a += static_cast<T>(y.real());
+    _b += static_cast<T>(y.imag());
     return *this;
   }
 
   /**
-   * Scaling by a constant.
+   * Unary +=.
    */
-  template <typename T1>
-  Quaternion operator/=(T1 k) {
-    _a /= k;
-    _b /= k;
-    _c /= k;
-    _d /= k;
+  template<typename T1>
+  Quaternion operator+=(const Quaternion<T1> &y) {
+    _a += static_cast<T>(y.a());
+    _b += static_cast<T>(y.b());
+    _c += static_cast<T>(y.c());
+    _d += static_cast<T>(y.d());
     return *this;
   }
 
@@ -386,35 +441,6 @@ public:
     _c = k1 * _c + k2 * y._c;
     _d = k1 * _d + k2 * y._d;
     return *this;
-  }
-
-  /**
-   * The polar representation of a quaternion.
-   * Returns 5 numbers:
-   * - the Euclidean norm of the quaternion,
-   * - the polar angle theta,
-   * - and each of the components of the "unreal unit direction".
-   */
-  polar_representation to_polar_representation() const {
-    T n = norm();
-    T theta = std::acos(_a / n);
-    T nu = _b * _b + _c * _c + _d * _d;
-    if (nu != 0) {
-      T ns = 1.0 / std::sqrt(nu); //n*std::sin(theta);
-      return {{n, theta, _b / ns, _c / ns, _d / ns}};
-    }
-    const T pi = std::atan2(+0., -0.);
-    // theta = 0 or pi, because n = +/- a().
-    return {{n, n == _a ? 0 : pi, 0, 0, 0}};
-  }
-
-  /**
-   * Returns a matrix representation of a quaternion.
-   */
-  matrix_representation to_matrix_representation() const {
-    std::array<std::complex<T>, 2> r0{{std::complex<T>(a(), b()), std::complex<T>(c(), d())}};
-    std::array<std::complex<T>, 2> r1{{std::complex<T>(-c(), d()), std::complex<T>(a(), -b())}};
-    return matrix_representation{{r0, r1}};
   }
 
   /**
@@ -590,9 +616,7 @@ inline Quaternion<T> operator/(const Quaternion<T>& x, T1 k) {
  */
 template<typename T>
 inline Quaternion<T> conjugate(const Quaternion<T>& x) {
-  Quaternion<T> r(x);
-  r.conjugate();
-  return r;
+  return Quaternion<T>(x).conjugate();
 }
 
 /**
@@ -665,16 +689,28 @@ inline bool operator!=(const Quaternion<T>& x, const Quaternion<T> &y) {
   return !(x == y);
 }
 
+using namespace std;
+
 /**
  * Equality of a quaternion and a real, or at least a number that can converted to a real.
  */
 template<typename T, typename T2>
 inline bool operator==(const Quaternion<T>& x, T2 y) {
-  return is_real(x) && x.a() == static_cast<T>(y);
+  return is_real(x) && x.a() == y;
 }
 
 template<typename T, typename T2>
 inline bool operator!=(const Quaternion<T>& x, T2 y) {
+  return !(x == y);
+}
+
+template<typename T, typename T2>
+inline bool operator==(const Quaternion<T>& x, const std::complex<T2>& y) {
+  return is_complex(x) && x.a() == y.real() && x.b() == y.imag();
+}
+
+template<typename T, typename T2>
+inline bool operator!=(const Quaternion<T>& x, const std::complex<T2>& y) {
   return !(x == y);
 }
 
@@ -734,7 +770,7 @@ inline Quaternion<T> operator/(const Quaternion<T>& x, const Quaternion<T> &y) {
 
 template<typename T>
 inline T dot(const Quaternion<T>& x, const Quaternion<T> &y) {
-  return x.b() * y.b() + x.c() * y.c() + x.d() * y.d();
+  return x.a() * y.a() + x.b() * y.b() + x.c() * y.c() + x.d() * y.d();
 }
 
 /**
@@ -884,7 +920,6 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
 
 /**
  * Real power of a quaternion.
- * TODO: test against pow just above
  */
 template<typename T>
 inline Quaternion<T> pow(const Quaternion<T>& x, T a) {

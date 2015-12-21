@@ -4,10 +4,13 @@
 #include <random>
 #include <chrono>
 #include <array>
-#include <boost/math/quaternion.hpp>
 #include <iomanip>
 
+#include <boost/math/quaternion.hpp>
+#include <boost/rational.hpp>
+
 using namespace std;
+using namespace boost;
 using namespace boost::math;
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -298,8 +301,20 @@ void test_accessors() {
   }
 
   {
+    Qf x(3.14);
+    float a = x;
+    assert(a == 3.14f);
+  }
+
+  {
+    Qf x(3.14, 2.71);
+    complex<float> c = x;
+    assert(c.real() == 3.14f && c.imag() == 2.71f);
+  }
+
+  {
     Qf x(1,2,3,4);
-    auto a = x.to_array();
+    array<float,4> a = x;
     array<float,4> r{{1,2,3,4}};
     assert(a == r);
   }
@@ -343,6 +358,50 @@ void test_equality() {
   //TODO: refine for precision
 }
 
+void test_unaries() {
+  cout << "Testing unaries" << endl;
+  assert(-Qf(1,2,3,4) == Qf(-1,-2,-3,-4));
+  assert(- -Qf(1,2,3,4) == Qf(1,2,3,4));
+  assert(- - -Qf(1,2,3,4) == Qf(-1,-2,-3,-4));
+  assert(+Qf(1,2,3,4) == Qf(1,2,3,4));
+  assert(+ +Qf(1,2,3,4) == Qf(1,2,3,4));
+  assert(+ + +Qf(1,2,3,4) == Qf(1,2,3,4));
+}
+
+void test_unary_w_scalar() {
+  cout << "Testing unary operations with scalar" << endl;
+  {
+    Qd x(1,2,3,4);
+    x += (long double) 3;
+    assert(x == Qd(4,2,3,4));
+  }
+
+  {
+    Qd x(1,2,3,4);
+    x -= 3;
+    assert(x == Qd(-2,2,3,4));
+  }
+
+  {
+    Qd x(1,2,3,4);
+    x *= -3.5;
+    assert(x == Qd(-3.5,-3.5*2,-3.5*3,-3.5*4));
+  }
+
+  {
+    Qd x(1,2,3,4);
+    x /= 2;
+    assert(x == Qd(1.0/2,2.0/2,3.0/2,4.0/2));
+  }
+
+  {
+    Qd x(1,2);
+    x /= 3;
+    assert(x == complex<double>(1.0/3, 2.0/3));
+  }
+}
+
+// TODO: test unaries with complex
 
 void test_pow2() {
   cout << "Testing pow2" << endl;
@@ -352,6 +411,8 @@ void test_pow2() {
   assert(pow2(Qf_i) == -1);
   assert(pow2(Qf_j) == -1);
   assert(pow2(Qf_k) == -1);
+  assert(pow2(Qf(1,2,3,4)) == Qf(1,2,3,4) * Qf(1,2,3,4));
+  assert(pow2(Qf(1,2)) == complex<float>(1,2) * complex<float>(1,2));
 }
 
 void test_pow3() {
@@ -367,6 +428,7 @@ void test_pow3() {
   assert(pow3(Qld_i) == -Qld_i);
   assert(pow3(Qld_j) == -Qld_j);
   assert(pow3(Qld_k) == -Qld_k);
+  assert(pow3(Qf(1,2,3,4)) == Qf(1,2,3,4) * Qf(1,2,3,4) * Qf(1,2,3,4));
 }
 
 void test_pow() {
@@ -381,44 +443,20 @@ void test_pow() {
     assert(norm2(y - pow(x,n)) < 1e-10);
   }
 
-  cout << pow(Qld{1,2,0,1},(long double)2.5) << endl;
+  for (size_t i = 0; i < 1000; ++i) {
+    double n = double(random() % 20)/(1 + double(random() % 10));
+    Qd x(rand()%5,rand()%5,rand()%5,rand()%5);
+    assert(std::abs(norm(pow(x,n)) - norm(exp(n * log(x)))) < 1e-6);
+  }
 }
 
 void test_q_pow() {
   cout << "Testing q pow" << endl;
 
-  for (size_t i = 0; i < 1000; ++i) {
+  for (size_t i = 0; i < 10; ++i) {
     Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
-    int n = (int) random() % 20;
-    Qld y(n);
-    Qld::scalar_zero_threshold = 1e-6;
-//    cout << set_style_compact<long double>();
-//    cout << pow(x,y) << endl;
-//    cout << pow(x,n) << endl;
-    // works but we get large values which are hard to compare
-    //assert(pow(x,y) == pow(x,n));
-  }
-}
-
-void test_exp() {
-  cout << "Testing exp" << endl;
-
-  { // Make sure it works for reals
-    Qld x(2,0,0,0);
-    assert(std::abs(exp(x).real() - std::exp(2)) < 1e-10);
-  }
-
-  {
-    cout << exp(Qld{2,3,1,6}) << endl;
-  }
-
-  size_t N = 100000;
-  for (size_t i = 0; i < N; ++i) {
-    Qld x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
-    quaternion<long double> bx(x.a(), x.b(), x.c(), x.d());
-    Qld y = exp(x);
-    quaternion<long double> by = exp(bx);
-    assert(equals(y, by, 1e-6));
+    Qld y(rand()%5,rand()%5,rand()%5,rand()%5);
+    assert(std::abs(norm(pow(x,y)) - norm(exp(y * log(x)))) < 1e-6);
   }
 }
 
@@ -439,43 +477,60 @@ void test_log() {
   }
 }
 
-void test_addition() {
-  cout << Qf(1, 2, 3, 4) + Qf(4, 3, 2, 1) << endl;
-}
+void test_exp() {
+  cout << "Testing exp" << endl;
 
-void test_multiplication() {
+  { // Make sure it works for reals
+    Qld x(2,0,0,0);
+    assert(std::abs(exp(x).real() - std::exp(2)) < 1e-10);
+  }
 
-  cout << Qf(1, 2, 3, 4) * Qf(4, 3, 2, 1) << endl;
-  cout << Qf(4, 3, 2, 1) * Qf(1, 2, 3, 4) << endl;
-  cout << Qf(4, 3, 2, 1) * 1.5 << endl;
-  cout << Qf(4, 3, 2, 1) * 0.0 << endl;
-  cout << Qf_i * Qf_i << endl;
-}
-
-void test_inverse() {
-  cout << inverse(Qf(0, 1, 0, 0)) << endl;
-  cout << (inverse(Qf(0, 1, 0, 0)) == Qf_i) << endl;
-}
-
-void test_division() {
-  cout << (Qf(1, 2, 3, 4) / Qf(2, 2, 2, 2)) << endl;
+  {
+    size_t N = 1000;
+    for (size_t i = 0; i < N; ++i) {
+      Qld x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
+      quaternion<long double> bx(x.a(), x.b(), x.c(), x.d());
+      Qld y = exp(x);
+      quaternion<long double> by = exp(bx);
+      assert(equals(y, by, 1e-6));
+    }
+  }
 }
 
 void test_dot() {
-  cout << dot(Qf(1, 2, 3, 4), Qf(2, 2, 2, 2)) << endl;
-  cout << .5*(Qf(1,2,3,4) * conjugate(Qf(2,2,2,2)) + Qf(2,2,2,2) * conjugate(Qf(1,2,3,4))) << endl;
+  cout << "Testing dot product" << endl;
+  assert(dot(Qf(1, 2, 3, 4), Qf(2, 2, 2, 2)) == 20);
+  assert(dot(Qf(-1, 2, -3, 4), Qf(-1, 2, -3, 4)) == norm2(Qf(1,2,3,4)));
+  // TODO: verify this works in general
+  Qf a(1,2,3,4), b(5,6,7,8);
+  Qf d1 = dot(a,b);
+  Qf d2 = .5*(conjugate(b) * a + conjugate(a) * b);
+  assert(d1 == d2);
 }
 
 void test_cross() {
-  cout << cross(Qf(1, 2, 3, 4), Qf(2, 2, 2, 2)) << endl;
+  cout << "Testing cross product" << endl;
+  // TODO: verify
+  assert(Qf(0,-2,4,-2) == cross(Qf(1, 2, 3, 4), Qf(2, 2, 2, 2)));
+  // TODO: verify this works in general
+  Qf a(0,2,3,4), b(0,6,7,8);
+  Qf p1 = cross(a,b);
+  Qf p2 = .5*(a * b - conjugate(b) * conjugate(a));
+  cout << p1 << endl;
+  cout << p2 << endl;
+  assert(p1 == p2);
 }
 
 void test_commutator() {
-  cout << commutator(Qf(1,2,3,4), Qf(2,2,2,2)) << endl;
-}
-
-void test_normalize() {
-  assert(norm(normalize(Qf(1,2,3,4))) == 1);
+  cout << "Testing commutator" << endl;
+  Qf c = commutator(Qf(1,2,3,4), Qf(2,2,2,2));
+  assert(c == Qf(0,-4,8,-4));
+  assert(c == Qf(1,2,3,4) * Qf(2,2,2,2) - Qf(2,2,2,2) * Qf(1,2,3,4));
+  // TODO: verify this works in general
+  Qf a(1,2,3,4), b(5,6,7,8);
+  Qf c1 = commutator(a,b);
+  Qf c2 = 2 * cross(a,b);
+  assert(c1 == c2);
 }
 
 void test_io_eps() {
@@ -501,6 +556,24 @@ void test_stl() {
   vector<Qf> qs{{1,2,3,4},{5,6,7,8},{1,3,5,7},{2,4,6,8}};
   auto v = accumulate(qs.begin(), qs.end(), Qf_1, multiplies<Qf>());
   assert(v == Qf_1 * Qf(1,2,3,4) * Qf(5,6,7,8) * Qf(1,3,5,7) * Qf(2,4,6,8));
+}
+
+/**
+ * Some operations don't compile with boost rational, in particular
+ * those that involve e.g. std::fabs (like operator<< does!).
+ */
+void test_boost_rational() {
+  cout << "Testing with boost::rational" << endl;
+  typedef rational<long> Rl;
+  typedef Quaternion<Rl> Qrl;
+  {
+    Qrl x({1,2},{3,4},{5,6},{7,8}), y({2,3},{4,5},{6,7},{8,9});
+    Qrl z = x * y;
+    assert(z.a() == Rl(-554,315));
+    assert(z.b() == Rl(481,540));
+    assert(z.c() == Rl(641,630));
+    assert(z.d() == Rl(253,252));
+  }
 }
 
 /**
@@ -651,7 +724,6 @@ void test_axby_speed() {
   }
 }
 
-
 int main() {
   test_constructors();
   test_trigonometric_constructors();
@@ -661,18 +733,26 @@ int main() {
   test_to_polar_representation();
   test_norms();
   test_equality();
+  test_unaries();
+  test_unary_w_scalar();
   test_stl();
-//  test_pow2();
-//  test_pow3();
-//  test_pow();
-//  test_q_pow();
-//  test_log();
-//  test_exp();
+  test_boost_rational();
+  test_pow2();
+  test_pow3();
+  test_pow();
+  test_q_pow();
+  test_log();
+  test_exp();
+  test_dot();
+  test_cross();
+  test_commutator();
+  test_io_eps();
+  test_io_style();
+
 //  test_exp_speed();
 //  test_multiplication_speed();
 //  test_pow_speed();
 //  test_axby_speed();
-//  test_io_eps();
-//  test_io_style();
+
   return 0;
 }
