@@ -63,10 +63,7 @@ public:
    */
   template<typename T1 = T, IS_NOT_ITERATOR(T1)>
   Quaternion(T1 a = 0, T1 b = 0, T1 c = 0, T1 d = 0)
-      : _a(static_cast<T>(a)),
-        _b(static_cast<T>(b)),
-        _c(static_cast<T>(c)),
-        _d(static_cast<T>(d)) { }
+      : _a(a), _b(b), _c(c), _d(d) { }
 
   /**
    * Construct a quaternion from 2 complex<T>.
