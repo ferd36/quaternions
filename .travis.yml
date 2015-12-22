@@ -22,19 +22,6 @@ before_install:
 
 install:
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"  CC="gcc-4.8"; fi
-  # install latest LCOV (1.9 was failing)
-  - cd ${TRAVIS_BUILD_DIR}
-  - wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
-  - tar xzf lcov_1.11.orig.tar.gz
-  - sudo make -C lcov-1.11/ install
-  - gem install coveralls-lcov
-  - lcov --version
-  - g++ --version
-
-before_script:
-  - cd ${TRAVIS_BUILD_DIR}
-  # init coverage to 0 (optional)
-  - lcov --directory . --zerocounters
 
 script:
   - make -f Makefile.mk # gcc without Autotools
@@ -42,8 +29,3 @@ script:
   - make
   - ./unit_tests
   - ctest --verbose
-
-after_success:
-  - lcov --directory . --capture --output-file coverage.info
-  - lcov --list coverage.info
-  - coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
