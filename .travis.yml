@@ -10,7 +10,7 @@ addons:
       - boost-latest
     packages:
       - g++-4.8
-      - libboost1.58-all-dev
+      - libboost1.55-all-dev
 
 before_install:
   - git config --global user.name "Continuous Integration"
