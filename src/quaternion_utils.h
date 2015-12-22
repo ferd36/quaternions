@@ -43,14 +43,25 @@
  * If eps == 0, does a "hard" comparison to 0.
  * Otherwise, uses a ball of radius eps around 0. If the scalar is inside
  * that ball, it is equivalent to 0.
- * TODO: refine for large floating point numbers
  */
 template<typename T, typename T1>
 inline bool is_scalar_zero(T x, T1 eps = 0) {
-  if (eps > 0)
-    return std::fabs(x) < eps;
+  return std::abs(x) <= eps;
+}
+
+/**
+ * Compares 2 floating point numbers "relatively": if the numbers are
+ * very large, differences are still "small" if they are "small"
+ * relative to the magnitudes of the quantities.
+ */
+template<typename T, typename T1>
+inline bool is_near_equal_relative(T x, T y, T1 eps = 0) {
+  if (x == 0)
+    return is_scalar_zero(y, eps);
+  else if (y == 0)
+    return is_scalar_zero(x, eps);
   else
-    return x == 0;
+    return is_scalar_zero((x-y)/std::min(x,y), eps);
 }
 
 #endif //QUATERNIONS_UTILS_H

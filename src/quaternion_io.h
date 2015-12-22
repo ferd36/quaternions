@@ -88,49 +88,30 @@ struct QuaternionIO {
  * IO manipulators to control the format when printing quaternions out to a stream.
  */
 long double QuaternionIO::scalar_zero_threshold;
-
 int QuaternionIO::print_style;
 
-template<typename T>
-struct SetScalarZeroThreshold {
-  T eps = 0;
-};
-
-template<typename T>
-inline SetScalarZeroThreshold<T> set_eps(T eps) {
-  SetScalarZeroThreshold<T> sszt;
+struct SetScalarZeroThreshold { long double eps = 0; };
+inline SetScalarZeroThreshold set_display_eps(long double eps) {
+  SetScalarZeroThreshold sszt;
   sszt.eps = eps;
   return sszt;
 }
 
-template<typename T>
-inline std::ostream &operator<<(std::ostream &out, SetScalarZeroThreshold<T> sszt) {
+inline std::ostream &operator<<(std::ostream &out, SetScalarZeroThreshold sszt) {
   QuaternionIO::scalar_zero_threshold = sszt.eps;
   return out;
 }
 
-template<typename T>
-struct SetPrintStyle {
-  int style;
-};
-
-template<typename T>
-inline SetPrintStyle<T> set_style_nice() {
-  SetPrintStyle<T> sps;
-  sps.style = 0;
-  return sps;
+enum DisplayStyle { q_nice, q_compact };
+struct SetDisplayStyle { DisplayStyle style; };
+inline SetDisplayStyle set_display_style(DisplayStyle ds) {
+  SetDisplayStyle sds;
+  sds.style = ds;
+  return sds;
 }
 
-template<typename T>
-inline SetPrintStyle<T> set_style_compact() {
-  SetPrintStyle<T> sps;
-  sps.style = 1;
-  return sps;
-}
-
-template<typename T>
-inline std::ostream &operator<<(std::ostream &out, SetPrintStyle<T> sps) {
-  QuaternionIO::print_style = sps.style;
+inline std::ostream &operator<<(std::ostream &out, SetDisplayStyle sds) {
+  QuaternionIO::print_style = sds.style;
   return out;
 }
 

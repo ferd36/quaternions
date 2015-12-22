@@ -9,9 +9,9 @@ message("Compiler      : " ${CMAKE_CXX_COMPILER})
 message("Flags         : " ${CMAKE_CXX_FLAGS})
 
 # boost - used for comparison in unit tests
-find_package(Boost 1.5.9 REQUIRED)
+#find_package(Boost 1.5.9 REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
-set(SOURCE_FILES src/unit_tests.cpp src/Quaternion.h src/quaternion_utils.h src/quaternion_io.h.h)
+set(SOURCE_FILES src/unit_tests.cpp src/Quaternion.h src/quaternion_utils.h src/quaternion_io.h)
 
 add_executable(quaternions ${SOURCE_FILES})

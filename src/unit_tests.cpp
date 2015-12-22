@@ -70,14 +70,15 @@ inline ostream& operator<<(ostream& out, const vector<T>& x) {
 
 /**
  * Compare a boost quaternion to quaternion, within epsilon.
+ * Boost is required only for testing, to compare against a known implementation,
+ * so this method is not provided alongside the other nearly_equal in quaternion.h.
  */
 template <typename T, typename T1>
 inline bool nearly_equal(const Quaternion<T>& us, const boost::math::quaternion<T>& them, T1 eps) {
-  T teps = static_cast<T>(eps);
-  return std::abs((us.a() - them.R_component_1())) <= teps
-         && std::abs((us.b() - them.R_component_2())) <= teps
-         && std::abs((us.c() - them.R_component_3())) <= teps
-         && std::abs((us.d() - them.R_component_4())) <= teps;
+  return is_near_equal_relative(us.a(), them.R_component_1(), eps)
+         && is_near_equal_relative(us.b(), them.R_component_2(), eps)
+         && is_near_equal_relative(us.c(), them.R_component_3(), eps)
+         && is_near_equal_relative(us.d(), them.R_component_4(), eps);
 }
 
 /**
@@ -611,19 +612,19 @@ void test_commutator() {
 void test_io_eps() {
   cout << "Testing io/eps" << endl;
   Qd x(1e-1, 1e-2, 1e-3, 1e-4);
-  cout << set_eps(1e-6) << x << endl;
-  cout << set_eps(1e-4) << x << endl;
-  cout << set_eps(1e-3) << x << endl;
-  cout << set_eps(1e-2) << x << endl;
-  cout << set_eps(1e-1) << x << endl;
-  cout << set_eps(1) << x << endl;
+  cout << set_display_eps(1e-6) << x << endl;
+  cout << set_display_eps(1e-4) << x << endl;
+  cout << set_display_eps(1e-3) << x << endl;
+  cout << set_display_eps(1e-2) << x << endl;
+  cout << set_display_eps(1e-1) << x << endl;
+  cout << set_display_eps(1) << x << endl;
 }
 
 void test_io_style() {
   cout << "Testing io/style" << endl;
   Qd x(1,2,3,4);
-  cout << set_style_nice<double>() << x << endl;
-  cout << set_style_compact<double>() << x << endl;
+  cout << set_display_style(q_nice) << x << endl;
+  cout << set_display_style(q_compact) << x << endl;
 }
 
 void test_stl() {

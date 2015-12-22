@@ -101,13 +101,11 @@ public:
 
   /**
    * Construct from a pointer to a range of 4 elements ("float[4]").
+   * TODO: make sure we can't use the next constructor here
    */
   template<typename T1 = T>
   Quaternion(T1 *it)
-      : _a(static_cast<T>(*it)),
-        _b(static_cast<T>(*++it)),
-        _c(static_cast<T>(*++it)),
-        _d(static_cast<T>(*++it)) { }
+      : _a(*it), _b(*++it), _c(*++it), _d(*++it) { }
 
   /**
    * Construct from an iterator to a range of 4 elements.
@@ -597,11 +595,7 @@ inline bool is_unreal(const Quaternion<T>& x, T1 eps =0) {
 }
 
 /**
- * Equality of two quaternions.
- * TODO: for very large values, equality is a classic floating point problem
- * TODO: comparison method, together with scalar_zero_threshold
- * TODO: this is kind of annoying in application - might need a function where eps
- * specified each time
+ * Equality.
  */
 template<typename T>
 inline bool operator==(const Quaternion<T>& x, const Quaternion<T> &y) {
@@ -613,12 +607,16 @@ inline bool operator!=(const Quaternion<T>& x, const Quaternion<T> &y) {
   return !(x == y);
 }
 
+/**
+ * This is more costly, but very useful in practice: quaternions transcendentals
+ * require a lot of floating point operations, so accuracy degrades quickly.
+ */
 template <typename T, typename T1> // T1 allows eps to be the default type double
 inline bool nearly_equal(const Quaternion<T>& x, const Quaternion<T>& y, T1 eps) {
-  return is_scalar_zero(x.a() - y.a(), eps)
-         && is_scalar_zero(x.b() - y.b(), eps)
-         && is_scalar_zero(x.c() - y.c(), eps)
-         && is_scalar_zero(x.d() - y.d(), eps);
+  return is_near_equal_relative(x.a(), y.a(), eps)
+         && is_near_equal_relative(x.b(), y.b(), eps)
+         && is_near_equal_relative(x.c(), y.c(), eps)
+         && is_near_equal_relative(x.d(), y.d(), eps);
 }
 
 template<typename T, typename T2>
@@ -644,7 +642,7 @@ inline bool operator!=(T2 y, const Quaternion<T>& x) {
 
 template <typename T, typename  T1>
 inline bool nearly_equal(const Quaternion<T>& x, T1 y, T1 eps) {
-  return is_real(x, eps) && is_scalar_zero(x.a() - y.a(), eps);
+  return is_real(x, eps) && is_near_equal_relative(x.a(), y, eps);
 }
 
 template<typename T, typename T2>
@@ -660,8 +658,8 @@ inline bool operator!=(const Quaternion<T>& x, const std::complex<T2>& y) {
 template <typename T, typename T1>
 inline bool nearly_equal(const Quaternion<T>& x, const std::complex<T>& y, T1 eps) {
   return is_complex(x, eps)
-         && is_scalar_zero(x.a() - y.real(), eps)
-         && is_scalar_zero(x.b() - y.imag(), eps);
+         && is_near_equal_relative(x.a(), y.real(), eps)
+         && is_near_equal_relative(x.b(), y.imag(), eps);
 }
 
 // Same, swapping the lhs and rhs.
@@ -821,9 +819,9 @@ inline Quaternion<T> pow3(const Quaternion<T>& x) {
   T n1 = x.unreal_norm2();
   T n2 = 3 * a2 - n1;
   return {x.a() * (a2 - 3 * n1),
-                       x.b() * n2,
-                       x.c() * n2,
-                       x.d() * n2};
+          x.b() * n2,
+          x.c() * n2,
+          x.d() * n2};
 }
 
 /**
