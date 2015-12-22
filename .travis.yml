@@ -1,7 +1,7 @@
 language: cpp
-
-compiler:
-  - g++
+compiler: g++
+os: linux
+sudo: required
 
 addons:
   apt:
