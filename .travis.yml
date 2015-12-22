@@ -4,4 +4,7 @@ compiler:
   - clang
   - gcc
 
-script: make
+script:
+  cmake .
+  make # cmake/clang
+  make -f Makefile.mk # gcc
