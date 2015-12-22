@@ -12,7 +12,7 @@ message("Flags         : " ${CMAKE_CXX_FLAGS})
 # uncomment only if needing to use a specific location.
 # in travis, it assumes boost is in /usr/include/boost
 #find_package(Boost 1.5.9 REQUIRED)
-#include_directories(${Boost_INCLUDE_DIRS})
+include_directories("/usr/include /usr/local/include") #${Boost_INCLUDE_DIRS})
 
 set(SOURCE_FILES src/unit_tests.cpp src/quaternion.h src/quaternion_utils.h src/quaternion_io.h)
 

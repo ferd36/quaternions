@@ -14,9 +14,8 @@ addons:
 before_script:
   - mkdir build
   - cd build
-  - cmake ..
 
 script:
-  - cmake .
+  - cmake ..
   - make # cmake/clang
-  - make -f Makefile.mk # gcc
+  - make -f ../Makefile.mk # gcc
