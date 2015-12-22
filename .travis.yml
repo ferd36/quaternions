@@ -25,6 +25,4 @@ install:
 
 script:
   - make -f Makefile.mk # gcc without Autotools
-  - cmake .
-  - make
   - ./unit_tests
