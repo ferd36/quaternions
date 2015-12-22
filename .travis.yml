@@ -2,9 +2,21 @@ language: cpp
 
 compiler:
   - clang
-  - gcc
+  - g++
+
+addons:
+  apt:
+    packages:
+      - g++-4.8
+      - libboost1.59-all-dev
+      - cmake3.0
+
+before_script:
+  - mkdir build
+  - cd build
+  - cmake ..
 
 script:
-  cmake .
-  make # cmake/clang
-  make -f Makefile.mk # gcc
+  - cmake .
+  - make # cmake/clang
+  - make -f Makefile.mk # gcc
