@@ -10,4 +10,8 @@ addons:
       - libboost1.59-all-dev
 
 script:
-  - make -f ../Makefile.mk # gcc
+  - find /usr -name "quaternion.hpp"
+  - find /usr -name "liboost_chrono.a"
+  - find /usr -name "liboost_chrono.so"
+  - make -f Makefile.mk # gcc without Autotools
+  - unit_tests
