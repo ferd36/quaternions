@@ -1,6 +1,6 @@
 # Makefile outside of cmake
 
-CXX               = g++
+#CXX               = g++
 CXX_FLAGS         = -std=c++11 -Wall -DNDEBUG -O3
 DEPS              = src/quaternion.h
 OBJS              = unit_tests.o

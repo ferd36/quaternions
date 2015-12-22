@@ -1,16 +1,20 @@
 language: cpp
-compiler: g++
+compiler:
+  - g++
+  - clang++
 os: linux
 sudo: false
 
 addons:
   apt:
     sources:
-      - ubuntu-toolchain-r-test
-      - boost-latest
+    - ubuntu-toolchain-r-test
+    - boost-latest
     packages:
-      - g++-4.8
-      - libboost1.55-all-dev
+    - gcc-4.8
+    - g++-4.8
+    - libboost-all-dev
+    - cmake
 
 before_install:
   - git config --global user.name "Continuous Integration"
@@ -19,13 +23,10 @@ before_install:
   - export CXX="g++-4.8"
 
 install:
-  # a full get/build/install cycle of boost is way too slow
-  #- wget https://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2
-  #- tar xfj boost-1.60.0.tar.gz
-  #- cd boost-1.60.0 && ./bootstrap.sh && --prefix=/usr/local && ./b2 install
-  #- export BOOST_ROOT="/usr/local/boost" && export PATH="$PATH:$BOOST_ROOT"
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"  CC="gcc-4.8"; fi
+  - if [ "$CXX" == "clang++" ]; then export CXX="clang++-3.4"; fi
 
 script:
-  - find /usr -name "liboost_chrono.*"
+  - $CXX --version
   - make -f Makefile.mk # gcc without Autotools
   - unit_tests
