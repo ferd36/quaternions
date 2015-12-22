@@ -1,7 +1,6 @@
 language: cpp
 
 compiler:
-  - clang
   - g++
 
 addons:
@@ -9,13 +8,6 @@ addons:
     packages:
       - g++-4.8
       - libboost1.59-all-dev
-      - cmake3.0
-
-before_script:
-  - mkdir build
-  - cd build
 
 script:
-  - cmake ..
-  - make # cmake/clang
   - make -f ../Makefile.mk # gcc
