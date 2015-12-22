@@ -28,4 +28,3 @@ script:
   - cmake .
   - make
   - ./unit_tests
-  - ctest --verbose
