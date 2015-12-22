@@ -5,6 +5,9 @@ sudo: false
 
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - boost-latest
     packages:
       - g++-4.8
       - libboost1.58-all-dev
@@ -13,6 +16,7 @@ before_install:
   - git config --global user.name "Continuous Integration"
   - git config --global user.email "fastier@yahoo.com"
   - git config --global push.default simple
+  - export CXX="g++-4.8"
 
 install:
   # a full get/build/install cycle of boost is way too slow
