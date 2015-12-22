@@ -1,7 +1,7 @@
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 2.8.7) # travis doesn't want 3.0 I'm using locally
 project(quaternions)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
+set(CMAKE_CXX_FLAGS "-Wall -std=c++11")
 
 message("System        : " ${CMAKE_SYSTEM})
 message("CMake dir     : " ${CMAKE_ROOT})
@@ -9,8 +9,10 @@ message("Compiler      : " ${CMAKE_CXX_COMPILER})
 message("Flags         : " ${CMAKE_CXX_FLAGS})
 
 # boost - used for comparison in unit tests
-find_package(Boost 1.5.9 REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
+# uncomment only if needing to use a specific location.
+# in travis, it assumes boost is in /usr/include/boost
+#find_package(Boost 1.5.9 REQUIRED)
+#include_directories(${Boost_INCLUDE_DIRS})
 
 set(SOURCE_FILES src/unit_tests.cpp src/quaternion.h src/quaternion_utils.h src/quaternion_io.h)
 
