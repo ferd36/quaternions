@@ -15,10 +15,7 @@ addons:
     - cmake
 
 before_install:
-  - git config --global user.name "Continuous Integration"
-  - git config --global user.email "fastier@yahoo.com"
-  - git config --global push.default simple
-  - export CXX="g++-4.8"
+  - pip install --user cpp-coveralls
 
 install:
   - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"  CC="gcc-4.8"; fi
@@ -26,3 +23,7 @@ install:
 script:
   - make -f Makefile.mk # gcc without Autotools
   - ./unit_tests
+  - gcov unit_test.cpp
+
+after_success:
+  - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
