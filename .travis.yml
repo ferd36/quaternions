@@ -7,11 +7,19 @@ addons:
   apt:
     packages:
       - g++-4.8
-      - libboost1.59-all-dev
+
+before_install:
+  - git config --global user.name "Continuous Integration"
+  - git config --global user.email "fastier@yahoo.com"
+  - git config --global push.default simple
+
+install:
+  - wget https://sourceforge.net/projects/boost/files/boost/1.60.0/boost_1_60_0.tar.bz2
+  - tar xfj boost-1.60.0.tar.gz
+  - cd boost-1.60.0 && ./bootstrap.sh && --prefix=/usr/local && ./b2 install
+  - export BOOST_ROOT="/usr/local/boost" && export PATH="$PATH:$BOOST_ROOT"
 
 script:
-  - find /usr -name "quaternion.hpp"
-  - find /usr -name "liboost_chrono.a"
-  - find /usr -name "liboost_chrono.so"
+  - find /usr/local -name "liboost_chrono.*"
   - make -f Makefile.mk # gcc without Autotools
   - unit_tests
