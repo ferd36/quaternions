@@ -1,4 +1,5 @@
-# Quaternions  [![Build status](https://travis-ci.org/FrankAstier/quaternions.svg?branch=master)](https://travis-ci.org/FrankAstier/quaternions) [![Coverage status](https://coveralls.io/repos/FrankAstier/quaternions/badge.svg?branch=master&service=github)](https://coveralls.io/github/FrankAstier/quaternions?branch=master)
+# Quaternions  [![Build status](https://travis-ci.org/FrankAstier/quaternions.svg?branch=master)](https://travis-ci.org/FrankAstier/quaternions) [![Coverage Status](https://coveralls.io/repos/FrankAstier/quaternions/badge.svg?branch=master&service=github)](https://coveralls.io/github/FrankAstier/quaternions?branch=master)
+
 A library to work with quaternions, as a single header file.
 
 ## Requirements
