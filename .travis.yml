@@ -15,17 +15,14 @@ addons:
       - lcov
 
 install:
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"  CC="gcc-4.8"; fi
-  - lcov --version
-  - g++ --version
+  - export CXX="g++-4.8" 
 
 script:
-  - make -f Makefile.mk # no Autotools
+  - make -f Makefile.mk 
   - ./unit_tests
 
 after_success:
   - lcov --directory . --capture --output-file coverage.info
-  - lcov --remove coverage.info 'tests/*' '/usr/*' --output-file coverage.info
   - lcov --list coverage.info
   - coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
 
