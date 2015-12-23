@@ -106,6 +106,13 @@ inline Quaternion<T> random_quaternion(G& g) {
   return {g(), g(), g(), g()};
 }
 
+/**
+ * For convenience and ease of reading the code.
+ */
+typedef std::complex<float> Cf;
+typedef std::complex<double> Cd;
+typedef std::complex<long double> Cld;
+
 //----------------------------------------------------------------------------------------------------------------------
 // Unit tests
 //----------------------------------------------------------------------------------------------------------------------
@@ -119,7 +126,7 @@ void test_constructors() {
   }
 
   {
-    Qf x((float)0, (float)0, (float)0, (float)0);
+    Qf x(0,0,0,0);
     assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 
@@ -155,24 +162,24 @@ void test_constructors() {
   }
 
   {
-    Qf x(complex<float>(1,2));
+    Qf x(Cf(1,2));
     assert(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
   }
 
   {
-    Qf x(complex<float>(1,2), complex<float>(3,4));
+    Qf x(Cf(1,2), Cf(3,4));
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
-    assert(x.c1() == complex<float>(1,2));
-    assert(x.c2() == complex<float>(3,4));
+    assert(x.c1() == Cf(1,2));
+    assert(x.c2() == Cf(3,4));
   }
 
   {
-    Qd x(complex<float>(1,2), complex<float>(3,4));
+    Qd x(Cf(1,2), Cf(3,4));
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
   {
-    Qd y(complex<float>(1,2), complex<float>(3,4));
+    Qd y(Cf(1,2), Cf(3,4));
     Qd x(y);
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
@@ -184,7 +191,7 @@ void test_constructors() {
   }
 
   {
-    Qd y(complex<float>(1,2), complex<float>(3,4));
+    Qd y(Cf(1,2), Cf(3,4));
     Qd x = y;
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
@@ -309,7 +316,7 @@ void test_accessors() {
 
   {
     Qf x(3.14, 2.71);
-    complex<float> c = x;
+    Cf c = x;
     assert(c.real() == 3.14f && c.imag() == 2.71f);
   }
 
@@ -349,13 +356,49 @@ void test_norms() {
     assert(normalize(x).is_unit(1e-6));
     assert(nearly_equal(normalize(x), x/std::sqrt(1+4+9+16), 1e-6));
   }
+
+  {
+    Qf x{1,-4,3,2};
+    assert(norm_l1(x) == 1+2+3+4);
+    assert(norm_sup(x) == 4);
+    assert(unreal_norm2(x) == 16+9+4);
+    assert(is_unit(x) == false);
+    assert(is_unit(normalize(x), 1e-6) == true);
+    assert(is_unreal(x) == false);
+    x -= 1;
+    assert(is_unreal(x, 1e-6) == true);
+  }
 }
 
 void test_equality() {
   cout << "Testing equality" << endl;
+  assert(Qf(1) == 1);
+  assert(1 == Qf(1));
+  assert(Qf(1) != 2);
+  assert(2 != Qf(1));
+  assert(Qf(1,2) != 1);
+  assert(Qf(1,2) == Cf(1,2));
+  assert(Cf(1,2) == Qf(1,2));
+  assert(Qf(1,2) != Cf(3,4));
+  assert(Cf(3,4) != Qf(1,2));
+  assert(Qf(1,2,3) == Qf(1,2,3));
+  assert(Qf(1,2,3) != Qf(4,5,6));
   assert(Qf(1,2,3,4) == Qf(1, 2, 3, 4));
   assert(Qf(1,2,3,4) != Qf(4,3,2,1));
-  //TODO: refine for precision
+  assert(nearly_equal(Qf(1,2,3,4), Qf(1,2,3,4), 0));
+  assert(nearly_equal(Qf(1,2,3,4), Qf(1,2,3,4), 1e-6));
+  assert(nearly_equal(Qf(1,2,3,4), Qf(1,2,3,3.9999999f), 1e-6));
+  assert(!nearly_equal(Qf(1,2,3,4), Qf(0,2,3,3.9999999f), 1e-6));
+  assert(!nearly_equal(Qf(1,2,3,4), Qf(1), 1e-6));
+  assert(!nearly_equal(Qf(1,2,3,4), Qf(1,2), 1e-6));
+  assert(!nearly_equal(Qf(1,2,3,4), Qf(1,2,3), 1e-6));
+  assert(!nearly_equal(Qf(1,2,3,4), Cf(1), 1e-6));
+  assert(!nearly_equal(Qf(1,2,3,4), Cf(1,2), 1e-6));
+  assert(nearly_equal(Qf(1), Cf(1), 1e-6));
+  assert(!nearly_equal(Qf(1), Cf(2), 1e-6));
+  assert(nearly_equal(Qf(1,2), Cf(1,2), 1e-6));
+  assert(!nearly_equal(Qf(1), Cf(1,2), 1e-6));
+  assert(!nearly_equal(Qf(3,4), Cf(1,2), 1e-6));
 }
 
 void test_plus_minus() {
@@ -369,7 +412,7 @@ void test_plus_minus() {
 }
 
 void test_unary_w_scalar() {
-  cout << "Testing unary operations with scalar" << endl;
+  cout << "Testing unary operators with scalar" << endl;
   {
     Qd x(1,2,3,4);
     x += (long double) 3;
@@ -401,8 +444,35 @@ void test_unary_w_scalar() {
   }
 }
 
-void test_unary_operators() {
-  cout << "Testing unary operators" << endl;
+void test_unary_w_complex() {
+  cout << "Testing unary operators with complex" << endl;
+  {
+    Qf x(1); Cf y(3.14, 2.718);
+    x += y;
+    assert(nearly_equal(x, Cf(4.14, 2.718), 1e-6));
+  }
+
+  {
+    Qf x(1,2), y(3.14, 2.718);
+    x += y;
+    assert(nearly_equal(x, Cf(4.14,4.718), 1e-6));
+  }
+
+  {
+    Qf x(1,2,3,4); Cf y(5,6);
+    x *= y;
+    assert(x == Qf(1,2,3,4) * Qf(5,6));
+  }
+
+  {
+    Qf x(1,2,3,4); Cf y(5,6);
+    x /= y;
+    assert(nearly_equal(x, Qf(1,2,3,4) / Qf(5,6), 1e-6));
+  }
+}
+
+void test_unary_w_quaternion() {
+  cout << "Testing unary operators with quaternion" << endl;
   {
     Qf x(1), y(3.14);
     x += y;
@@ -412,7 +482,7 @@ void test_unary_operators() {
   {
     Qf x(1,2), y(3.14, 2.718);
     x += y;
-    assert(nearly_equal(x, complex<float>(4.14,4.718), 1e-6));
+    assert(nearly_equal(x, Cf(4.14,4.718), 1e-6));
   }
 
   {
@@ -446,7 +516,18 @@ void test_unary_operators() {
   }
 }
 
-// TODO: test unaries with complex
+void test_operators() {
+  cout << "Testing operators" << endl;
+
+  {
+    assert(Qf(1,2,3,4) * 3 == Qf(3,6,9,12));
+  }
+
+  {
+    assert(3 / Qf(1,2) == 3.0f / Cf(1,2));
+    assert(3 / Qf(1,2,3,4) == 3.0f / quaternion<float>(1,2,3,4));
+  }
+}
 
 void test_pow2() {
   cout << "Testing pow2" << endl;
@@ -459,7 +540,7 @@ void test_pow2() {
   assert(pow2(Qf_k) == -1);
   assert(pow2(Qf(1,2,3,4)) == Qf(1,2,3,4) * Qf(1,2,3,4));
   assert(pow2(Qf(3.14)) == 3.14f * 3.14f);
-  assert(pow2(Qf(1,2)) == complex<float>(1,2) * complex<float>(1,2));
+  assert(pow2(Qf(1,2)) == Cf(1,2) * Cf(1,2));
 }
 
 void test_pow3() {
@@ -495,17 +576,16 @@ void test_pow() {
 
   assert(pow(Qf_1, 0.5f) == 1);
   assert(nearly_equal(pow(-Qf_1, 0.5f), Qf_i, 1e-6));
-  assert(nearly_equal(pow(Qf_i, 0.5f), sqrt(complex<float>(0,1)), 1e-6));
-  assert(nearly_equal(pow(-Qf_i, 0.5f), sqrt(complex<float>(0,-1)), 1e-6));
+  assert(nearly_equal(pow(Qf_i, 0.5f), sqrt(Cf(0,1)), 1e-6));
+  assert(nearly_equal(pow(-Qf_i, 0.5f), sqrt(Cf(0,-1)), 1e-6));
   assert(nearly_equal(pow(Qf_j, 0.5f), Qf(1.0f/sqrt(2.0f), 0, 1.0f/sqrt(2.0f)), 1e-6));
   assert(nearly_equal(pow(-Qf_j, 0.5f), Qf(1.0f/sqrt(2.0f), 0, -1.0f/sqrt(2.0f)), 1e-6));
   assert(nearly_equal(pow(Qf_k, 0.5f), Qf(1.0f/sqrt(2.0f), 0, 0, 1.0f/sqrt(2.0f)), 1e-6));
   assert(nearly_equal(pow(-Qf_k, 0.5f), Qf(1.0f/sqrt(2.0f), 0, 0, -1.0f/sqrt(2.0f)), 1e-6));
   assert(pow(Qf_1, -0.33f) == 1);
-  assert(nearly_equal(pow(-Qf_1, -0.33f), pow(complex<float>(-1,0), -0.33f), 1e-6));
-  assert(nearly_equal(pow(Qf_i, -0.33f), pow(complex<float>(0,1), -0.33f), 1e-6));
-  cout << pow(-Qf_i, -0.33f) << endl;
-  cout << pow(-Qf_j, -0.33f) << endl;
+  assert(nearly_equal(pow(-Qf_1, -0.33f), pow(Cf(-1,0), -0.33f), 1e-6));
+  assert(nearly_equal(pow(Qf_i, -0.33f), pow(Cf(0,1), -0.33f), 1e-6));
+  assert(nearly_equal(pow(-Qf_i, -0.33f), pow(Cf(0,-1), -0.33f), 1e-6));
 
   for (size_t i = 0; i < 1000; ++i) {
     int n = (int) random() % 20;
@@ -607,6 +687,14 @@ void test_commutator() {
   Qf c1 = commutator(a,b);
   Qf c2 = 2 * cross(a,b);
   assert(c1 == c2);
+}
+
+void test_axby() {
+  cout << "Testing axby" << endl;
+  {
+    Qf x(1,2,3,4), y(5,6,7,8);
+    assert(axby(-1,x,3,y) == -x + 3 * y);
+  }
 }
 
 void test_io_eps() {
@@ -811,7 +899,8 @@ int main() {
   test_equality();
   test_plus_minus();
   test_unary_w_scalar();
-  test_unary_operators();
+  test_unary_w_complex();
+  test_unary_w_quaternion();
   test_stl();
   test_boost_rational();
   test_pow2();
@@ -823,6 +912,7 @@ int main() {
   test_dot();
   test_cross();
   test_commutator();
+  test_axby();
   test_io_eps();
   test_io_style();
 

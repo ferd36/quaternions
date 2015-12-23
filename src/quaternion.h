@@ -96,7 +96,7 @@ public:
    * This sets all 4 components of the quaternion.
    */
   template<typename T1>
-  Quaternion(const std::complex<T1>& x, const std::complex<T1> &y = std::complex<T1>(0, 0))
+  Quaternion(const std::complex<T1>& x, const std::complex<T1>& y = std::complex<T1>(0, 0))
       : _a(x.real()), _b(x.imag()), _c(y.real()), _d(y.imag()) { }
 
   /**
@@ -121,7 +121,7 @@ public:
    * Copy constructor.
    */
   template<typename T1>
-  Quaternion(const Quaternion<T1> &y)
+  Quaternion(const Quaternion<T1>& y)
       : _a(static_cast<T>(y.a())),
         _b(static_cast<T>(y.b())),
         _c(static_cast<T>(y.c())),
@@ -131,7 +131,7 @@ public:
    * Assignment operator.
    */
   template<typename T1>
-  Quaternion &operator=(const Quaternion<T1> &other) {
+  Quaternion &operator=(const Quaternion<T1>& other) {
     _a = static_cast<T>(other.a());
     _b = static_cast<T>(other.b());
     _c = static_cast<T>(other.c());
@@ -285,6 +285,7 @@ public:
 
   /**
    * The l1 norm of the quaternion.
+   * TODO: correct? needs function too.
    */
   T norm_l1() const {
     return std::abs(_a) + std::abs(_b) + std::abs(_c) + std::abs(_d);
@@ -337,9 +338,10 @@ public:
    */
   template <typename T1 =T>
   bool is_unreal(T1 eps =0) const {
-    return !is_scalar_zero(_b, eps)
-           && is_scalar_zero(_c, eps)
-           && is_scalar_zero(_d, eps);
+    return is_scalar_zero(_a, eps)
+           && !(is_scalar_zero(_b, eps)
+             && is_scalar_zero(_c, eps)
+             && is_scalar_zero(_d, eps));
   }
 
   /**
@@ -398,29 +400,54 @@ public:
    * Unary +=.
    */
   template<typename T1>
-  Quaternion operator+=(const std::complex<T1> &y) {
+  Quaternion operator+=(const std::complex<T1>& y) {
     _a += y.real();
     _b += y.imag();
     return *this;
   }
 
   /**
-  * Unary +=.
+  * Unary -=.
   */
   template<typename T1>
-  Quaternion operator-=(const std::complex<T1> &y) {
+  Quaternion operator-=(const std::complex<T1>& y) {
     _a -= y.real();
     _b -= y.imag();
     return *this;
   }
 
-  // TODO *=, /= with complex
+  /**
+   * Unary *=.
+   */
+  template<typename T1>
+  Quaternion operator*=(const std::complex<T1>& y) {
+    T at = _a * y.real() - _b * y.imag();
+    T bt = _a * y.imag() + _b * y.real();
+    T ct = _c * y.real() + _d * y.imag();
+    T dt = - _c * y.imag() + _d * y.real();
+
+    _a = at;
+    _b = bt;
+    _c = ct;
+    _d = dt;
+
+    return *this;
+  }
+
+  /**
+   * Unary /=.
+   * TODO: reduce operation count
+   */
+  template<typename T1>
+  Quaternion operator/=(const std::complex<T1>& y) {
+    return operator*=(conj(y)/std::norm(y));
+  }
 
   /**
    * Unary +=.
    */
   template<typename T1>
-  Quaternion operator+=(const Quaternion<T1> &y) {
+  Quaternion operator+=(const Quaternion<T1>& y) {
     _a += y.a();
     _b += y.b();
     _c += y.c();
@@ -432,7 +459,7 @@ public:
    * Unary -=.
    */
   template <typename T1>
-  Quaternion operator-=(const Quaternion<T1> &y) {
+  Quaternion operator-=(const Quaternion<T1>& y) {
     _a -= y._a;
     _b -= y._b;
     _c -= y._c;
@@ -562,13 +589,18 @@ inline T norm(const Quaternion<T>& x) {
 }
 
 template<typename T>
-inline T nom_l1(const Quaternion<T>& x) {
+inline T norm_l1(const Quaternion<T>& x) {
   return x.norm_l1();
 }
 
 template<typename T>
 inline T norm_sup(const Quaternion<T>& x) {
   return x.norm_sup();
+}
+
+template<typename T>
+inline T unreal_norm2(const Quaternion<T>& x) {
+  return x.unreal_norm2();
 }
 
 /**
@@ -598,12 +630,12 @@ inline bool is_unreal(const Quaternion<T>& x, T1 eps =0) {
  * Equality.
  */
 template<typename T>
-inline bool operator==(const Quaternion<T>& x, const Quaternion<T> &y) {
+inline bool operator==(const Quaternion<T>& x, const Quaternion<T>& y) {
   return x.a() == y.a() && x.b() == y.b() && x.c() == y.c() && x.d() == y.d();
 }
 
 template<typename T>
-inline bool operator!=(const Quaternion<T>& x, const Quaternion<T> &y) {
+inline bool operator!=(const Quaternion<T>& x, const Quaternion<T>& y) {
   return !(x == y);
 }
 
@@ -681,12 +713,12 @@ inline Quaternion<T> operator+(const Quaternion<T>& x, T y) {
 }
 
 template<typename T>
-inline Quaternion<T> operator+(const Quaternion<T>& x, const Quaternion<T> &y) {
+inline Quaternion<T> operator+(const Quaternion<T>& x, const Quaternion<T>& y) {
   return Quaternion<T>(x) += y;
 }
 
 template<typename T>
-inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T> &y) {
+inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T>& y) {
   return Quaternion<T>(x) -= y;
 }
 
@@ -697,7 +729,7 @@ inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T> &y) {
  * TODO: on Mac/clang and only there, this is twice as slow as boost?
  */
 template<typename T>
-inline Quaternion<T> operator*(const Quaternion<T>& x, const Quaternion<T> &y) {
+inline Quaternion<T> operator*(const Quaternion<T>& x, const Quaternion<T>& y) {
   return Quaternion<T>(x) *= y;
 }
 
@@ -712,12 +744,12 @@ inline Quaternion<T> operator/(T1 k, const Quaternion<T>& x) {
 }
 
 template<typename T>
-inline Quaternion<T> operator/(const Quaternion<T>& x, const Quaternion<T> &y) {
+inline Quaternion<T> operator/(const Quaternion<T>& x, const Quaternion<T>& y) {
   return x * inverse(y);
 }
 
 template<typename T>
-inline T dot(const Quaternion<T>& x, const Quaternion<T> &y) {
+inline T dot(const Quaternion<T>& x, const Quaternion<T>& y) {
   return x.a() * y.a() + x.b() * y.b() + x.c() * y.c() + x.d() * y.d();
 }
 
@@ -725,7 +757,7 @@ inline T dot(const Quaternion<T>& x, const Quaternion<T> &y) {
  * 9 operations
  */
 template<typename T>
-inline Quaternion<T> cross(const Quaternion<T>& x, const Quaternion<T> &y) {
+inline Quaternion<T> cross(const Quaternion<T>& x, const Quaternion<T>& y) {
   return {0,
           x.c() * y.d() - x.d() * y.c(),
           x.d() * y.b() - x.b() * y.d(),
@@ -733,7 +765,7 @@ inline Quaternion<T> cross(const Quaternion<T>& x, const Quaternion<T> &y) {
 }
 
 template<typename T>
-inline Quaternion<T> commutator(const Quaternion<T>& x, const Quaternion<T> &y) {
+inline Quaternion<T> commutator(const Quaternion<T>& x, const Quaternion<T>& y) {
   return x * y - y * x;
 }
 
@@ -908,7 +940,7 @@ inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T>& a) {
  * result = a*x + b*y
  */
 template<typename T, typename K>
-inline Quaternion<T> axby(K k1, const Quaternion<T>& x, K k2, const Quaternion<T> &y) {
+inline Quaternion<T> axby(K k1, const Quaternion<T>& x, K k2, const Quaternion<T>& y) {
   return Quaternion<T>(x).axby(k1, k2, y);
 }
 
