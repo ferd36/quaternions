@@ -9,21 +9,24 @@ addons:
     - ubuntu-toolchain-r-test
     - boost-latest
     packages:
-    - gcc-4.8
-    - g++-4.8
+    - gcc-4.9
+    - g++-4.9
     - libboost-all-dev
-    - cmake
+    - lcov
 
-before_install:
-  - pip install --user cpp-coveralls
 
 install:
-  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8"  CC="gcc-4.8"; fi
+  - if [ "$CXX" = "g++" ]; then export CXX="g++-4.9"  CC="gcc-4.9"; fi
+  - lcov --version
+  - g++ --version
 
 script:
-  - make -f Makefile.mk # gcc without Autotools
+  - make -f Makefile.mk # no Autotools
   - ./unit_tests
 
 after_success:
-  - gcov unit_tests.cpp
-  - coveralls --verbose --gcov-options '\-lp'
+  - lcov --directory . --capture --output-file coverage.info
+  - lcov --remove coverage.info 'tests/*' '/usr/*' --output-file coverage.info
+  - lcov --list coverage.info
+  - coveralls-lcov --repo-token ${COVERALLS_TOKEN} coverage.info
+
