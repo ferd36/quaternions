@@ -226,6 +226,13 @@ void test_constructors() {
     Qf x{1,0,2,0};
     assert(x.a() == 1 && x.b() == 0 && x.c() == 2 && x.d() == 0);
   }
+
+  {
+    Qf x(1,2,3,4);
+    Qf y;
+    y = x;
+    assert(x == y);
+  }
 }
 
 void test_trigonometric_constructors() {
@@ -456,6 +463,12 @@ void test_unary_w_complex() {
     Qf x(1,2), y(3.14, 2.718);
     x += y;
     assert(nearly_equal(x, Cf(4.14,4.718), 1e-6));
+  }
+
+  {
+    Qf x(1,2), y(3.14, 2.718);
+    x -= y;
+    assert(nearly_equal(x, Cf(-2.14f,-0.718f), 1e-6));
   }
 
   {
