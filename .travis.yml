@@ -12,7 +12,7 @@ addons:
       - gcc-4.8
       - g++-4.8
       - libboost-all-dev
-      - lcov
+      - valgrind
 
 install:
   - export CXX="g++-4.8"
@@ -21,7 +21,8 @@ install:
 script:
   - make -f Makefile.mk 
   - ./unit_tests
+  - valgrind --leak-check=full ./unit_tests
 
 after_success:
-  - coveralls -r . -b . --gcov /usr/bin/${GCOV} --repo-token "${COVERALLS_TOKEN}" --gcov-options '\-lp'
+  - coveralls -r . -b . --repo-token "${COVERALLS_TOKEN}" --gcov-options '\-lp'
 
