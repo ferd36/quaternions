@@ -4,7 +4,6 @@ version: 0.{build}-{branch}
 skip_tags: true
  
 # Operating system (build VM template)
-os: linux
 init:
 clone_folder:
 platform: x64 
