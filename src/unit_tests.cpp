@@ -96,7 +96,7 @@ bool operator==(const Quaternion<T>& x, const boost::math::quaternion<T>& boost_
  */
 std::default_random_engine generator;
 std::uniform_real_distribution<float> distribution(0.0,1.0);
-auto rng = std::bind(distribution, generator);
+auto rng = bind(distribution, generator);
 
 /**
  * A function to generate random quaternions.
