@@ -1,0 +1,22 @@
+# version format
+version: 0.{build}-{branch}
+ 
+skip_tags: true
+ 
+# Operating system (build VM template)
+os: linux
+init:
+clone_folder:
+platform: x64 
+
+before_build:
+build_script:
+  - make -f Makefile.mk
+after_build:
+before_test:
+test_script:
+  ./unit_tests
+after_test:
+on_success:
+on_failure:
+on_finish:
