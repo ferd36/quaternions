@@ -42,3 +42,4 @@ unit_tests
 *.gcov
 *.gcda
 *.gcno
+.DS_Store
