@@ -13,6 +13,23 @@ addons:
       - g++-4.8
       - libboost-all-dev
       - valgrind
+      - gcov
+
+before_install:
+  # add external repos
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test           # gcc
+  - sudo add-apt-repository -y ppa:boost-latest/ppa                  # boost
+  
+  # update apt 
+  - sudo apt-get update -y -qq
+
+  # install
+  - sudo apt-get install -y -qq g++-4.8 boost1.59
+  
+  # make sure we're using new gcc tools
+  - sudo update-alternatives --install /usr/bin/g++  g++  /usr/bin/g++-4.8  90
+  - sudo update-alternatives --install /usr/bin/gcc  gcc  /usr/bin/gcc-4.8  90 
+  - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-4.8 90
 
 install:
   - export CXX="g++-4.8"
