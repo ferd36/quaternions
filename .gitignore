@@ -38,5 +38,7 @@ Makefile
 CMakeCache.txt
 CMakeFiles
 cmake_install.cmake
-quaternions
 unit_tests
+*.gcov
+*.gcda
+*.gcno
