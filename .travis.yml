@@ -23,7 +23,7 @@ install:
 script:
   - make -f Makefile.mk # gcc without Autotools
   - ./unit_tests
-  #- gcov unit_tests.cpp
 
 after_success:
+  - gcov unit_tests.cpp
   - coveralls --verbose --gcov-options '\-lp'
