@@ -697,6 +697,18 @@ void test_axby() {
   }
 }
 
+void test_io() {
+  cout << Qf() << endl;
+  cout << Qf(1) << endl;
+  cout << Qf(-1) << endl;
+  cout << Qf(0,1) << endl;
+  cout << Qf(0,-1) << endl;
+  cout << Qf(0,0,1) << endl;
+  cout << Qf(0,0,-1) << endl;
+  cout << Qf(0,0,0,1) << endl;
+  cout << Qf(0,0,0,-1) << endl;
+}
+
 void test_io_eps() {
   cout << "Testing io/eps" << endl;
   Qd x(1e-1, 1e-2, 1e-3, 1e-4);
@@ -913,6 +925,7 @@ int main() {
   test_cross();
   test_commutator();
   test_axby();
+  test_io();
   test_io_eps();
   test_io_style();
 
