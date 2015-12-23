@@ -143,33 +143,33 @@ void test_constructors() {
   }
 
   {
-    Qf x((float)1);
+    Qf x(1);
     assert(x.a() == 1 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 
   {
-    Qf x((float)1, (float)2);
+    Qf x(1, 2);
     assert(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
   }
 
   {
-    Qf x((float)1, (float)2, (float)3);
+    Qf x(1, 2, 3);
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 0);
   }
 
   {
-    Qf x((float)1, (float)2, (float)3, (float)4);
+    Qf x(1, 2, 3, 4);
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
 
   }
 
   {
-    Qf x((int)1,(int)2);
+    Qf x(1,2);
     assert(x.a() == 1 && x.b() == 2 && x.c() == 0 && x.d() == 0);
   }
 
   {
-    Qf x((int)1,(int)2,(int)3,(int)4);
+    Qf x(1,2,3,4);
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
@@ -197,7 +197,7 @@ void test_constructors() {
   }
 
   {
-    Qf y((int)1,(int)2,(int)3,(int)4);
+    Qf y(1,2,3,4);
     Qd x(y);
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
@@ -209,7 +209,7 @@ void test_constructors() {
   }
 
   {
-    Qf y((int)1,(int)2,(int)3,(int)4);
+    Qf y(1,2,3,4);
     Qd x = y;
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
     assert(x.c1() == complex<double>(1,2));
@@ -242,6 +242,7 @@ void test_constructors() {
   {
     Qf x(1,2,3,4);
     Qf y;
+    y += 3;
     y = x;
     assert(x == y);
   }
@@ -358,6 +359,9 @@ void test_to_polar_representation() {
   {
     PR expected{{0,0,0,0,0}};
     assert(Qd().to_polar_representation() == expected);
+
+    expected = {{1,1,1,1,1}};
+    assert(!nearly_equal(Qd(1).to_polar_representation(), expected, 1e-6));
 
     expected = {{3,3.141592,0,0,0}};
     assert(nearly_equal(Qd(-3).to_polar_representation(), expected, 1e-6));
@@ -614,6 +618,14 @@ void test_pow() {
   assert(pow(Qf_i, 0) == 1);
   assert(pow(Qf_j, 0) == 1);
   assert(pow(Qf_k, 0) == 1);
+
+  assert(nearly_equal(pow(Qf(1),-1),Qf(1),1e-6));
+  assert(nearly_equal(pow(Qf(2),-3),Qf(1.0f/8),1e-6));
+  assert(nearly_equal(pow(Qf(-2),-3),Qf(-1.0f/8),1e-6));
+  assert(nearly_equal(pow(Qd_i,-2),pow(Cd(0,1),-2.0f),1e-15));
+  // TODO: verify
+  assert(nearly_equal(pow(Qd_j,-2),Qd(-1),1e-10));
+  assert(nearly_equal(pow(Qd_k,-2),Qd(-1),1e-10));
 
   assert(pow(Qf_1, 0.5f) == 1);
   assert(nearly_equal(pow(-Qf_1, 0.5f), Qf_i, 1e-6));
@@ -955,6 +967,7 @@ int main() {
   test_unary_w_scalar();
   test_unary_w_complex();
   test_unary_w_quaternion();
+  test_operators();
   test_stl();
   test_boost_rational();
   test_pow2();
