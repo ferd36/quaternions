@@ -139,8 +139,7 @@ public:
     return *this;
   }
 
-  template<typename T1>
-  static Quaternion spherical(T1 rho, T1 theta, T1 phi1, T1 phi2) {
+  static Quaternion spherical(T rho, T theta, T phi1, T phi2) {
 
     T d = std::sin(phi2);
     T cr = std::cos(phi2);
@@ -152,8 +151,7 @@ public:
     return {rho * a, rho * b, rho * c, rho * d};
   }
 
-  template<typename T1>
-  static Quaternion semipolar(T1 rho, T1 alpha, T1 theta1, T1 theta2) {
+  static Quaternion semipolar(T rho, T alpha, T theta1, T theta2) {
 
     T ca = std::cos(alpha);
     T sa = std::sin(alpha);
@@ -165,8 +163,7 @@ public:
     return {rho * a, rho * b, rho * c, rho * d};
   }
 
-  template<typename T1>
-  static Quaternion multipolar(T1 rho1, T1 theta1, T1 rho2, T1 theta2) {
+  static Quaternion multipolar(T rho1, T theta1, T rho2, T theta2) {
 
     T a = rho1 * std::cos(theta1);
     T b = rho1 * std::sin(theta1);
@@ -176,8 +173,7 @@ public:
     return {a, b, c, d};
   }
 
-  template<typename T1>
-  static Quaternion cylindrospherical(T1 t, T1 radius, T1 longitude, T1 latitude) {
+  static Quaternion cylindrospherical(T t, T radius, T longitude, T latitude) {
 
     T cl = std::cos(latitude);
     T b = radius * cl * std::cos(longitude);
@@ -187,8 +183,7 @@ public:
     return {t, b, c, d};
   }
 
-  template<typename T1>
-  static Quaternion cylindrical(T1 r, T1 angle, T1 h1, T1 h2) {
+  static Quaternion cylindrical(T r, T angle, T h1, T h2) {
 
     T a = r * std::cos(angle);
     T b = r * std::sin(angle);
@@ -234,11 +229,12 @@ public:
    * - and each of the components of the "unreal unit direction".
    */
   polar_representation to_polar_representation() const {
-    T n = norm();
-    T theta = std::acos(_a / n);
-    T nu = _b * _b + _c * _c + _d * _d;
-    if (nu != 0) {
-      T ns = 1.0 / std::sqrt(nu); //n*std::sin(theta);
+    T nu = unreal_norm2();
+    T n = std::sqrt(nu + _a*_a);
+    assert(nu >= 0);
+    if (nu > 0) {
+      T theta = std::acos(_a / n);
+      T ns = std::sqrt(nu);
       return {{n, theta, _b / ns, _c / ns, _d / ns}};
     }
     const T pi = std::atan2(+0., -0.);

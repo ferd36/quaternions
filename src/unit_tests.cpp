@@ -85,11 +85,23 @@ inline bool nearly_equal(const Quaternion<T>& us, const boost::math::quaternion<
  * This method useful in unit tests, to compare against boost, which has
  * a (supposedly) well tested quaternion library.
  * NOTE: hard to compare large values, requires floating point relative comparison.
+ * TODO: maybe remove this and keep only a nearly_equal for uniformity
  */
 template <typename T>
-bool operator==(const Quaternion<T>& x, const boost::math::quaternion<T>& boost_y) {
+inline bool operator==(const Quaternion<T>& x, const boost::math::quaternion<T>& boost_y) {
   return nearly_equal(x, boost_y, 1e-6);
 }
+
+/**
+ * This used to test e.g. the polar representation of the quaternions.
+ */
+template <typename T, size_t n>
+inline bool nearly_equal(const std::array<T,n>& x, const std::array<T,n>& y, T eps) {
+  for (size_t i = 0; i < n; ++i)
+    if (!is_near_equal_relative(x.at(i), y.at(i), eps))
+      return false;
+  return true;
+};
 
 /**
  * A random number generator, for the speed tests.
@@ -243,33 +255,28 @@ void test_trigonometric_constructors() {
   }
 
   {
-    Qd x = Qf::spherical((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
-    cout << x << endl;
-    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    Qd x = Qd::spherical(10, 3.1415, 3.1415/2, 3.1415/4);
+    assert(x == boost::math::spherical(10.0, 3.1415, 3.1415/2, 3.1415/4));
   }
 
   {
-    Qd x = Qf::semipolar((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
-    cout << x << endl;
-    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    Qd x = Qd::semipolar(10, 3.1415, 3.1415/2, 3.1415/4);
+    assert(x == boost::math::semipolar(10.0, 3.1415, 3.1415/2, 3.1415/4));
   }
 
   {
-    Qd x = Qf::multipolar((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
-    cout << x << endl;
-    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    Qd x = Qd::multipolar(10, 3.1415, 3.1415/2, 3.1415/4);
+    assert(x == boost::math::multipolar(10.0, 3.1415, 3.1415/2, 3.1415/4));
   }
 
   {
-    Qd x = Qf::cylindrospherical((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
-    cout << x << endl;
-    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    Qd x = Qd::cylindrospherical(-2.0, -3.0, 3.1415/2, 3.1415/4);
+    assert(x == boost::math::cylindrospherical(-2.0, -3.0, 3.1415/2, 3.1415/4));
   }
 
   {
-    Qd x = Qf::cylindrical((float)10, (float)3.1415, float(3.1415/2), float(3.1415/4));
-    cout << x << endl;
-    //assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
+    Qd x = Qd::cylindrical(-2.0, 3.1415/2, 3.0, 4.0);
+    assert(x == boost::math::cylindrical(-2.0, 3.1415/2, 3.0, 4.0));
   }
 }
 
@@ -331,7 +338,7 @@ void test_accessors() {
     Qf x(1,2,3,4);
     array<float,4> a = x; // can cast to array directly
     array<float,4> r{{1,2,3,4}};
-    assert(a == r);
+    assert(a == r); // exact equality expected (operator== is in std)
   }
 }
 
@@ -347,11 +354,32 @@ void test_to_matrix() {
 
 void test_to_polar_representation() {
   cout << "Testing polar representation" << endl;
-  Qd x(1);
-  cout << Qd(1,0,0,0).to_polar_representation() << endl;
-  cout << Qd(0,1,0,0).to_polar_representation() << endl;
-  cout << Qd(0,0,1,0).to_polar_representation() << endl;
-  cout << Qd(0,0,0,1).to_polar_representation() << endl;
+  typedef typename Qd::polar_representation PR;
+  {
+    PR expected{{0,0,0,0,0}};
+    assert(Qd().to_polar_representation() == expected);
+
+    expected = {{3,3.141592,0,0,0}};
+    assert(nearly_equal(Qd(-3).to_polar_representation(), expected, 1e-6));
+
+    expected = {{1,3.1415926f/2,1,0,0}};
+    assert(nearly_equal(Qd(0,1).to_polar_representation(), expected, 1e-6));
+
+    expected = {{3,3.1415926f/2,-1,0,0}};
+    assert(nearly_equal(Qd(0,-3).to_polar_representation(), expected, 1e-6));
+
+    expected = {{1,3.1415926f/2,0,1,0}};
+    assert(nearly_equal(Qd(0,0,1).to_polar_representation(), expected, 1e-6));
+
+    expected = {{2.5,3.1415926f/2,0,-1,0}};
+    assert(nearly_equal(Qd(0,0,-2.5).to_polar_representation(), expected, 1e-6));
+
+    expected = {{1,3.1415926f/2,0,0,1}};
+    assert(nearly_equal(Qd(0,0,0,1).to_polar_representation(), expected, 1e-6));
+
+    expected = {{3.5,3.1415926f/2,0,0,-1}};
+    assert(nearly_equal(Qd(0,0,0,-3.5).to_polar_representation(), expected, 1e-6));
+  }
 }
 
 void test_norms() {
@@ -711,33 +739,34 @@ void test_axby() {
 }
 
 void test_io() {
-  cout << Qf() << endl;
-  cout << Qf(1) << endl;
-  cout << Qf(-1) << endl;
-  cout << Qf(0,1) << endl;
-  cout << Qf(0,-1) << endl;
-  cout << Qf(0,0,1) << endl;
-  cout << Qf(0,0,-1) << endl;
-  cout << Qf(0,0,0,1) << endl;
-  cout << Qf(0,0,0,-1) << endl;
+  stringstream s;
+  s << Qf() << Qf(1) << Qf(-1) << Qf(0,1) << Qf(0,-1) << Qf(0,0,1) << Qf(0,0,-1);
+  s << Qf(0,0,0,1) << Qf(0,0,0,-1) << Qf(1,2,3,4) << Qf(-1,2,-3,4);
+  assert(s.str() == "01-1i-ij-jk-k1+2i+3j+4k-1+2i-3j+4k");
 }
 
 void test_io_eps() {
   cout << "Testing io/eps" << endl;
   Qd x(1e-1, 1e-2, 1e-3, 1e-4);
-  cout << set_display_eps(1e-6) << x << endl;
-  cout << set_display_eps(1e-4) << x << endl;
-  cout << set_display_eps(1e-3) << x << endl;
-  cout << set_display_eps(1e-2) << x << endl;
-  cout << set_display_eps(1e-1) << x << endl;
-  cout << set_display_eps(1) << x << endl;
+  stringstream s;
+  s << set_display_eps(1e-6) << x;
+  s << set_display_eps(1e-4) << x;
+  s << set_display_eps(1e-3) << x;
+  s << set_display_eps(1e-2) << x;
+  s << set_display_eps(1e-1) << x;
+  s << set_display_eps(1) << x;
+  s << set_display_eps(1e-6);
+  assert(s.str() == "0.1+0.01i+0.001j+0.0001k0.1+0.01i+0.001j0.1+0.01i0.1");
 }
 
 void test_io_style() {
   cout << "Testing io/style" << endl;
   Qd x(1,2,3,4);
-  cout << set_display_style(q_nice) << x << endl;
-  cout << set_display_style(q_compact) << x << endl;
+  stringstream s;
+  s << set_display_eps(1e-6);
+  s << set_display_style(q_nice) << x << " ";
+  s << set_display_style(q_compact) << x ;
+  assert(s.str() == "1+2i+3j+4k {1,2,3,4}");
 }
 
 void test_stl() {
@@ -942,6 +971,7 @@ int main() {
   test_io_eps();
   test_io_style();
 
+  cout << endl;
   test_exp_speed();
   test_multiplication_speed();
   test_pow_speed();
