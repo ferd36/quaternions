@@ -23,6 +23,5 @@ script:
   - ./unit_tests
 
 after_success:
-
-  - coveralls -r . -b . --gcov /usr/bin/${GCOV} --repo-token "${COVERALLS_TOKEN}") --gcov-options '\-lp'
+  - coveralls -r . -b . --gcov /usr/bin/${GCOV} --repo-token "${COVERALLS_TOKEN}" --gcov-options '\-lp'
 
