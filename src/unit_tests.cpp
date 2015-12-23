@@ -916,10 +916,10 @@ int main() {
   test_io_eps();
   test_io_style();
 
-//  test_exp_speed();
-//  test_multiplication_speed();
-//  test_pow_speed();
-//  test_axby_speed();
+  test_exp_speed();
+  test_multiplication_speed();
+  test_pow_speed();
+  test_axby_speed();
 
   return 0;
 }
