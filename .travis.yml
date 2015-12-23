@@ -23,7 +23,8 @@ install:
 script:
   - make -f Makefile.mk # gcc without Autotools
   - ls -la
-  - ./unit_tests && gcov unit_test.cpp
+  - ./unit_tests
+  - gcov -o . unit_test.cpp
   - ls -la
 
 after_success:
