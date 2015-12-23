@@ -26,4 +26,4 @@ script:
   #- gcov unit_tests.cpp
 
 after_success:
-  - coveralls --gcov-options '\-lp'
+  - coveralls --verbose --gcov-options '\-lp'

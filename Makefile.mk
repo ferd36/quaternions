@@ -13,4 +13,4 @@ unit_tests: $(OBJS)
 	$(CXX) $(CXX_FLAGS) -c -o $@ $<
 
 clean:
-	rm *.o
+	rm unit_tests *.o *.gcda *.gcno *.gcov
