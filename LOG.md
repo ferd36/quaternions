@@ -1,4 +1,4 @@
-= LOG
+LOG
 ===
 Contains a detailed record of the things I experimented with while writing this code.
 
