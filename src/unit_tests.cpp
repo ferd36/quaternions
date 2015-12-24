@@ -411,6 +411,17 @@ void test_to_polar_representation() {
   }
 }
 
+void test_to_rotation_matrix() {
+  cout << "Testing rotation matrix" << endl;
+  {
+    Qf x(0,1);
+    cout << x.to_rotation_matrix() << endl;
+    Qf::rotation_matrix r = x.to_rotation_matrix();
+    Qf y; y.from_rotation_matrix(r);
+    cout << y << endl;
+  }
+}
+
 void test_norms() {
   cout << "Testing norms" << endl;
   {
@@ -1018,6 +1029,7 @@ int main() {
   test_accessors();
   test_to_matrix_representation();
   test_to_polar_representation();
+  test_to_rotation_matrix();
   test_norms();
   test_equality();
   test_plus_minus();

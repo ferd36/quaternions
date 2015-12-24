@@ -65,7 +65,7 @@ public:
   typedef T value_type;
 
   /**
-   * 2x2 matrices are related to quatenrions and Pauli matrices.
+   * 2x2 matrices are related to quaternions and Pauli matrices.
    */
   typedef std::array<std::array<std::complex<T>, 2>, 2> matrix_2_2;
 
@@ -79,6 +79,11 @@ public:
    * TODO: array or valarray? - maybe make template parameters, and polar_representation too
    */
   typedef std::array<std::array<std::complex<T>, 2>, 2> matrix_representation;
+
+  /**
+   * A 3D rotation matrix.
+   */
+  typedef std::array<std::array<T, 3>, 3> rotation_matrix;
 
   /**
   * Construct a quaternion from at most 4 components of type T.
@@ -258,6 +263,42 @@ public:
     std::array<std::complex<T>, 2> r0{{std::complex<T>(a(), b()), std::complex<T>(c(), d())}};
     std::array<std::complex<T>, 2> r1{{std::complex<T>(-c(), d()), std::complex<T>(a(), -b())}};
     return {{r0, r1}};
+  }
+
+  /**
+   * Returns a 3D rotation matrix.
+   */
+  rotation_matrix to_rotation_matrix() const {
+    // 21 operations?
+    T a2 = _a*_a, b2 = _b*_b, c2 = _c*_c, d2 = _d*_d;
+    T ab = _a*_b, ac = _a*_c, ad = _a*_d;
+    T bc = _b*_c, bd = _b*_d;
+    T cd = _c*_d;
+    std::array<T, 3> r0{{a2+b2-c2-d2,2*(bc-ad),2*(bd+ac)}};
+    std::array<T, 3> r1{{2*(bc+ad),a2-b2+c2-d2,2*(cd-ab)}};
+    std::array<T, 3> r2{{2*(bd-ac),2*(cd+ab),a2-b2-c2+d2}};
+    return {{r0, r1, r2}};
+    /** TODO: test (37 operations)
+     * n = w * w + x * x + y * y + z * z
+     * s = if n == 0 then 0 else 2 / n
+     * wx = s * w * x, wy = s * w * y, wz = s * w * z
+     * xx = s * x * x, xy = s * x * y, xz = s * x * z
+     * yy = s * y * y, yz = s * y * z, zz = s * z * z
+     * [ 1 - (yy + zz)         xy - wz          xz + wy  ]
+     * [      xy + wz     1 - (xx + zz)         yz - wx  ]
+     * [      xz - wy          yz + wx     1 - (xx + yy) ]
+     */
+  }
+
+  // TODO: clumsy: maybe standalone factory
+  void from_rotation_matrix(const rotation_matrix& rm) {
+    T t = rm[0][0] + rm[1][1] + rm[2][2];
+    T r = std::sqrt(1+t); // TODO: bug if trace < -1
+    T s = 0.5/r;
+    _a = 0.5 * r;
+    _b = s * (rm[2][1] - rm[1][2]);
+    _c = s * (rm[0][2] - rm[2][0]);
+    _d = s * (rm[1][0] - rm[0][1]);
   }
 
   /**
