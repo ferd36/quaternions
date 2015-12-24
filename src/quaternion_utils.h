@@ -64,30 +64,4 @@ inline bool is_near_equal_relative(T x, T y, T1 eps = 0) {
     return is_scalar_zero((x-y)/std::min(x,y), eps);
 }
 
-/**
- * i_sqrt optimization is worthwhile only for float, and only in DNDEBUG -O3 release mode.
- * In that case, it seems to be 3X faster than std::sqrt.
- * There is also a loss of precision.
- */
-template <typename T>
-inline T i_sqrt(T x) { return 1.0 / std::sqrt(x); }
-
-template <>
-inline float i_sqrt(float x)
-{
-  long i;
-  float x2, y;
-  const float threehalfs = 1.5F;
-
-  x2 = x * 0.5F;
-  y  = x;
-  i  = * ( long * ) &y;                       // evil floating point bit level hacking
-  i  = 0x5f3759df - ( i >> 1 );               // what the fuck?
-  y  = * ( float * ) &i;
-  y  = y * ( threehalfs - ( x2 * y * y ) );   // 1st iteration
-//	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
-
-  return y;
-}
-
 #endif //QUATERNIONS_UTILS_H
