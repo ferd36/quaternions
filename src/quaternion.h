@@ -41,18 +41,16 @@
 
 /**
  * A quaternion class.
- * TODO: combine operations: axby...
  * TODO: provide same operations as boost
  * TODO: provide round to zero, floor, ceil
- * TODO: check if 0 detection is worth doing in *
- * TODO: check with std algos
  * TODO: remove copies/constructions in expressions
- * TODO: fast sinus? Sinus in CPU instruction?
+ * TODO: fast sinus? (or combined operationrs)
+ * TODO: IEEE NaN?
  * TODO: study matrix representation and isomorphism
- * TODO: do we need the static_cast?
  * TODO: check references to make sure functionality covered
  * TODO: preconditions
  * TODO: sort out when to provide member functions v external functions
+ * TODO: http://www.gamedev.net/page/resources/_/technical/math-and-physics/quaternion-powers-r1095
  */
 template<typename T =double> // assert operations for numeric is_specialized??
 // T has to be real or integer for exp, log, can't accept e.g. complex
