@@ -119,11 +119,14 @@ inline Quaternion<T> random_quaternion(G& g) {
 }
 
 /**
- * For convenience and ease of reading the code.
+ * For convenience and ease of reading the testing code.
  */
 typedef std::complex<float> Cf;
 typedef std::complex<double> Cd;
 typedef std::complex<long double> Cld;
+
+typedef boost::math::quaternion<float> qf;
+typedef boost::math::quaternion<double> qd;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Unit tests
@@ -303,6 +306,17 @@ void test_IJK() {
   assert(Qld_j * Qld_j == -1);
   assert(Qld_k * Qld_k == -1);
   assert(Qld_i * Qld_j * Qld_k == -1);
+
+  assert(Qf_i/Qf_j == -Qf_k);
+  assert(Qf_j/Qf_k == -Qf_i);
+  assert(Qf_k/Qf_i == -Qf_j);
+
+  assert(1.0f/Qf_i == -Qf_i);
+  assert(1.0f/Qf_j == -Qf_j);
+  assert(1.0f/Qf_k == -Qf_k);
+
+  assert(Qf_i*(Qf_k/Qf_i) == -Qf_k);
+  assert((Qf_k/Qf_i)*Qf_i == Qf_k);
 }
 
 void test_accessors() {
@@ -343,14 +357,25 @@ void test_accessors() {
   }
 }
 
-void test_to_matrix() {
-  cout << "Testing to_matrix" << endl;
-  typedef std::complex<double> CD;
-  Qd x(1,2,3,4);
-  Qd::matrix_representation r;
-  r[0] = {{CD(1,2),CD(3,4)}};
-  r[1] = {{CD(-3,4),CD(1,-2)}};
-  assert(x.to_matrix_representation() == r);
+void test_to_matrix_representation() {
+  cout << "Testing matrix representation" << endl;
+  typedef typename Qd::matrix_representation MR;
+
+  {
+    assert(Qd().to_matrix_representation() == MR());
+  }
+  {
+    MR r;
+    r[0] = {{Cd(1,0), Cd()}};
+    r[1] = {{Cd(), Cd(1,0)}};
+    assert(Qd(1).to_matrix_representation() == r);
+  }
+  {
+    MR r;
+    r[0] = {{Cd(1, 2), Cd(3, 4)}};
+    r[1] = {{Cd(-3, 4), Cd(1, -2)}};
+    assert(Qd(1,2,3,4).to_matrix_representation() == r);
+  }
 }
 
 void test_to_polar_representation() {
@@ -541,7 +566,7 @@ void test_unary_w_quaternion() {
 
   {
     Qf x(1,2,3,4), y(5,6,7,8);
-    quaternion<float> q1(1,2,3,4), q2(5,6,7,8);
+    qf q1(1,2,3,4), q2(5,6,7,8);
     x *= y;
     assert(x == Qf(-60,12,30,24));
     assert(q1 * q2 == x);
@@ -552,12 +577,12 @@ void test_unary_w_quaternion() {
 
   {
     Qf x(1,2,3,4), y(5,6,7,8);
-    quaternion<float> q1(1,2,3,4), q2(5,6,7,8);
+    qf q1(1,2,3,4), q2(5,6,7,8);
     x /= y;
     assert(nearly_equal(x, q1 / q2, 1e-6));
     Qd z(1,1,1,1);
     x /= z;
-    assert(nearly_equal(x, (q1/q2)/quaternion<float>(1,1,1,1), 1e-6));
+    assert(nearly_equal(x, (q1/q2)/qf(1,1,1,1), 1e-6));
   }
 }
 
@@ -570,7 +595,16 @@ void test_operators() {
 
   {
     assert(3 / Qf(1,2) == 3.0f / Cf(1,2));
-    assert(3 / Qf(1,2,3,4) == 3.0f / quaternion<float>(1,2,3,4));
+    assert(3 / Qf(1,2,3,4) == 3.0f / qf(1,2,3,4));
+  }
+
+  {
+    assert(Qf(1,2,3,4) + Qf(4,5,6,7) == Qf(5,7,9,11));
+    assert(Qf(1,2,3,4) - Qf(4,5,6,7) == Qf(-3,-3,-3,-3));
+  }
+  {
+    assert(Qf(1,2,3,4) * Qf(4,-5,6,-7) == qf(1,2,3,4) * qf(4,-5,6,-7));
+    assert(Qf(1,2,3,4) / Qf(4,-5,6,-7) == qf(1,2,3,4) / qf(4,-5,6,-7));
   }
 }
 
@@ -746,7 +780,30 @@ void test_axby() {
   cout << "Testing axby" << endl;
   {
     Qf x(1,2,3,4), y(5,6,7,8);
+    assert(axby(0,x,0,y) == 0);
+  }
+  {
+    Qf x(1,2,3,4), y(5,6,7,8);
+    assert(axby(1,x,0,y) == x);
+  }
+  {
+    Qf x(1,2,3,4), y(5,6,7,8);
+    assert(axby(0,x,1,y) == y);
+  }
+  {
+    Qf x(1,2,3,4), y(5,6,7,8);
     assert(axby(-1,x,3,y) == -x + 3 * y);
+  }
+}
+
+void test_dot_sum_product() {
+  cout << "Testing dot sum product" << endl;
+  {
+    Qf q1(1,2,3,4), q2(5,6,7,8), q3(2,4,6,8);
+    Qf q[] = {q1,q2,q3};
+    float s[] = {-1,2,-3};
+    // TODO: just accumulate? Qf(). is clumsy
+    assert(Qf().dot_sum_product(s, s + 3, q) == -1 * q1 + 2 * q2 - 3 * q3);
   }
 }
 
@@ -832,11 +889,11 @@ void test_multiplication_speed() {
   }
 
   { // With Boost
-    quaternion<float> a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
+    qf a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
     float certificate = 0.0;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < N; ++i) {
-      quaternion<float> r = a * (b + (float)i);
+      qf r = a * (b + (float)i);
       certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
     }
     auto end = std::chrono::system_clock::now();
@@ -857,11 +914,11 @@ void test_pow_speed() {
 
 
   { // With Boost
-    quaternion<float> a(q1.a(),q1.b(),q1.c(),q1.d());
+    qf a(q1.a(),q1.b(),q1.c(),q1.d());
     float certificate = 0.0;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < N; ++i) {
-      quaternion<float> r = pow(a, 15);
+      qf r = pow(a, 15);
       certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
     }
     auto end = std::chrono::system_clock::now();
@@ -927,11 +984,11 @@ void test_axby_speed() {
   Qf q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
 
   { // With Boost
-    quaternion<float> a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
+    qf a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
     float certificate = 0.0;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < N; ++i) {
-      quaternion<float> r = ((float) i) * a + ((float) i+1) * b;
+      qf r = ((float) i) * a + ((float) i+1) * b;
       certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
     }
     auto end = std::chrono::system_clock::now();
@@ -959,7 +1016,7 @@ int main() {
   test_trigonometric_constructors();
   test_IJK();
   test_accessors();
-  test_to_matrix();
+  test_to_matrix_representation();
   test_to_polar_representation();
   test_norms();
   test_equality();
@@ -980,6 +1037,7 @@ int main() {
   test_cross();
   test_commutator();
   test_axby();
+  test_dot_sum_product();
   test_io();
   test_io_eps();
   test_io_style();

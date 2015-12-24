@@ -55,13 +55,18 @@
  */
 template<typename T =double> // assert operations for numeric is_specialized??
 // T has to be real or integer for exp, log, can't accept e.g. complex
-// if custom type, check requirements
+// if custom type, check requirements - can't have complex
 class Quaternion {
 public:
   /**
    * The value of each component of a quaternion.
    */
   typedef T value_type;
+
+  /**
+   * 2x2 matrices are related to quatenrions and Pauli matrices.
+   */
+  typedef std::array<std::array<std::complex<T>, 2>, 2> matrix_2_2;
 
   /**
    * The polar representation of a quaternion.
@@ -207,16 +212,25 @@ public:
   std::complex<T> c1() const { return {_a,_b}; }
   std::complex<T> c2() const { return {_c,_d}; }
 
+  /**
+   * Only for reals, will assert if not real.
+   */
   operator T() const {
     assert(_b == 0 && _c == 0 && _d == 0);
     return _a;
   }
 
+  /**
+   * Only for complex, will assert if not complex.
+   */
   operator std::complex<T>() const {
     assert(_c == 0 && _d == 0);
     return std::complex<T>(_a,_b);
   }
 
+  /**
+   * Ordered list form.
+   */
   operator std::array<T,4>() const {
     return {{_a, _b, _c, _d}};
   }
@@ -249,6 +263,20 @@ public:
     std::array<std::complex<T>, 2> r0{{std::complex<T>(a(), b()), std::complex<T>(c(), d())}};
     std::array<std::complex<T>, 2> r1{{std::complex<T>(-c(), d()), std::complex<T>(a(), -b())}};
     return {{r0, r1}};
+  }
+
+  /**
+   *
+   */
+  std::array<T,4> to_pauli() const {
+    return {{_a, 0, 0, 0}};
+  }
+
+  void from_pauli(const std::array<T,4>& pauli) {
+    constexpr matrix_2_2 id = {{{1},{0}},{{0},{1}}};
+    constexpr matrix_2_2 s1 = {{{0},{1}},{{1},{0}}};
+    constexpr matrix_2_2 s2 = {{{0},{0,1}},{{0,-1},{0}}};
+    constexpr matrix_2_2 s3 = {{{1},{0}},{{0},{-1}}};
   }
 
   /**
@@ -336,8 +364,8 @@ public:
   bool is_unreal(T1 eps =0) const {
     return is_scalar_zero(_a, eps)
            && !(is_scalar_zero(_b, eps)
-             && is_scalar_zero(_c, eps)
-             && is_scalar_zero(_d, eps));
+                && is_scalar_zero(_c, eps)
+                && is_scalar_zero(_d, eps));
   }
 
   /**
@@ -494,6 +522,7 @@ public:
   /**
    * k1 * this quaternion + k2 * y
    * Improves performance by reducing number of constructions/copies.
+   * TODO: move to quaternion algorithms? but faster here?
    */
   template<typename K>
   Quaternion axby(K k1, K k2, const Quaternion &y) {
@@ -504,6 +533,19 @@ public:
     return *this;
   }
 
+  /**
+   * TODO: does this have merit versus std::accumulate? faster?
+   */
+  template <typename S_it, typename Q_it>
+  Quaternion dot_sum_product(S_it s_begin, S_it s_end, Q_it q_begin) {
+    for (; s_begin != s_end; ++s_begin, ++q_begin) {
+      _a += *s_begin * q_begin->a();
+      _b += *s_begin * q_begin->b();
+      _c += *s_begin * q_begin->c();
+      _d += *s_begin * q_begin->d();
+    }
+    return *this;
+  }
 
 private:
   T _a, _b, _c, _d; // the full state for a Quaternion
