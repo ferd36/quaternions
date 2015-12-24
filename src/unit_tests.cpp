@@ -864,6 +864,36 @@ void test_boost_rational() {
 }
 
 /**
+ * i_sqrt shines only in DNDEBUG -O3. Otherwise, it's slow...
+ */
+void test_i_sqrt_speed() {
+  cout << "Testing i_sqrt speed" << endl;
+  size_t N = 1000000;
+
+  {
+    double certificate = 0.0;
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < N; ++i)
+      certificate += 1.0f / std::sqrt(i);
+    auto end = std::chrono::system_clock::now();
+    std::chrono::nanoseconds diff = end - start;
+    cout << "std: " << (diff.count() / N) << "ns" << endl;
+    cout << "Certificate=" << certificate << endl;
+  }
+
+  {
+    double certificate = 0.0;
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < N; ++i)
+      certificate += i_sqrt<float>(i);
+    auto end = std::chrono::system_clock::now();
+    std::chrono::nanoseconds diff = end - start;
+    cout << "i_sqrt: " << (diff.count() / N) << "ns" << endl;
+    cout << "Certificate=" << certificate << endl;
+  }
+}
+
+/**
  * Between standard C++, boost and vectorclass which uses intrinsics, no difference.
  * The compiler is probably optimizing well enough, or the intrinsics are not used properly.
  * Whoever is in first position (boot or quaternion) in this micro-benchmark, is twice as
@@ -1043,6 +1073,7 @@ int main() {
   test_io_style();
 
   cout << endl;
+  test_i_sqrt_speed();
   test_exp_speed();
   test_multiplication_speed();
   test_pow_speed();

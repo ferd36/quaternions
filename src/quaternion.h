@@ -243,8 +243,8 @@ public:
     assert(nu >= 0);
     if (nu > 0) {
       T theta = std::acos(_a / n);
-      T ns = std::sqrt(nu);
-      return {{n, theta, _b / ns, _c / ns, _d / ns}};
+      T ns = i_sqrt<T>(nu);
+      return {{n, theta, ns * _b, ns * _c, ns * _d}};
     }
     const T pi = std::atan2(+0., -0.);
     // theta = 0 or pi, because n = +/- a().

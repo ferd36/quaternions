@@ -64,6 +64,11 @@ inline bool is_near_equal_relative(T x, T y, T1 eps = 0) {
     return is_scalar_zero((x-y)/std::min(x,y), eps);
 }
 
+/**
+ * i_sqrt optimization is worthwhile only for float, and only in DNDEBUG -O3 release mode.
+ * In that case, it seems to be 3X faster than std::sqrt.
+ * There is also a loss of precision.
+ */
 template <typename T>
 inline T i_sqrt(T x) { return 1.0 / std::sqrt(x); }
 
