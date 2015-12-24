@@ -52,6 +52,7 @@
  * TODO: do we need the static_cast?
  * TODO: check references to make sure functionality covered
  * TODO: preconditions
+ * TODO: sort out when to provide member functions v external functions
  */
 template<typename T =double> // assert operations for numeric is_specialized??
 // T has to be real or integer for exp, log, can't accept e.g. complex
@@ -109,7 +110,7 @@ public:
    * TODO: make sure we can't use the next constructor here
    */
   template<typename T1 = T>
-  Quaternion(T1 *it)
+  Quaternion(T1* it)
       : _a(*it), _b(*++it), _c(*++it), _d(*++it) { }
 
   /**
@@ -117,30 +118,24 @@ public:
    */
   template<typename It, IS_ITERATOR(It)>
   Quaternion(It it)
-      : _a(static_cast<T>(*it)),
-        _b(static_cast<T>(*++it)),
-        _c(static_cast<T>(*++it)),
-        _d(static_cast<T>(*++it)) { }
+      : _a(*it), _b(*++it), _c(*++it), _d(*++it) { }
 
   /**
    * Copy constructor.
    */
   template<typename T1>
   Quaternion(const Quaternion<T1>& y)
-      : _a(static_cast<T>(y.a())),
-        _b(static_cast<T>(y.b())),
-        _c(static_cast<T>(y.c())),
-        _d(static_cast<T>(y.d())) { }
+      : _a(y.a()), _b(y.b()), _c(y.c()), _d(y.d()) { }
 
   /**
    * Assignment operator.
    */
   template<typename T1>
   Quaternion &operator=(const Quaternion<T1>& other) {
-    _a = static_cast<T>(other.a());
-    _b = static_cast<T>(other.b());
-    _c = static_cast<T>(other.c());
-    _d = static_cast<T>(other.d());
+    _a = other.a();
+    _b = other.b();
+    _c = other.c();
+    _d = other.d();
     return *this;
   }
 
@@ -213,7 +208,7 @@ public:
   std::complex<T> c2() const { return {_c,_d}; }
 
   /**
-   * Only for reals, will assert if not real.
+   * Only for real quaternions, will assert if not real.
    */
   operator T() const {
     assert(_b == 0 && _c == 0 && _d == 0);
