@@ -276,7 +276,7 @@ public:
     std::array<T, 3> r1{{2*(bc+ad),a2-b2+c2-d2,2*(cd-ab)}};
     std::array<T, 3> r2{{2*(bd-ac),2*(cd+ab),a2-b2-c2+d2}};
     return {{r0, r1, r2}};
-    /** TODO: test (37 operations)
+    /** TODO: test (37 operations?)
      * n = w * w + x * x + y * y + z * z
      * s = if n == 0 then 0 else 2 / n
      * wx = s * w * x, wy = s * w * y, wz = s * w * z
@@ -288,15 +288,36 @@ public:
      */
   }
 
-  // TODO: clumsy: maybe standalone factory
+  // TODO: clumsy: maybe standalone factory?
   void from_rotation_matrix(const rotation_matrix& rm) {
     T t = rm[0][0] + rm[1][1] + rm[2][2];
-    T r = std::sqrt(1+t); // TODO: bug if trace < -1
-    T s = 0.5/r;
-    _a = 0.5 * r;
-    _b = s * (rm[2][1] - rm[1][2]);
-    _c = s * (rm[0][2] - rm[2][0]);
-    _d = s * (rm[1][0] - rm[0][1]);
+    if (t > 0) {
+      T s = 0.5 / std::sqrt(t + 1);
+      _a = 0.25 / s;
+      _b = (rm[2][1] - rm[1][2]) * s;
+      _c = (rm[0][2] - rm[2][0]) * s;
+      _d = (rm[1][0] - rm[0][1]) * s;
+    } else {
+      if (rm[0][0] > rm[1][1] && rm[0][0] > rm[2][2]) {
+        T s = 2.0 * std::sqrt(1.0 + rm[0][0] - rm[1][1] - rm[2][2]);
+        _a = (rm[2][1] - rm[1][2]) / s;
+        _b = 0.25 * s;
+        _c = (rm[0][1] + rm[1][0]) / s;
+        _d = (rm[0][2] + rm[2][0]) / s;
+      } else if (rm[1][1] > rm[2][2]) {
+        T s = 2.0 * std::sqrt(1.0 + rm[1][1] - rm[0][0] - rm[2][2]);
+        _a = (rm[0][2] - rm[2][0]) / s;
+        _b = (rm[0][1] + rm[1][0]) / s;
+        _c = 0.25 * s;
+        _d = (rm[1][2] + rm[2][1]) / s;
+      } else {
+        T s = 2.0 * std::sqrt(1.0 + rm[2][2] - rm[0][0] - rm[1][1]);
+        _a = (rm[1][0] - rm[0][1]) / s;
+        _b = (rm[0][2] + rm[2][0]) / s;
+        _c = (rm[1][2] + rm[2][1]) / s;
+        _d = 0.25 * s;
+      }
+    }
   }
 
   /**

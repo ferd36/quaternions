@@ -94,11 +94,24 @@ inline bool operator==(const Quaternion<T>& x, const boost::math::quaternion<T>&
 
 /**
  * This used to test e.g. the polar representation of the quaternions.
+ * TODO: this could go into utils because of generality
  */
 template <typename T, size_t n>
 inline bool nearly_equal(const std::array<T,n>& x, const std::array<T,n>& y, T eps) {
   for (size_t i = 0; i < n; ++i)
-    if (!is_near_equal_relative(x.at(i), y.at(i), eps))
+    if (!is_near_equal_relative(x[i], y[i], eps))
+      return false;
+  return true;
+};
+
+/**
+ * This used to test e.g. the rotation matrices.
+ */
+template <typename T, size_t n1, size_t n2>
+inline bool nearly_equal(const std::array<std::array<T,n1>,n2>& x, const std::array<std::array<T,n1>,n2>& y, T eps) {
+  for (size_t i = 0; i < n1; ++i)
+    for (size_t j = 0; j < n2; ++j)
+    if (!is_near_equal_relative(x[i][j], y[i][j], eps))
       return false;
   return true;
 };
@@ -413,12 +426,50 @@ void test_to_polar_representation() {
 
 void test_to_rotation_matrix() {
   cout << "Testing rotation matrix" << endl;
+  typedef typename Qd::rotation_matrix RM;
   {
-    Qf x(0,1);
-    cout << x.to_rotation_matrix() << endl;
-    Qf::rotation_matrix r = x.to_rotation_matrix();
-    Qf y; y.from_rotation_matrix(r);
-    cout << y << endl;
+    Qd x(1);
+    RM expected;
+    expected[0] = {{1,0,0}};
+    expected[1] = {{0,1,0}};
+    expected[2] = {{0,0,1}};
+    assert(nearly_equal(x.to_rotation_matrix(), expected, 1e-10));
+    RM r = x.to_rotation_matrix();
+    Qd y; y.from_rotation_matrix(r);
+    assert(y == Qd_1);
+  }
+  {
+    Qd x(0,1);
+    RM expected;
+    expected[0] = {{1,0,0}};
+    expected[1] = {{0,-1,0}};
+    expected[2] = {{0,0,-1}};
+    assert(nearly_equal(x.to_rotation_matrix(), expected, 1e-10));
+    RM r = x.to_rotation_matrix();
+    Qd y; y.from_rotation_matrix(r);
+    assert(y == Qd_i);
+  }
+  {
+    Qd x(0,0,1);
+    RM expected;
+    expected[0] = {{-1,0,0}};
+    expected[1] = {{0,1,0}};
+    expected[2] = {{0,0,-1}};
+    assert(nearly_equal(x.to_rotation_matrix(), expected, 1e-10));
+    RM r = x.to_rotation_matrix();
+    Qd y; y.from_rotation_matrix(r);
+    assert(y == Qd_j);
+  }
+  {
+    Qd x(0,0,0,1);
+    RM expected;
+    expected[0] = {{-1,0,0}};
+    expected[1] = {{0,-1,0}};
+    expected[2] = {{0,0,1}};
+    assert(nearly_equal(x.to_rotation_matrix(), expected, 1e-10));
+    RM r = x.to_rotation_matrix();
+    Qd y; y.from_rotation_matrix(r);
+    assert(y == Qd_k);
   }
 }
 
