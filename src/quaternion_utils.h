@@ -54,8 +54,8 @@ inline bool is_scalar_zero(T x, T1 eps = 0) {
  * very large, differences are still "small" if they are "small"
  * relative to the magnitudes of the quantities.
  */
-template<typename T, typename T1>
-inline bool is_near_equal_relative(T x, T y, T1 eps = 0) {
+template<typename T, typename T2>
+inline bool is_near_equal_relative(T x, T y, T2 eps = 0) {
   if (x == 0)
     return is_scalar_zero(y, eps);
   else if (y == 0)

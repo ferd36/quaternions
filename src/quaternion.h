@@ -142,6 +142,7 @@ public:
     return *this;
   }
 
+  // TODO: move to factory?
   static Quaternion spherical(T rho, T theta, T phi1, T phi2) {
 
     T d = std::sin(phi2);
@@ -241,7 +242,7 @@ public:
    * - and each of the components of the "unreal unit direction".
    */
   polar_representation to_polar_representation() const {
-    T nu = unreal_norm2();
+    T nu = unreal_norm_squared();
     T n = std::sqrt(nu + _a*_a);
     assert(nu >= 0);
     if (nu > 0) {
@@ -341,48 +342,25 @@ public:
   Quaternion unreal() const { return {0, _b, _c, _d}; }
 
   /**
-   * The conjugate of this quaternion.
-   */
-  Quaternion conjugate() const {
-    return {_a, -_b, -_c, -_d};
-  }
-
-  /**
    * The squared of the norm of the quaternion.
    * (The square is sometimes useful, and it avoids paying for a sqrt).
    */
-  T norm2() const {
+  T norm_squared() const {
     return _a * _a + _b * _b + _c * _c + _d * _d;
   }
 
   /**
    * The norm of the quaternion (the l2 norm).
    */
-  T norm() const {
-    return std::sqrt(norm2());
-  }
-
-  /**
-   * The l1 norm of the quaternion.
-   * TODO: correct? needs function too.
-   */
-  T norm_l1() const {
-    return std::abs(_a) + std::abs(_b) + std::abs(_c) + std::abs(_d);
-  }
-
-  /**
-   * The value of the largest components of the quaternion.
-   */
-  T norm_sup() const {
-    return std::max(std::max(std::abs(_a), std::abs(_b)),
-                    std::max(std::abs(_c), std::abs(_d)));
+  T abs() const {
+    return std::sqrt(norm_squared());
   }
 
   /**
    * The L2 norm of the "unreal" components of the quaternion,
    * comes back often in computations.
    */
-  T unreal_norm2() const {
+  T unreal_norm_squared() const {
     return _b * _b + _c * _c + _d * _d;
   }
 
@@ -391,7 +369,7 @@ public:
    */
   template <typename T1 =T>
   bool is_unit(T1 eps =0) const {
-    return is_scalar_zero(norm2() - T(1), eps);
+    return is_scalar_zero(norm_squared() - T(1), eps);
   }
 
   /**
@@ -427,7 +405,7 @@ public:
    * Unary minus.
    */
   Quaternion operator-() const {
-    return Quaternion(-_a, -_b, -_c, -_d);
+    return {-_a, -_b, -_c, -_d};
   }
 
   /**
@@ -519,7 +497,7 @@ public:
    */
   template<typename T1>
   Quaternion operator/=(const std::complex<T1>& y) {
-    return operator*=(conj(y)/std::norm(y));
+    return operator*=(conj(y)/std::norm(y)); // so in std, "norm" is actually norm^2 !!!
   }
 
   /**
@@ -571,7 +549,7 @@ public:
    */
   template <typename T1>
   Quaternion operator/=(const Quaternion<T1>& y) {
-    return operator*=(y.conjugate()/y.norm2());
+    return operator*=(conj(y)/ y.norm_squared());
   }
 
   /**
@@ -660,40 +638,58 @@ inline Quaternion<T> operator/(const Quaternion<T>& x, T1 k) {
   return Quaternion<T>(x) /= k;
 }
 
-/**
+/** +
  * Returns the conjugate of x, as a new quaternion (x is unchanged).
  */
 template<typename T>
-inline Quaternion<T> conjugate(const Quaternion<T>& x) {
-  return Quaternion<T>(x).conjugate();
+inline Quaternion<T> conj(const Quaternion<T> &x) {
+  return {x.a(), -x.b(), -x.c(), -x.d()};
 }
 
-/**
- * The norms on a quaternion.
+/** +
+ * Norms on a quaternion.
  */
 template<typename T>
-inline T norm2(const Quaternion<T>& x) {
-  return x.norm2();
+inline T norm_squared(const Quaternion<T> &x) {
+  return x.norm_squared();
+}
+
+// abs = l2 norm = euclidean norm
+template<typename T>
+inline T abs(const Quaternion<T> &x) {
+  return x.abs();
 }
 
 template<typename T>
-inline T norm(const Quaternion<T>& x) {
-  return x.norm();
+inline T unreal_norm_squared(const Quaternion<T> &x) {
+  return x.unreal_norm_squared();
 }
 
+// Hamming
+template <typename T>
+inline T norm_l0(const Quaternion<T>& x) {
+  return (x.a() != 0) + (x.b() != 0) + (x.c() != 0) + (x.d() != 0);
+}
+
+// l1 norm = taxicab = manhattan
 template<typename T>
 inline T norm_l1(const Quaternion<T>& x) {
-  return x.norm_l1();
+  return std::abs(x.a()) + std::abs(x.b()) + std::abs(x.c()) + std::abs(x.d());
 }
 
+template<typename T, typename T1>
+inline T norm_lk(const Quaternion<T> &x, T1 k) {
+  return std::pow(std::pow(std::abs(x.a()),k)
+                  + std::pow(std::abs(x.b()),k)
+                  + std::pow(std::abs(x.c()),k)
+                  + std::pow(std::abs(x.d()),k),1.0/k);
+}
+
+// norm sup = max norm = norm inf
 template<typename T>
 inline T norm_sup(const Quaternion<T>& x) {
-  return x.norm_sup();
-}
-
-template<typename T>
-inline T unreal_norm2(const Quaternion<T>& x) {
-  return x.unreal_norm2();
+  return std::max(std::max(std::abs(x.a()), std::abs(x.b())),
+                  std::max(std::abs(x.c()), std::abs(x.d())));
 }
 
 /**
@@ -780,6 +776,7 @@ inline bool operator!=(const Quaternion<T>& x, const std::complex<T2>& y) {
   return !(x == y);
 }
 
+// TODO: make name uniform with is_near_equal_relative
 template <typename T, typename T1>
 inline bool nearly_equal(const Quaternion<T>& x, const std::complex<T>& y, T1 eps) {
   return is_complex(x, eps)
@@ -828,7 +825,7 @@ inline Quaternion<T> operator*(const Quaternion<T>& x, const Quaternion<T>& y) {
 
 template<typename T>
 inline Quaternion<T> inverse(const Quaternion<T>& x) {
-  return conjugate(x) / norm2(x);
+  return conj(x) / norm_squared(x);
 }
 
 template<typename T, typename T1>
@@ -864,7 +861,8 @@ inline Quaternion<T> commutator(const Quaternion<T>& x, const Quaternion<T>& y) 
 
 template<typename T>
 inline Quaternion<T> normalize(const Quaternion<T>& x) {
-  return x / norm(x);
+  assert(abs(x) > 0); // or this is not normalizable
+  return x / abs(x);
 }
 
 /**
@@ -880,7 +878,7 @@ inline Quaternion<T> normalize(const Quaternion<T>& x) {
  */
 template<typename T>
 inline Quaternion<T> exp(const Quaternion<T>& x) {
-  T un = x.unreal_norm2();
+  T un = x.unreal_norm_squared();
   if (un == 0)
     return {std::exp(x.a())};
   assert(un > 0);
@@ -899,7 +897,7 @@ inline Quaternion<T> exp(const Quaternion<T>& x) {
  */
 template<typename T>
 inline Quaternion<T> log(const Quaternion<T>& x) {
-  T nu2 = x.unreal_norm2();
+  T nu2 = x.unreal_norm_squared();
   if (nu2 == 0) {
     if (x.a() > 0)
       return {std::log(x.a())};
@@ -925,7 +923,7 @@ inline Quaternion<T> log(const Quaternion<T>& x) {
 template<typename T>
 inline Quaternion<T> pow2(const Quaternion<T>& x) {
   T aa = 2 * x.a();
-  return {x.a() * x.a() - x.unreal_norm2(),
+  return {x.a() * x.a() - x.unreal_norm_squared(),
           aa * x.b(),
           aa * x.c(),
           aa * x.d()};
@@ -941,7 +939,7 @@ inline Quaternion<T> pow2(const Quaternion<T>& x) {
 template<typename T>
 inline Quaternion<T> pow3(const Quaternion<T>& x) {
   T a2 = x.a() * x.a();
-  T n1 = x.unreal_norm2();
+  T n1 = x.unreal_norm_squared();
   T n2 = 3 * a2 - n1;
   return {x.a() * (a2 - 3 * n1),
           x.b() * n2,
@@ -959,7 +957,7 @@ inline Quaternion<T> pow3(const Quaternion<T>& x) {
 template<typename T>
 inline Quaternion<T> pow4(const Quaternion<T>& x) {
   T a2 = x.a() * x.a();
-  T n1 = x.unreal_norm2();
+  T n1 = x.unreal_norm_squared();
   T n2 = 4 * x.a() * (a2 - n1);
   return {a2 * a2 - 6 * a2 * n1 + n1 * n1,
           x.b() * n2,

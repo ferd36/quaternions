@@ -1,8 +1,11 @@
 LOG
 ===
-Contains a detailed record of the things I experimented with while writing this code.
+Contains a detailed record of the decisions I made and the things I experimented with while writing this code.
 
 * 12/24/15:
+    - I am going to follow the std::complex names for functions as much as possible, that way, the Quaternion class
+    will be "compatible" with std out of the box: conj, abs, ... will be uniform. If a function is provided as
+    a member function, I'll also provide it as a standalone function (like std seems to do (most of the time)).
     - Tested the "fast inverse square root" from Quake for norms, but the precision I could get out of it was too awful.
     I tried this code from the internet:
     ```cpp

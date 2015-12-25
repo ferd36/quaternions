@@ -92,6 +92,11 @@ inline bool operator==(const Quaternion<T>& x, const boost::math::quaternion<T>&
   return nearly_equal(x, boost_y, 1e-6);
 }
 
+template <typename T, typename T2>
+inline bool nearly_equal(T x, T y, T2 eps) {
+  return is_near_equal_relative(x, y, eps);
+}
+
 /**
  * This used to test e.g. the polar representation of the quaternions.
  * TODO: this could go into utils because of generality
@@ -339,10 +344,6 @@ void test_accessors() {
     assert(x.real() == 1);
     assert(x.unreal() != 0); // TODO: check what is happening here exactly
     assert(x.unreal() == Qf(0, 2, 3, 4));
-    assert(x.conjugate() == Qf(1, -2, -3, -4));
-    assert(x.conjugate().conjugate() == x);
-    assert(x.conjugate() + x == Qf(2, 0, 0, 0));
-    assert(x - x.conjugate() == Qf(0, 4, 6, 8));
     assert(!x.is_real());
     assert(!x.is_complex());
     assert(!x.is_unreal());
@@ -367,6 +368,25 @@ void test_accessors() {
     array<float,4> a = x; // can cast to array directly
     array<float,4> r{{1,2,3,4}};
     assert(a == r); // exact equality expected (operator== is in std)
+  }
+}
+
+void test_conjugate() {
+  cout << "Testing conjugate" << endl;
+
+  {
+    assert(conj(Qf(0)) == 0);
+    assert(conj(Qf(1)) == 1);
+    assert(conj(Qf_i) == -Qf_i);
+    assert(conj(Qf_j) == -Qf_j);
+    assert(conj(Qf_k) == -Qf_k);
+  }
+  {
+    Qf x(1, 2, 3, 4);
+    assert(conj(x) == Qf(1, -2, -3, -4));
+    assert(conj(conj(x)) == x);
+    assert(conj(x) + x == Qf(2, 0, 0, 0));
+    assert(x - conj(x) == Qf(0, 4, 6, 8));
   }
 }
 
@@ -476,23 +496,52 @@ void test_to_rotation_matrix() {
 void test_norms() {
   cout << "Testing norms" << endl;
   {
-    Qf x{1,2,3,4};
-    assert(norm2(x) == 1+4+9+16);
-    assert(std::abs(norm(x) - std::sqrt(1+4+9+16)) < 1e-6);
-    assert(normalize(x).is_unit(1e-6));
-    assert(nearly_equal(normalize(x), x/std::sqrt(1+4+9+16), 1e-6));
+    assert(abs(Qld_0) == 0);
+    assert(abs(Qld_1) == 1);
+    assert(abs(Qld_i) == 1);
+    assert(abs(Qld_j) == 1);
+    assert(abs(Qld_k) == 1);
   }
 
   {
-    Qf x{1,-4,3,2};
+    Qf x;
+    assert(norm_squared(x) == 0);
+    assert(std::abs(abs(x)) < 1e-6);
+    assert(norm_l0(x) == 0);
+    assert(norm_l1(x) == 0);
+    assert(norm_sup(x) == 0);
+    assert(norm_lk(x, 0.5) == 0);
+    assert(unreal_norm_squared(x) == 0);
+    assert(is_real(x));
+    assert(is_complex(x));
+    assert(!is_unreal(x));
+  }
+
+  {
+    Qd x{1,2,3,4};
+    assert(norm_squared(x) == 1 + 4 + 9 + 16);
+    assert(std::abs(abs(x) - std::sqrt(1 + 4 + 9 + 16)) < 1e-6);
+    assert(normalize(x).is_unit(1e-6));
+    assert(nearly_equal(normalize(x), x/std::sqrt(1+4+9+16), 1e-6));
+    assert(unreal_norm_squared(x) == 29);
+    assert(norm_l0(x) == 4);
+    assert(norm_l1(x) == 10);
+    assert(norm_sup(x) == 4);
+    assert(nearly_equal(norm_lk(x, .5), pow(1 + sqrt(2) + sqrt(3) + sqrt(4), 2), 1e-6));
+  }
+
+  {
+    Qd x{1,-4,3,2};
+    assert(norm_l0(x) == 4);
     assert(norm_l1(x) == 1+2+3+4);
     assert(norm_sup(x) == 4);
-    assert(unreal_norm2(x) == 16+9+4);
-    assert(is_unit(x) == false);
-    assert(is_unit(normalize(x), 1e-6) == true);
-    assert(is_unreal(x) == false);
+    assert(unreal_norm_squared(x) == 29);
+    assert(!is_unit(x));
+    assert(is_unit(normalize(x), 1e-6));
+    assert(!is_unreal(x));
+    assert(nearly_equal(norm_lk(x, .5), pow(1 + sqrt(2) + sqrt(3) + sqrt(4),2), 1e-6));
     x -= 1;
-    assert(is_unreal(x, 1e-6) == true);
+    assert(is_unreal(x, 1e-6));
   }
 }
 
@@ -742,7 +791,7 @@ void test_pow() {
     Qld y = Qld_1;
     for (int j = 0; j < n; ++j)
       y *= x;
-    assert(norm2(y - pow(x,n)) < 1e-10);
+    assert(norm_squared(y - pow(x, n)) < 1e-10);
   }
 
   // Need Qld for precision, and even with Qld, not better than 1e-5...
@@ -807,11 +856,11 @@ void test_exp() {
 void test_dot() {
   cout << "Testing dot product" << endl;
   assert(dot(Qf(1, 2, 3, 4), Qf(2, 2, 2, 2)) == 20);
-  assert(dot(Qf(-1, 2, -3, 4), Qf(-1, 2, -3, 4)) == norm2(Qf(1,2,3,4)));
+  assert(dot(Qf(-1, 2, -3, 4), Qf(-1, 2, -3, 4)) == norm_squared(Qf(1, 2, 3, 4)));
   // TODO: verify this works in general
   Qf a(1,2,3,4), b(5,6,7,8);
   Qf d1 = dot(a,b);
-  Qf d2 = .5*(conjugate(b) * a + conjugate(a) * b);
+  Qf d2 = .5*(conj(b) * a + conj(a) * b);
   assert(d1 == d2);
 }
 
@@ -822,7 +871,7 @@ void test_cross() {
   // TODO: verify this works in general
   Qf a(0,2,3,4), b(0,6,7,8);
   Qf p1 = cross(a,b);
-  Qf p2 = .5*(a * b - conjugate(b) * conjugate(a));
+  Qf p2 = .5*(a * b - conj(b) * conj(a));
   assert(p1 == p2);
 }
 
@@ -1078,6 +1127,7 @@ int main() {
   test_trigonometric_constructors();
   test_IJK();
   test_accessors();
+  test_conjugate();
   test_to_matrix_representation();
   test_to_polar_representation();
   test_to_rotation_matrix();
