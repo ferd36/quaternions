@@ -50,6 +50,7 @@
  * TODO: check references to make sure functionality covered
  * TODO: preconditions
  * TODO: sort out when to provide member functions v external functions
+ * TODO: integer quaternions, binary quaternions
  * TODO: http://www.gamedev.net/page/resources/_/technical/math-and-physics/quaternion-powers-r1095
  */
 template<typename T =double> // assert operations for numeric is_specialized??
@@ -277,16 +278,6 @@ public:
     std::array<T, 3> r1{{2*(bc+ad),a2-b2+c2-d2,2*(cd-ab)}};
     std::array<T, 3> r2{{2*(bd-ac),2*(cd+ab),a2-b2-c2+d2}};
     return {{r0, r1, r2}};
-    /** TODO: test (37 operations?)
-     * n = w * w + x * x + y * y + z * z
-     * s = if n == 0 then 0 else 2 / n
-     * wx = s * w * x, wy = s * w * y, wz = s * w * z
-     * xx = s * x * x, xy = s * x * y, xz = s * x * z
-     * yy = s * y * y, yz = s * y * z, zz = s * z * z
-     * [ 1 - (yy + zz)         xy - wz          xz + wy  ]
-     * [      xy + wz     1 - (xx + zz)         yz - wx  ]
-     * [      xz - wy          yz + wx     1 - (xx + yy) ]
-     */
   }
 
   // TODO: clumsy: maybe standalone factory?
@@ -478,6 +469,7 @@ public:
    */
   template<typename T1>
   Quaternion operator*=(const std::complex<T1>& y) {
+
     T at = _a * y.real() - _b * y.imag();
     T bt = _a * y.imag() + _b * y.real();
     T ct = _c * y.real() + _d * y.imag();
@@ -493,11 +485,22 @@ public:
 
   /**
    * Unary /=.
-   * TODO: reduce operation count
    */
   template<typename T1>
   Quaternion operator/=(const std::complex<T1>& y) {
-    return operator*=(conj(y)/std::norm(y)); // so in std, "norm" is actually norm^2 !!!
+
+    T n2 = y.real() * y.real() + y.imag() * y.imag();
+    T at = _a * y.real() + _b * y.imag();
+    T bt = - _a * y.imag() + _b * y.real();
+    T ct = _c * y.real() - _d * y.imag();
+    T dt = _c * y.imag() + _d * y.real();
+
+    _a = at / n2;
+    _b = bt / n2;
+    _c = ct / n2;
+    _d = dt / n2;
+
+    return *this;
   }
 
   /**
@@ -545,11 +548,23 @@ public:
   }
 
   /**
-   * TODO: inline and reduce number of operations
+   * Unary division with other quaternion.
    */
   template <typename T1>
   Quaternion operator/=(const Quaternion<T1>& y) {
-    return operator*=(conj(y)/ y.norm_squared());
+
+    T n2 = y.norm_squared();
+    T at = _a * y.a() + _b * y.b() + _c * y.c() + _d * y.d();
+    T bt = - _a * y.b() + _b * y.a() - _c * y.d() + _d * y.c();
+    T ct = - _a * y.c() + _b * y.d() + _c * y.a() - _d * y.b();
+    T dt = - _a * y.d() - _b * y.c() + _c * y.b() + _d * y.a();
+
+    _a = at / n2;
+    _b = bt / n2;
+    _c = ct / n2;
+    _d = dt / n2;
+
+    return *this;
   }
 
   /**

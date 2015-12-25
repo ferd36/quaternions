@@ -64,49 +64,4 @@ inline bool is_near_equal_relative(T x, T y, T2 eps = 0) {
     return is_scalar_zero((x-y)/std::min(x,y), eps);
 }
 
-/**
- * TODO: try this "fast" cos
- *
- * template<typename T>
-inline T cos(T x) noexcept
-{
-    constexpr T tp = 1./(2.*M_PI);
-    x *= tp;
-    x -= T(.25) + std::floor(x + T(.25));
-    x *= T(16.) * (std::abs(x) - T(.5));
-    #if EXTRA_PRECISION
-    x += T(.225) * x * (std::abs(x) - T(1.));
-    #endif
-    return x;
-}
-
- http://forum.devmaster.net/t/fast-and-accurate-sine-cosine/9648
- http://stackoverflow.com/questions/345085/how-do-trigonometric-functions-work/394512#394512
- https://en.wikipedia.org/wiki/CORDIC
- https://en.wikipedia.org/wiki/Approximation_theory
- https://en.wikipedia.org/wiki/Methods_of_computing_square_roots#Approximations_that_depend_on_the_floating_point_representation
- // cos(x) = sin(x + pi/2)
-addps xmm0, PI_2
-movaps xmm1, xmm0
-cmpnltps xmm1, PI
-andps xmm1, PIx2
-subps xmm0, xmm1
-
-// Parabola
-movaps xmm1, xmm0
-andps xmm1, abs
-mulps xmm1, xmm0
-mulps xmm0, B
-mulps xmm1, C
-addps xmm0, xmm1
-
-// Extra precision
-movaps xmm1, xmm0
-andps xmm1, abs
-mulps xmm1, xmm0
-subps xmm1, xmm0
-mulps xmm1, P
-addps xmm0, xmm1
- */
-
 #endif //QUATERNIONS_UTILS_H
