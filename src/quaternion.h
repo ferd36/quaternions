@@ -23,11 +23,11 @@
  */
 
 /**
- * A quaternion class.
+ * A Quaternion class.
  */
 
-#ifndef QUATERNIONS_QUATERNION_H
-#define QUATERNIONS_QUATERNION_H
+#ifndef QuaternionS_Quaternion_H
+#define QuaternionS_Quaternion_H
 
 #include <limits>
 #include <array>
@@ -35,12 +35,12 @@
 #include <iterator>
 #include <assert.h>
 
-#include "quaternion_utils.h"
+#include "Quaternion_utils.h"
 
 // TODO: add namespace
 
 /**
- * A quaternion class.
+ * A Quaternion class.
  * TODO: provide same operations as boost
  * TODO: provide round to zero, floor, ceil
  * TODO: remove copies/constructions in expressions
@@ -50,8 +50,8 @@
  * TODO: check references to make sure functionality covered
  * TODO: preconditions
  * TODO: sort out when to provide member functions v external functions
- * TODO: integer quaternions, binary quaternions
- * TODO: http://www.gamedev.net/page/resources/_/technical/math-and-physics/quaternion-powers-r1095
+ * TODO: integer Quaternions, binary Quaternions
+ * TODO: http://www.gamedev.net/page/resources/_/technical/math-and-physics/Quaternion-powers-r1095
  */
 template<typename T =double> // assert operations for numeric is_specialized??
 // T has to be real or integer for exp, log, can't accept e.g. complex
@@ -59,22 +59,22 @@ template<typename T =double> // assert operations for numeric is_specialized??
 class Quaternion {
 public:
   /**
-   * The value of each component of a quaternion.
+   * The value of each component of a Quaternion.
    */
   typedef T value_type;
 
   /**
-   * 2x2 matrices are related to quaternions and Pauli matrices.
+   * 2x2 matrices are related to Quaternions and Pauli matrices.
    */
   typedef std::array<std::array<std::complex<T>, 2>, 2> matrix_2_2;
 
   /**
-   * The polar representation of a quaternion.
+   * The polar representation of a Quaternion.
    */
   typedef std::array<T, 5> polar_representation;
 
   /**
-   * The type used for matrix representations of quaternions.
+   * The type used for matrix representations of Quaternions.
    * TODO: array or valarray? - maybe make template parameters, and polar_representation too
    */
   typedef std::array<std::array<std::complex<T>, 2>, 2> matrix_representation;
@@ -85,25 +85,25 @@ public:
   typedef std::array<std::array<T, 3>, 3> rotation_matrix;
 
   /**
-  * Construct a quaternion from at most 4 components of type T.
-  * Specifying only a != 0 makes the quaternion a real.
-  * Specifying only a != and b != 0 makes the quaternion an ordinary complex number.
+  * Construct a Quaternion from at most 4 components of type T.
+  * Specifying only a != 0 makes the Quaternion a real.
+  * Specifying only a != and b != 0 makes the Quaternion an ordinary complex number.
   */
   Quaternion(T a = 0, T b = 0, T c = 0, T d = 0)
       : _a(a), _b(b), _c(c), _d(d) { }
 
   /**
-   * Construct a quaternion from at most 4 components of type T.
-   * Specifying only a != 0 makes the quaternion a real.
-   * Specifying only a != and b != 0 makes the quaternion an ordinary complex number.
+   * Construct a Quaternion from at most 4 components of type T.
+   * Specifying only a != 0 makes the Quaternion a real.
+   * Specifying only a != and b != 0 makes the Quaternion an ordinary complex number.
    */
   template<typename T1 = T, IS_NOT_ITERATOR(T1)>
   Quaternion(T1 a = 0, T1 b = 0, T1 c = 0, T1 d = 0)
       : _a(a), _b(b), _c(c), _d(d) { }
 
   /**
-   * Construct a quaternion from 2 complex<T>.
-   * This sets all 4 components of the quaternion.
+   * Construct a Quaternion from 2 complex<T>.
+   * This sets all 4 components of the Quaternion.
    */
   template<typename T1>
   Quaternion(const std::complex<T1>& x, const std::complex<T1>& y = std::complex<T1>(0, 0))
@@ -199,7 +199,7 @@ public:
   // TODO: copy to valarray, array, vector...
 
   /**
-   * Accessors for all 4 components of the quaternion.
+   * Accessors for all 4 components of the Quaternion.
    */
   T a() const { return _a; }
   T b() const { return _b; }
@@ -207,13 +207,13 @@ public:
   T d() const { return _d; }
 
   /**
-   * The complex components of this quaternion.
+   * The complex components of this Quaternion.
    */
   std::complex<T> c1() const { return {_a,_b}; }
   std::complex<T> c2() const { return {_c,_d}; }
 
   /**
-   * Only for real quaternions, will assert if not real.
+   * Only for real Quaternions, will assert if not real.
    */
   operator T() const {
     assert(_b == 0 && _c == 0 && _d == 0);
@@ -236,9 +236,9 @@ public:
   }
 
   /**
-   * The polar representation of a quaternion.
+   * The polar representation of a Quaternion.
    * Returns 5 numbers:
-   * - the Euclidean norm of the quaternion,
+   * - the Euclidean norm of the Quaternion,
    * - the polar angle theta,
    * - and each of the components of the "unreal unit direction".
    */
@@ -257,7 +257,7 @@ public:
   }
 
   /**
-   * Returns a matrix representation of a quaternion.
+   * Returns a matrix representation of a Quaternion.
    */
   matrix_representation to_matrix_representation() const {
     std::array<std::complex<T>, 2> r0{{std::complex<T>(a(), b()), std::complex<T>(c(), d())}};
@@ -313,27 +313,13 @@ public:
   }
 
   /**
-   *
-   */
-  std::array<T,4> to_pauli() const {
-    return {{_a, 0, 0, 0}};
-  }
-
-  void from_pauli(const std::array<T,4>& pauli) {
-    constexpr matrix_2_2 id = {{{1},{0}},{{0},{1}}};
-    constexpr matrix_2_2 s1 = {{{0},{1}},{{1},{0}}};
-    constexpr matrix_2_2 s2 = {{{0},{0,1}},{{0,-1},{0}}};
-    constexpr matrix_2_2 s3 = {{{1},{0}},{{0},{-1}}};
-  }
-
-  /**
-   * The real and "unreal" parts of the quaternion.
+   * The real and "unreal" parts of the Quaternion.
    */
   T real() const { return _a; }
   Quaternion unreal() const { return {0, _b, _c, _d}; }
 
   /**
-   * The squared of the norm of the quaternion.
+   * The squared of the norm of the Quaternion.
    * (The square is sometimes useful, and it avoids paying for a sqrt).
    */
   T norm_squared() const {
@@ -341,14 +327,14 @@ public:
   }
 
   /**
-   * The norm of the quaternion (the l2 norm).
+   * The norm of the Quaternion (the l2 norm).
    */
   T abs() const {
     return std::sqrt(norm_squared());
   }
 
   /**
-   * The L2 norm of the "unreal" components of the quaternion,
+   * The L2 norm of the "unreal" components of the Quaternion,
    * comes back often in computations.
    */
   T unreal_norm_squared() const {
@@ -356,7 +342,7 @@ public:
   }
 
   /**
-   * Return true if this quaternion has norm 1, false otherwise.
+   * Return true if this Quaternion has norm 1, false otherwise.
    */
   template <typename T1 =T>
   bool is_unit(T1 eps =0) const {
@@ -364,7 +350,7 @@ public:
   }
 
   /**
-   * Return true if this quaternion is real, false otherwise.
+   * Return true if this Quaternion is real, false otherwise.
    */
   template <typename T1 =T>
   bool is_real(T1 eps =0) const {
@@ -374,7 +360,7 @@ public:
   }
 
   /**
-   * Return true if this quaternion is complex, false otherwise.
+   * Return true if this Quaternion is complex, false otherwise.
    */
   template <typename T1 =T>
   bool is_complex(T1 eps =0) const {
@@ -382,7 +368,7 @@ public:
   }
 
   /**
-   * Return true if this quaternion is real, false otherwise.
+   * Return true if this Quaternion is real, false otherwise.
    */
   template <typename T1 =T>
   bool is_unreal(T1 eps =0) const {
@@ -548,7 +534,7 @@ public:
   }
 
   /**
-   * Unary division with other quaternion.
+   * Unary division with other Quaternion.
    */
   template <typename T1>
   Quaternion operator/=(const Quaternion<T1>& y) {
@@ -568,9 +554,9 @@ public:
   }
 
   /**
-   * k1 * this quaternion + k2 * y
+   * k1 * this Quaternion + k2 * y
    * Improves performance by reducing number of constructions/copies.
-   * TODO: move to quaternion algorithms? but faster here?
+   * TODO: move to Quaternion algorithms? but faster here?
    */
   template<typename K>
   Quaternion axby(K k1, K k2, const Quaternion &y) {
@@ -600,7 +586,7 @@ private:
 };
 
 /**
- * Predefined quaternions on floats.
+ * Predefined Quaternions on floats.
  */
 typedef Quaternion<float> Qf;
 const Qf Qf_0;
@@ -610,7 +596,7 @@ const Qf Qf_j(0, 0, 1);
 const Qf Qf_k(0, 0, 0, 1);
 
 /**
- * Predefined quaternions on doubles.
+ * Predefined Quaternions on doubles.
  */
 typedef Quaternion<double> Qd;
 const Qd Qd_0;
@@ -620,7 +606,7 @@ const Qd Qd_j(0, 0, 1);
 const Qd Qd_k(0, 0, 0, 1);
 
 /**
- * Predefined quaternions on long doubles.
+ * Predefined Quaternions on long doubles.
  */
 typedef Quaternion<long double> Qld;
 const Qld Qld_0;
@@ -654,7 +640,7 @@ inline Quaternion<T> operator/(const Quaternion<T>& x, T1 k) {
 }
 
 /** +
- * Returns the conjugate of x, as a new quaternion (x is unchanged).
+ * Returns the conjugate of x, as a new Quaternion (x is unchanged).
  */
 template<typename T>
 inline Quaternion<T> conj(const Quaternion<T> &x) {
@@ -662,7 +648,7 @@ inline Quaternion<T> conj(const Quaternion<T> &x) {
 }
 
 /** +
- * Norms on a quaternion.
+ * Norms on a Quaternion.
  */
 template<typename T>
 inline T norm_squared(const Quaternion<T> &x) {
@@ -708,7 +694,7 @@ inline T norm_sup(const Quaternion<T>& x) {
 }
 
 /**
- * quaternion tests.
+ * Quaternion tests.
  */
 template<typename T, typename T1 =T>
 inline bool is_unit(const Quaternion<T>& x, T1 eps =0) {
@@ -744,7 +730,7 @@ inline bool operator!=(const Quaternion<T>& x, const Quaternion<T>& y) {
 }
 
 /**
- * This is more costly, but very useful in practice: quaternions transcendentals
+ * This is more costly, but very useful in practice: Quaternions transcendentals
  * require a lot of floating point operations, so accuracy degrades quickly.
  */
 template <typename T, typename T1> // T1 allows eps to be the default type double
@@ -810,7 +796,7 @@ inline bool operator!=(const std::complex<T2>& y, const Quaternion<T>& x) {
   return x != y;
 }
 
-// TODO: equality of quaternion and complex, of quaternion and array/container
+// TODO: equality of Quaternion and complex, of Quaternion and array/container
 
 template<typename T>
 inline Quaternion<T> operator+(const Quaternion<T>& x, T y) {
@@ -881,7 +867,7 @@ inline Quaternion<T> normalize(const Quaternion<T>& x) {
 }
 
 /**
- * Exponential of a quaternion.
+ * Exponential of a Quaternion.
  * This code seems to be quite a bit faster than boost, while giving
  * the same results. Boost uses a Taylor approximation for sinc,
  * which *might* (not sure) be why they are slightly slower here.
@@ -904,7 +890,7 @@ inline Quaternion<T> exp(const Quaternion<T>& x) {
 }
 
 /**
- * Log of a quaternion.
+ * Log of a Quaternion.
  * exp(log(x)) == x always, but log(exp(x)) != x is already not true
  * for complex number, because the log is multi-valued.
  *
@@ -1017,7 +1003,7 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
 }
 
 /**
- * Real power of a quaternion.
+ * Real power of a Quaternion.
  */
 template<typename T>
 inline Quaternion<T> pow(const Quaternion<T>& x, T a) {
@@ -1027,7 +1013,7 @@ inline Quaternion<T> pow(const Quaternion<T>& x, T a) {
 }
 
 /**
- * quaternion power of a quaternion.
+ * Quaternion power of a Quaternion.
  * (that should cover all the other cases for the exponent...)
  * TODO: test against pow just above
  */
@@ -1041,6 +1027,33 @@ inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T>& a) {
 
 // TODO: sqrt
 // TOOD: sin, cos, tan ...
+template<typename T>
+inline Quaternion<T> cos(const Quaternion<T>& x)
+{
+  T z = abs(x.unreal());
+  T w = -std::sin(x.real()) * std::sinh(z) / z;
+
+  return {std::cos(x.real()) * std::cosh(z), w * x.b(), w * x.c(), w * x.d()};
+}
+
+template<typename T>
+inline Quaternion<T> sin(const Quaternion<T>& x)
+{
+  T z = abs(x.unreal());
+  T w = std::cos(x.real()) * std::sinh(z) / z;
+
+  return {std::sin(x.real()) * std::cosh(z), w * x.b(), w * x.c(), w * x.d()};
+}
+
+/**
+ * TODO: optimize instruction count
+ */
+template<typename T>
+inline Quaternion<T> tan(const Quaternion<T>& x)
+{
+  return sin(x) / cos(x);
+}
+
 
 /**
  * result = a*x + b*y
@@ -1050,4 +1063,4 @@ inline Quaternion<T> axby(K k1, const Quaternion<T>& x, K k2, const Quaternion<T
   return Quaternion<T>(x).axby(k1, k2, y);
 }
 
-#endif //QUATERNIONS_QUATERNION_H
+#endif //QuaternionS_Quaternion_H

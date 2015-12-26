@@ -887,6 +887,22 @@ void test_commutator() {
   assert(c1 == c2);
 }
 
+void test_trigo() {
+  cout << "Testing trigonometic functions" << endl;
+  {
+    Qd x{1,2,3,4}; quaternion<double> qx{1,2,3,4};
+    assert(nearly_equal(sin(x), sin(qx), 1e-6));
+  }
+  {
+    Qd x{1,2,3,4}; quaternion<double> qx{1,2,3,4};
+    assert(nearly_equal(cos(x), cos(qx), 1e-6));
+  }
+  {
+    Qd x{1,2,3,4}; quaternion<double> qx{1,2,3,4};
+    assert(nearly_equal(tan(x), tan(qx), 1e-6));
+  }
+}
+
 void test_axby() {
   cout << "Testing axby" << endl;
   {
@@ -1149,6 +1165,7 @@ int main() {
   test_dot();
   test_cross();
   test_commutator();
+  test_trigo();
   test_axby();
   test_dot_sum_product();
   test_io();
