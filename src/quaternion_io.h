@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef QUATERNIONS_QUATERNION_IO_H_H
-#define QUATERNIONS_QUATERNION_IO_H_H
+#ifndef QUATERNIONS_QUATERNION_IO_H
+#define QUATERNIONS_QUATERNION_IO_H
 
 #include <iostream>
 
@@ -126,4 +126,4 @@ inline std::ostream &operator<<(std::ostream &out, const Quaternion<T> &q) {
   return QuaternionIO::print(out, q);
 }
 
-#endif //QUATERNIONS_QUATERNION_IO_H_H
+#endif //QUATERNIONS_QUATERNION_IO_H

@@ -26,8 +26,8 @@
  * A Quaternion class.
  */
 
-#ifndef QuaternionS_Quaternion_H
-#define QuaternionS_Quaternion_H
+#ifndef QUATERNIONS_QUATERNION_H
+#define QUATERNIONS_QUATERNION_H
 
 #include <limits>
 #include <array>
@@ -35,7 +35,7 @@
 #include <iterator>
 #include <assert.h>
 
-#include "Quaternion_utils.h"
+#include "quaternion_utils.h"
 
 // TODO: add namespace
 
@@ -1083,4 +1083,4 @@ inline Quaternion<T> axby(K k1, const Quaternion<T>& x, K k2, const Quaternion<T
   return Quaternion<T>(x).axby(k1, k2, y);
 }
 
-#endif //QuaternionS_Quaternion_H
+#endif //QUATERNIONS_QUATERNION_H
