@@ -40,33 +40,33 @@ using namespace boost::math;
 //----------------------------------------------------------------------------------------------------------------------
 // Test utilities
 //----------------------------------------------------------------------------------------------------------------------
-/**
- * Prints out arrays to a stream
- */
-template <typename T, size_t n>
-inline ostream& operator<<(ostream& out, const array<T,n>& x) {
-  out << "{";
-  for (size_t i = 0; i < n; ++i) {
-    out << x[i];
-    if (i < n-1)
-      out << ",";
-  }
-  return out << "}";
-}
-
-/**
- * Prints out a vector of elements of type T to a stream
- */
-template <typename T>
-inline ostream& operator<<(ostream& out, const vector<T>& x) {
-  out << "(";
-  for (size_t i = 0; i < x.size(); ++i) {
-    out << x[i];
-    if (i < x.size()-1)
-      out << ",";
-  }
-  return out << ")";
-}
+///**
+// * Prints out arrays to a stream
+// */
+//template <typename T, size_t n>
+//inline ostream& operator<<(ostream& out, const array<T,n>& x) {
+//  out << "{";
+//  for (size_t i = 0; i < n; ++i) {
+//    out << x[i];
+//    if (i < n-1)
+//      out << ",";
+//  }
+//  return out << "}";
+//}
+//
+///**
+// * Prints out a vector of elements of type T to a stream
+// */
+//template <typename T>
+//inline ostream& operator<<(ostream& out, const vector<T>& x) {
+//  out << "(";
+//  for (size_t i = 0; i < x.size(); ++i) {
+//    out << x[i];
+//    if (i < x.size()-1)
+//      out << ",";
+//  }
+//  return out << ")";
+//}
 
 /**
  * Compare a boost quaternion to quaternion, within epsilon.
