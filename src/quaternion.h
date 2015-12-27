@@ -816,8 +816,6 @@ inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T>& y) {
 /**
  * SSE operations: tried 2 implementations (SO and vectorclass): not faster.
  * Boost: as fast as boost implementation.
- * TODO: micro-threads?
- * TODO: on Mac/clang and only there, this is twice as slow as boost?
  */
 template<typename T>
 inline Quaternion<T> operator*(const Quaternion<T>& x, const Quaternion<T>& y) {
@@ -1021,7 +1019,6 @@ template<typename T>
 inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T>& a) {
   if (a.is_real())
     return pow(x, a.a());
-  // if (a.is_complex()) // TODO: worth it?
   return exp(a * log(x));
 }
 
@@ -1047,13 +1044,36 @@ inline Quaternion<T> sin(const Quaternion<T>& x)
 
 /**
  * TODO: optimize instruction count
+ * TODO: reciprocals
+ * TODO: checkout /0
  */
 template<typename T>
 inline Quaternion<T> tan(const Quaternion<T>& x)
 {
-  return sin(x) / cos(x);
+  T z = abs(x.unreal());
+  T n = std::sinh(2*z);
+  T d = std::cos(2*x.a()) + std::cosh(2*z);
+  T r = n/(z*d);
+  return {std::sin(2*x.a())/d, r*x.b(), r*x.c(), r*x.d()};
 }
 
+template<typename T>
+inline Quaternion<T> cosh(const Quaternion<T>& x)
+{
+  return (exp(x) + exp(-x))/2;
+}
+
+template<typename T>
+inline Quaternion<T> sinh(const Quaternion<T>& x)
+{
+  return (exp(x) - exp(-x))/2;
+}
+
+template<typename T>
+inline Quaternion<T> tanh(const Quaternion<T>& x)
+{
+  return sinh(x)/cosh(x);
+}
 
 /**
  * result = a*x + b*y

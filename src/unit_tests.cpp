@@ -898,8 +898,26 @@ void test_trigo() {
     assert(nearly_equal(cos(x), cos(qx), 1e-6));
   }
   {
-    Qd x{1,2,3,4}; quaternion<double> qx{1,2,3,4};
-    assert(nearly_equal(tan(x), tan(qx), 1e-6));
+    Qd x{1,2,3,4};
+    assert(nearly_equal(tan(x), sin(x)/cos(x), 1e-6));
+  }
+}
+
+void test_hyper_trigo() {
+  cout << "Testing hyperbolic trigonometric functions" << endl;
+  {
+    {
+      Qd x{1,2,3,4};
+      assert(nearly_equal(sinh(x), (exp(x) - exp(-x))/2, 1e-6));
+    }
+    {
+      Qd x{1,2,3,4};
+      assert(nearly_equal(cosh(x), (exp(x) + exp(-x))/2, 1e-6));
+    }
+    {
+      Qd x{1,2,3,4};
+      assert(nearly_equal(tanh(x), sinh(x)/cosh(x), 1e-6));
+    }
   }
 }
 
@@ -1166,6 +1184,7 @@ int main() {
   test_cross();
   test_commutator();
   test_trigo();
+  test_hyper_trigo();
   test_axby();
   test_dot_sum_product();
   test_io();
