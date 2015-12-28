@@ -116,8 +116,8 @@ template <typename T, size_t n1, size_t n2>
 inline bool nearly_equal(const std::array<std::array<T,n1>,n2>& x, const std::array<std::array<T,n1>,n2>& y, T eps) {
   for (size_t i = 0; i < n1; ++i)
     for (size_t j = 0; j < n2; ++j)
-    if (!is_near_equal_relative(x[i][j], y[i][j], eps))
-      return false;
+      if (!is_near_equal_relative(x[i][j], y[i][j], eps))
+        return false;
   return true;
 };
 
@@ -147,6 +147,8 @@ typedef boost::math::quaternion<float> qf;
 typedef boost::math::quaternion<double> qd;
 
 void test_nearly_equal() {
+  cout << "Testing nearly equal" << endl;
+
   {
     array<array<float,3>,3> A;
     A[0] = {{1, 0, 0}};
@@ -911,33 +913,73 @@ void test_commutator() {
 void test_trigo() {
   cout << "Testing trigonometic functions" << endl;
   {
-    Qd x{1,2,3,4}; quaternion<double> qx{1,2,3,4};
+    Qd x{1,2,3,4}; qd qx{1,2,3,4};
     assert(nearly_equal(sin(x), sin(qx), 1e-6));
   }
   {
-    Qd x{1,2,3,4}; quaternion<double> qx{1,2,3,4};
+    Qd x{1,2,3,4}; qd qx{1,2,3,4};
     assert(nearly_equal(cos(x), cos(qx), 1e-6));
   }
   {
     Qd x{1,2,3,4};
     assert(nearly_equal(tan(x), sin(x)/cos(x), 1e-6));
   }
+  {
+    for (size_t i = 0; i < 1000; ++i) {
+      Qd x = random_quaternion<float>(rng);
+      qd qx(x.a(), x.b(), x.c(), x.d());
+      assert(nearly_equal(sin(x), sin(qx), 1e-6));
+    }
+  }
+  {
+    for (size_t i = 0; i < 1000; ++i) {
+      Qd x = random_quaternion<float>(rng);
+      qd qx(x.a(), x.b(), x.c(), x.d());
+      assert(nearly_equal(cos(x), cos(qx), 1e-6));
+    }
+  }
+  {
+    for (size_t i = 0; i < 1000; ++i) {
+      Qd x = random_quaternion<float>(rng);
+      qd qx(x.a(), x.b(), x.c(), x.d());
+      assert(nearly_equal(tan(x), tan(qx), 1e-6));
+    }
+  }
 }
 
 void test_hyper_trigo() {
   cout << "Testing hyperbolic trigonometric functions" << endl;
   {
-    {
-      Qd x{1,2,3,4};
-      assert(nearly_equal(sinh(x), (exp(x) - exp(-x))/2, 1e-6));
+    Qd x{1,2,3,4};
+    assert(nearly_equal(sinh(x), (exp(x) - exp(-x))/2, 1e-6));
+  }
+  {
+    Qd x{1,2,3,4};
+    assert(nearly_equal(cosh(x), (exp(x) + exp(-x))/2, 1e-6));
+  }
+  {
+    Qd x{1,2,3,4};
+    assert(nearly_equal(tanh(x), sinh(x)/cosh(x), 1e-6));
+  }
+  {
+    for (size_t i = 0; i < 1000; ++i) {
+      Qd x = random_quaternion<float>(rng);
+      qd qx(x.a(), x.b(), x.c(), x.d());
+      assert(nearly_equal(sinh(x), sinh(qx), 1e-6));
     }
-    {
-      Qd x{1,2,3,4};
-      assert(nearly_equal(cosh(x), (exp(x) + exp(-x))/2, 1e-6));
+  }
+  {
+    for (size_t i = 0; i < 1000; ++i) {
+      Qd x = random_quaternion<float>(rng);
+      qd qx(x.a(), x.b(), x.c(), x.d());
+      assert(nearly_equal(cosh(x), cosh(qx), 1e-6));
     }
-    {
-      Qd x{1,2,3,4};
-      assert(nearly_equal(tanh(x), sinh(x)/cosh(x), 1e-6));
+  }
+  {
+    for (size_t i = 0; i < 1000; ++i) {
+      Qd x = random_quaternion<float>(rng);
+      qd qx(x.a(), x.b(), x.c(), x.d());
+      assert(nearly_equal(tanh(x), tanh(qx), 1e-6));
     }
   }
 }
@@ -1177,6 +1219,40 @@ void test_axby_speed() {
   }
 }
 
+void test_tan_speed() {
+  cout << "Testing tan speed" << endl;
+  size_t N = 100000;
+
+  Qf q1 = random_quaternion<float>(rng);
+
+  { // With Boost
+    qf a(q1.a(),q1.b(),q1.c(),q1.d());
+    float certificate = 0.0;
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < N; ++i) {
+      qf r = tan(a);
+      certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
+    }
+    auto end = std::chrono::system_clock::now();
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Boost: " << (diff.count() / N) << "ns" << endl;
+    cout << "Certificate=" << certificate << endl;
+  }
+
+  {
+    float certificate = 0.0;
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < N; ++i) {
+      Qf r = tan(q1);
+      certificate += r.a() + r.b() + r.c() + r.d();
+    }
+    auto end = std::chrono::system_clock::now();
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Quaternion: " << (diff.count() / N) << "ns" << endl;
+    cout << "Certificate=" << certificate << endl;
+  }
+}
+
 int main() {
 
   test_nearly_equal();
@@ -1220,6 +1296,7 @@ int main() {
   test_multiplication_speed();
   test_pow_speed();
   test_axby_speed();
+  test_tan_speed();
 
   return 0;
 }

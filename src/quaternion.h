@@ -1029,7 +1029,6 @@ inline Quaternion<T> cos(const Quaternion<T>& x)
 {
   T z = abs(x.unreal());
   T w = -std::sin(x.real()) * std::sinh(z) / z;
-
   return {std::cos(x.real()) * std::cosh(z), w * x.b(), w * x.c(), w * x.d()};
 }
 
@@ -1038,7 +1037,6 @@ inline Quaternion<T> sin(const Quaternion<T>& x)
 {
   T z = abs(x.unreal());
   T w = std::cos(x.real()) * std::sinh(z) / z;
-
   return {std::sin(x.real()) * std::cosh(z), w * x.b(), w * x.c(), w * x.d()};
 }
 
