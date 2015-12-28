@@ -911,7 +911,8 @@ void test_commutator() {
 }
 
 void test_trigo() {
-  cout << "Testing trigonometic functions" << endl;
+  cout << "Testing trigonometric functions" << endl;
+  // TODO: verify ordinary real and complex trigo against std
   {
     Qd x{1,2,3,4}; qd qx{1,2,3,4};
     assert(nearly_equal(sin(x), sin(qx), 1e-6));
