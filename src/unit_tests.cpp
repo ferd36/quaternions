@@ -146,6 +146,27 @@ typedef std::complex<long double> Cld;
 typedef boost::math::quaternion<float> qf;
 typedef boost::math::quaternion<double> qd;
 
+void test_nearly_equal() {
+  {
+    array<array<float,3>,3> A;
+    A[0] = {{1, 0, 0}};
+    A[1] = {{0, 1, 0}};
+    A[2] = {{0, 0, 1}};
+    assert(nearly_equal(A, A, 0.0f));
+  }
+
+  {
+    array<array<float,3>,3> A, B;
+    A[0] = {{1, 0, 0}};
+    A[1] = {{0, 1, 0}};
+    A[2] = {{0, 0, 1}};
+    B[0] = {{1, 0, 0}};
+    B[1] = {{0, 1, 0}};
+    B[2] = {{0, 0, 2}};
+    assert(!nearly_equal(A, B, 1e-6f));
+  }
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 // Unit tests
 //----------------------------------------------------------------------------------------------------------------------
@@ -1157,6 +1178,9 @@ void test_axby_speed() {
 }
 
 int main() {
+
+  test_nearly_equal();
+
   test_constructors();
   test_trigonometric_constructors();
   test_IJK();

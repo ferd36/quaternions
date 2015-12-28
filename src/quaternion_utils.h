@@ -30,6 +30,7 @@
 
 #include <cmath>
 #include <iterator>
+#include <type_traits>
 
 /**
  * A couple of macros to use in template declarations in order to select
