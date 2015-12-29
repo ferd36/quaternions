@@ -49,6 +49,7 @@
  * TODO: study matrix representation and isomorphism
  * TODO: check references to make sure functionality covered
  * TODO: preconditions
+ * TODO: remove dependency on boost (to e.g. build simply on appveyor)
  * TODO: sort out when to provide member functions v external functions
  * TODO: integer Quaternions, binary Quaternions
  * TODO: http://www.gamedev.net/page/resources/_/technical/math-and-physics/Quaternion-powers-r1095
