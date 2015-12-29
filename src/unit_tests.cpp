@@ -35,7 +35,6 @@
 
 using namespace std;
 using namespace boost;
-using namespace boost::math;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Test utilities
@@ -295,32 +294,32 @@ void test_constructors() {
 void test_trigonometric_constructors() {
   cout << "Testing trigonometric constructors" << endl;
   {
-    Qf x; x.spherical(0,0,0,0);
+    Qf x = spherical(0.0f,0.0f,0.0f,0.0f);
     assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
   }
 
   {
-    Qd x = Qd::spherical(10, 3.1415, 3.1415/2, 3.1415/4);
+    Qd x = spherical(10.0, 3.1415, 3.1415/2.0, 3.1415/4.0);
     assert(x == boost::math::spherical(10.0, 3.1415, 3.1415/2, 3.1415/4));
   }
 
   {
-    Qd x = Qd::semipolar(10, 3.1415, 3.1415/2, 3.1415/4);
+    Qd x = semipolar(10.0, 3.1415, 3.1415/2, 3.1415/4);
     assert(x == boost::math::semipolar(10.0, 3.1415, 3.1415/2, 3.1415/4));
   }
 
   {
-    Qd x = Qd::multipolar(10, 3.1415, 3.1415/2, 3.1415/4);
+    Qd x = multipolar(10.0, 3.1415, 3.1415/2, 3.1415/4);
     assert(x == boost::math::multipolar(10.0, 3.1415, 3.1415/2, 3.1415/4));
   }
 
   {
-    Qd x = Qd::cylindrospherical(-2.0, -3.0, 3.1415/2, 3.1415/4);
+    Qd x = cylindrospherical(-2.0, -3.0, 3.1415/2, 3.1415/4);
     assert(x == boost::math::cylindrospherical(-2.0, -3.0, 3.1415/2, 3.1415/4));
   }
 
   {
-    Qd x = Qd::cylindrical(-2.0, 3.1415/2, 3.0, 4.0);
+    Qd x = cylindrical(-2.0, 3.1415/2, 3.0, 4.0);
     assert(x == boost::math::cylindrical(-2.0, 3.1415/2, 3.0, 4.0));
   }
 }
@@ -415,70 +414,71 @@ void test_conjugate() {
 
 void test_to_matrix_representation() {
   cout << "Testing matrix representation" << endl;
-  typedef typename Qd::matrix_representation MR;
+  typedef matrix_representation<double> MR;
 
   {
-    assert(Qd().to_matrix_representation() == MR());
+    assert(to_matrix_representation(Qd()) == MR());
   }
   {
     MR r;
     r[0] = {{Cd(1,0), Cd()}};
     r[1] = {{Cd(), Cd(1,0)}};
-    assert(Qd(1).to_matrix_representation() == r);
+    assert(to_matrix_representation(Qd(1)) == r);
   }
   {
     MR r;
     r[0] = {{Cd(1, 2), Cd(3, 4)}};
     r[1] = {{Cd(-3, 4), Cd(1, -2)}};
-    assert(Qd(1,2,3,4).to_matrix_representation() == r);
+    assert(to_matrix_representation(Qd(1,2,3,4)) == r);
   }
 }
 
 void test_to_polar_representation() {
   cout << "Testing polar representation" << endl;
-  typedef typename Qd::polar_representation PR;
+  typedef polar_representation<double> PR;
   {
     PR expected{{0,0,0,0,0}};
-    assert(Qd().to_polar_representation() == expected);
+    assert(to_polar_representation(Qd()) == expected);
 
     expected = {{1,1,1,1,1}};
-    assert(!nearly_equal(Qd(1).to_polar_representation(), expected, 1e-6));
+    assert(!nearly_equal(to_polar_representation(Qd(1)), expected, 1e-6));
 
     expected = {{3,3.141592,0,0,0}};
-    assert(nearly_equal(Qd(-3).to_polar_representation(), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(-3)), expected, 1e-6));
 
     expected = {{1,3.1415926f/2,1,0,0}};
-    assert(nearly_equal(Qd(0,1).to_polar_representation(), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0,1)), expected, 1e-6));
 
     expected = {{3,3.1415926f/2,-1,0,0}};
-    assert(nearly_equal(Qd(0,-3).to_polar_representation(), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0,-3)), expected, 1e-6));
 
     expected = {{1,3.1415926f/2,0,1,0}};
-    assert(nearly_equal(Qd(0,0,1).to_polar_representation(), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0,0,1)), expected, 1e-6));
 
     expected = {{2.5,3.1415926f/2,0,-1,0}};
-    assert(nearly_equal(Qd(0,0,-2.5).to_polar_representation(), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0,0,-2.5)), expected, 1e-6));
 
     expected = {{1,3.1415926f/2,0,0,1}};
-    assert(nearly_equal(Qd(0,0,0,1).to_polar_representation(), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0,0,0,1)), expected, 1e-6));
 
     expected = {{3.5,3.1415926f/2,0,0,-1}};
-    assert(nearly_equal(Qd(0,0,0,-3.5).to_polar_representation(), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0,0,0,-3.5)), expected, 1e-6));
   }
 }
 
 void test_to_rotation_matrix() {
   cout << "Testing rotation matrix" << endl;
-  typedef typename Qd::rotation_matrix RM;
+  typedef rotation_matrix<double> RM;
+
   {
     Qd x(1);
     RM expected;
     expected[0] = {{1,0,0}};
     expected[1] = {{0,1,0}};
     expected[2] = {{0,0,1}};
-    assert(nearly_equal(x.to_rotation_matrix(), expected, 1e-10));
-    RM r = x.to_rotation_matrix();
-    Qd y; y.from_rotation_matrix(r);
+    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-10));
+    RM r = to_rotation_matrix(x);
+    Qd y = from_rotation_matrix(r);
     assert(y == Qd_1);
   }
   {
@@ -487,9 +487,9 @@ void test_to_rotation_matrix() {
     expected[0] = {{1,0,0}};
     expected[1] = {{0,-1,0}};
     expected[2] = {{0,0,-1}};
-    assert(nearly_equal(x.to_rotation_matrix(), expected, 1e-10));
-    RM r = x.to_rotation_matrix();
-    Qd y; y.from_rotation_matrix(r);
+    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-10));
+    RM r = to_rotation_matrix(x);
+    Qd y = from_rotation_matrix(r);
     assert(y == Qd_i);
   }
   {
@@ -498,9 +498,9 @@ void test_to_rotation_matrix() {
     expected[0] = {{-1,0,0}};
     expected[1] = {{0,1,0}};
     expected[2] = {{0,0,-1}};
-    assert(nearly_equal(x.to_rotation_matrix(), expected, 1e-10));
-    RM r = x.to_rotation_matrix();
-    Qd y; y.from_rotation_matrix(r);
+    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-10));
+    RM r = to_rotation_matrix(x);
+    Qd y = from_rotation_matrix(r);
     assert(y == Qd_j);
   }
   {
@@ -509,9 +509,9 @@ void test_to_rotation_matrix() {
     expected[0] = {{-1,0,0}};
     expected[1] = {{0,-1,0}};
     expected[2] = {{0,0,1}};
-    assert(nearly_equal(x.to_rotation_matrix(), expected, 1e-10));
-    RM r = x.to_rotation_matrix();
-    Qd y; y.from_rotation_matrix(r);
+    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-10));
+    RM r = to_rotation_matrix(x);
+    Qd y = from_rotation_matrix(r);
     assert(y == Qd_k);
   }
 }
@@ -867,10 +867,10 @@ void test_exp() {
   {
     size_t N = 1000;
     for (size_t i = 0; i < N; ++i) {
-      Qld x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
-      quaternion<long double> bx(x.a(), x.b(), x.c(), x.d());
-      Qld y = exp(x);
-      quaternion<long double> by = exp(bx);
+      Qd x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
+      qd bx(x.a(), x.b(), x.c(), x.d());
+      Qd y = exp(x);
+      qd by = exp(bx);
       assert(nearly_equal(y, by, 1e-6));
     }
   }
@@ -1161,8 +1161,8 @@ void test_exp_speed() {
     float certificate = 0.0;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < N; ++i) {
-      quaternion<long double> x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
-      quaternion<long double> r = exp(x);
+      qd x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
+      qd r = exp(x);
       certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
     }
     auto end = std::chrono::system_clock::now();
@@ -1254,7 +1254,7 @@ void test_tan_speed() {
   }
 }
 
-int main() {
+int main(int argc, char** argv) {
 
   test_nearly_equal();
 

@@ -64,27 +64,6 @@ public:
   typedef T value_type;
 
   /**
-   * 2x2 matrices are related to Quaternions and Pauli matrices.
-   */
-  typedef std::array<std::array<std::complex<T>, 2>, 2> matrix_2_2;
-
-  /**
-   * The polar representation of a Quaternion.
-   */
-  typedef std::array<T, 5> polar_representation;
-
-  /**
-   * The type used for matrix representations of Quaternions.
-   * TODO: array or valarray? - maybe make template parameters, and polar_representation too
-   */
-  typedef std::array<std::array<std::complex<T>, 2>, 2> matrix_representation;
-
-  /**
-   * A 3D rotation matrix.
-   */
-  typedef std::array<std::array<T, 3>, 3> rotation_matrix;
-
-  /**
   * Construct a Quaternion from at most 4 components of type T.
   * Specifying only a != 0 makes the Quaternion a real.
   * Specifying only a != and b != 0 makes the Quaternion an ordinary complex number.
@@ -143,59 +122,6 @@ public:
     return *this;
   }
 
-  // TODO: move to factory?
-  static Quaternion spherical(T rho, T theta, T phi1, T phi2) {
-
-    T d = std::sin(phi2);
-    T cr = std::cos(phi2);
-    T c = cr * std::sin(phi1);
-    cr *= std::cos(phi1);
-    T b = cr * std::sin(theta);
-    T a = cr * std::cos(theta);
-
-    return {rho * a, rho * b, rho * c, rho * d};
-  }
-
-  static Quaternion semipolar(T rho, T alpha, T theta1, T theta2) {
-
-    T ca = std::cos(alpha);
-    T sa = std::sin(alpha);
-    T a = ca * std::cos(theta1);
-    T b = ca * std::sin(theta1);
-    T c = sa * std::cos(theta2);
-    T d = sa * std::sin(theta2);
-
-    return {rho * a, rho * b, rho * c, rho * d};
-  }
-
-  static Quaternion multipolar(T rho1, T theta1, T rho2, T theta2) {
-
-    T a = rho1 * std::cos(theta1);
-    T b = rho1 * std::sin(theta1);
-    T c = rho2 * std::cos(theta2);
-    T d = rho2 * std::sin(theta2);
-
-    return {a, b, c, d};
-  }
-
-  static Quaternion cylindrospherical(T t, T radius, T longitude, T latitude) {
-
-    T cl = std::cos(latitude);
-    T b = radius * cl * std::cos(longitude);
-    T c = radius * cl * std::sin(longitude);
-    T d = radius * std::sin(latitude);
-
-    return {t, b, c, d};
-  }
-
-  static Quaternion cylindrical(T r, T angle, T h1, T h2) {
-
-    T a = r * std::cos(angle);
-    T b = r * std::sin(angle);
-
-    return {a, b, h1, h2};
-  }
-
   // TODO: copy to valarray, array, vector...
 
   /**
@@ -233,83 +159,6 @@ public:
    */
   operator std::array<T,4>() const {
     return {{_a, _b, _c, _d}};
-  }
-
-  /**
-   * The polar representation of a Quaternion.
-   * Returns 5 numbers:
-   * - the Euclidean norm of the Quaternion,
-   * - the polar angle theta,
-   * - and each of the components of the "unreal unit direction".
-   */
-  polar_representation to_polar_representation() const {
-    T nu = unreal_norm_squared();
-    T n = std::sqrt(nu + _a*_a);
-    assert(nu >= 0);
-    if (nu > 0) {
-      T theta = std::acos(_a / n);
-      T ns = sqrt(nu);
-      return {{n, theta, _b / ns, _c / ns, _d / ns}};
-    }
-    const T pi = std::atan2(+0., -0.);
-    // theta = 0 or pi, because n = +/- a().
-    return {{n, n == _a ? 0 : pi, 0, 0, 0}};
-  }
-
-  /**
-   * Returns a matrix representation of a Quaternion.
-   */
-  matrix_representation to_matrix_representation() const {
-    std::array<std::complex<T>, 2> r0{{std::complex<T>(a(), b()), std::complex<T>(c(), d())}};
-    std::array<std::complex<T>, 2> r1{{std::complex<T>(-c(), d()), std::complex<T>(a(), -b())}};
-    return {{r0, r1}};
-  }
-
-  /**
-   * Returns a 3D rotation matrix.
-   */
-  rotation_matrix to_rotation_matrix() const {
-    // 21 operations?
-    T a2 = _a*_a, b2 = _b*_b, c2 = _c*_c, d2 = _d*_d;
-    T ab = _a*_b, ac = _a*_c, ad = _a*_d;
-    T bc = _b*_c, bd = _b*_d;
-    T cd = _c*_d;
-    std::array<T, 3> r0{{a2+b2-c2-d2,2*(bc-ad),2*(bd+ac)}};
-    std::array<T, 3> r1{{2*(bc+ad),a2-b2+c2-d2,2*(cd-ab)}};
-    std::array<T, 3> r2{{2*(bd-ac),2*(cd+ab),a2-b2-c2+d2}};
-    return {{r0, r1, r2}};
-  }
-
-  // TODO: clumsy: maybe standalone factory?
-  void from_rotation_matrix(const rotation_matrix& rm) {
-    T t = rm[0][0] + rm[1][1] + rm[2][2];
-    if (t > 0) {
-      T s = 0.5 / std::sqrt(t + 1);
-      _a = 0.25 / s;
-      _b = (rm[2][1] - rm[1][2]) * s;
-      _c = (rm[0][2] - rm[2][0]) * s;
-      _d = (rm[1][0] - rm[0][1]) * s;
-    } else {
-      if (rm[0][0] > rm[1][1] && rm[0][0] > rm[2][2]) {
-        T s = 2.0 * std::sqrt(1.0 + rm[0][0] - rm[1][1] - rm[2][2]);
-        _a = (rm[2][1] - rm[1][2]) / s;
-        _b = 0.25 * s;
-        _c = (rm[0][1] + rm[1][0]) / s;
-        _d = (rm[0][2] + rm[2][0]) / s;
-      } else if (rm[1][1] > rm[2][2]) {
-        T s = 2.0 * std::sqrt(1.0 + rm[1][1] - rm[0][0] - rm[2][2]);
-        _a = (rm[0][2] - rm[2][0]) / s;
-        _b = (rm[0][1] + rm[1][0]) / s;
-        _c = 0.25 * s;
-        _d = (rm[1][2] + rm[2][1]) / s;
-      } else {
-        T s = 2.0 * std::sqrt(1.0 + rm[2][2] - rm[0][0] - rm[1][1]);
-        _a = (rm[1][0] - rm[0][1]) / s;
-        _b = (rm[0][2] + rm[2][0]) / s;
-        _c = (rm[1][2] + rm[2][1]) / s;
-        _d = 0.25 * s;
-      }
-    }
   }
 
   /**
@@ -614,6 +463,161 @@ const Qld Qld_1(1);
 const Qld Qld_i(0, 1);
 const Qld Qld_j(0, 0, 1);
 const Qld Qld_k(0, 0, 0, 1);
+
+template <typename T>
+inline Quaternion<T> spherical(T rho, T theta, T phi1, T phi2) {
+
+  T d = std::sin(phi2);
+  T cr = std::cos(phi2);
+  T c = cr * std::sin(phi1);
+  cr *= std::cos(phi1);
+  T b = cr * std::sin(theta);
+  T a = cr * std::cos(theta);
+
+  return {rho * a, rho * b, rho * c, rho * d};
+}
+
+template <typename T>
+inline Quaternion<T> semipolar(T rho, T alpha, T theta1, T theta2) {
+
+  T ca = std::cos(alpha);
+  T sa = std::sin(alpha);
+  T a = ca * std::cos(theta1);
+  T b = ca * std::sin(theta1);
+  T c = sa * std::cos(theta2);
+  T d = sa * std::sin(theta2);
+
+  return {rho * a, rho * b, rho * c, rho * d};
+}
+
+template <typename T>
+inline Quaternion<T> multipolar(T rho1, T theta1, T rho2, T theta2) {
+
+  T a = rho1 * std::cos(theta1);
+  T b = rho1 * std::sin(theta1);
+  T c = rho2 * std::cos(theta2);
+  T d = rho2 * std::sin(theta2);
+
+  return {a, b, c, d};
+}
+
+template <typename T>
+inline Quaternion<T> cylindrospherical(T t, T radius, T longitude, T latitude) {
+
+  T cl = std::cos(latitude);
+  T b = radius * cl * std::cos(longitude);
+  T c = radius * cl * std::sin(longitude);
+  T d = radius * std::sin(latitude);
+
+  return {t, b, c, d};
+}
+
+template <typename T>
+inline Quaternion<T> cylindrical(T r, T angle, T h1, T h2) {
+
+  T a = r * std::cos(angle);
+  T b = r * std::sin(angle);
+
+  return {a, b, h1, h2};
+}
+
+/**
+ * The polar representation of a Quaternion.
+ */
+template <typename T>
+using polar_representation = std::array<T, 5>;
+
+/**
+ * The polar representation of a Quaternion.
+ * Returns 5 numbers:
+ * - the Euclidean norm of the Quaternion,
+ * - the polar angle theta,
+ * - and each of the components of the "unreal unit direction".
+ */
+template <typename T>
+inline polar_representation<T> to_polar_representation(const Quaternion<T>& x) {
+  T nu = x.unreal_norm_squared();
+  T n = std::sqrt(nu + x.a()*x.a());
+  assert(nu >= 0);
+  if (nu > 0) {
+    T theta = std::acos(x.a() / n);
+    T ns = sqrt(nu);
+    return {{n, theta, x.b() / ns, x.c() / ns, x.d() / ns}};
+  }
+  const T pi = std::atan2(+0., -0.);
+  // theta = 0 or pi, because n = +/- a().
+  return {{n, n == x.a() ? 0 : pi, 0, 0, 0}};
+}
+
+/**
+ * The type used for matrix representations of Quaternions.
+ */
+template <typename T>
+using matrix_representation = std::array<std::array<std::complex<T>, 2>, 2>;
+
+/**
+ * Returns a matrix representation of a Quaternion.
+ */
+template <typename T>
+matrix_representation<T> to_matrix_representation(const Quaternion<T>& x) {
+  std::array<std::complex<T>, 2> r0{{std::complex<T>(x.a(), x.b()), std::complex<T>(x.c(), x.d())}};
+  std::array<std::complex<T>, 2> r1{{std::complex<T>(-x.c(), x.d()), std::complex<T>(x.a(), -x.b())}};
+  return {{r0, r1}};
+}
+
+/**
+ * A 3D rotation matrix.
+ */
+template <typename T>
+using rotation_matrix = std::array<std::array<T, 3>, 3>;
+
+/**
+ * Returns a 3D rotation matrix.
+ */
+template <typename T>
+inline rotation_matrix<T> to_rotation_matrix(const Quaternion<T>& x) {
+  // 21 operations?
+  T a2 = x.a()*x.a(), b2 = x.b()*x.b(), c2 = x.c()*x.c(), d2 = x.d()*x.d();
+  T ab = x.a()*x.b(), ac = x.a()*x.c(), ad = x.a()*x.d();
+  T bc = x.b()*x.c(), bd = x.b()*x.d();
+  T cd = x.c()*x.d();
+  std::array<T, 3> r0{{a2+b2-c2-d2,2*(bc-ad),2*(bd+ac)}};
+  std::array<T, 3> r1{{2*(bc+ad),a2-b2+c2-d2,2*(cd-ab)}};
+  std::array<T, 3> r2{{2*(bd-ac),2*(cd+ab),a2-b2-c2+d2}};
+  return {{r0, r1, r2}};
+}
+
+template <typename T>
+inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
+  T t = rm[0][0] + rm[1][1] + rm[2][2];
+  if (t > 0) {
+    T s = 0.5 / std::sqrt(t + 1);
+    return {0.25 / s,
+            (rm[2][1] - rm[1][2]) * s,
+            (rm[0][2] - rm[2][0]) * s,
+            (rm[1][0] - rm[0][1]) * s};
+  } else {
+    if (rm[0][0] > rm[1][1] && rm[0][0] > rm[2][2]) {
+      T s = 2.0 * std::sqrt(1.0 + rm[0][0] - rm[1][1] - rm[2][2]);
+      return {(rm[2][1] - rm[1][2]) / s,
+              0.25 * s,
+              (rm[0][1] + rm[1][0]) / s,
+              (rm[0][2] + rm[2][0]) / s};
+    } else if (rm[1][1] > rm[2][2]) {
+      T s = 2.0 * std::sqrt(1.0 + rm[1][1] - rm[0][0] - rm[2][2]);
+      return {(rm[0][2] - rm[2][0]) / s,
+              (rm[0][1] + rm[1][0]) / s,
+              0.25 * s,
+              (rm[1][2] + rm[2][1]) / s};
+    } else {
+      T s = 2.0 * std::sqrt(1.0 + rm[2][2] - rm[0][0] - rm[1][1]);
+      return {(rm[1][0] - rm[0][1]) / s,
+              (rm[0][2] + rm[2][0]) / s,
+              (rm[1][2] + rm[2][1]) / s,
+              0.25 * s};
+    }
+  }
+}
 
 /**
  * Multiplication by a constant on the left.
