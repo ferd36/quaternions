@@ -1189,20 +1189,6 @@ void test_exp_speed() {
     float certificate = 0.0;
     auto start = std::chrono::system_clock::now();
     for (size_t i = 0; i < N; ++i) {
-      qd x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
-      qd r = exp(x);
-      certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
-    }
-    auto end = std::chrono::system_clock::now();
-    std::chrono::nanoseconds diff = end - start;
-    cout << "Boost: " << (diff.count() / N) << "ns" << endl;
-    cout << "Certificate=" << certificate << endl;
-  }
-
-  {
-    float certificate = 0.0;
-    auto start = std::chrono::system_clock::now();
-    for (size_t i = 0; i < N; ++i) {
       Qld x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
       Qld r = exp(x);
       certificate += r.a() + r.b() + r.c() + r.d();
@@ -1210,6 +1196,20 @@ void test_exp_speed() {
     auto end = std::chrono::system_clock::now();
     std::chrono::nanoseconds diff = end - start;
     cout << "quaternion: " << (diff.count() / N) << "ns" << endl;
+    cout << "Certificate=" << certificate << endl;
+  }
+
+  {
+    float certificate = 0.0;
+    auto start = std::chrono::system_clock::now();
+    for (size_t i = 0; i < N; ++i) {
+      qd x(rand() % 5, rand() % 5, rand() % 5, rand() % 5);
+      qd r = exp(x);
+      certificate += r.R_component_1() + r.R_component_2() + r.R_component_3() + r.R_component_4();
+    }
+    auto end = std::chrono::system_clock::now();
+    std::chrono::nanoseconds diff = end - start;
+    cout << "Boost: " << (diff.count() / N) << "ns" << endl;
     cout << "Certificate=" << certificate << endl;
   }
 }

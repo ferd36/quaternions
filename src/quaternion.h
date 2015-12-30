@@ -885,10 +885,9 @@ inline Quaternion<T> exp(const Quaternion<T>& x) {
   T un = x.unreal_norm_squared();
   if (un == 0)
     return {std::exp(x.a())};
-  assert(un > 0);
-  T n1 = std::sqrt(un); // un > 0, no problem
+  T n1 = std::sqrt(un);
   T ea = std::exp(x.a());
-  T n2 = ea * std::sin(n1) / n1;
+  T n2 = ea * std::sin(n1) / n1; // TODO: this needs speed-up (compared to boost)
   return {ea * std::cos(n1), n2 * x.b(), n2 * x.c(), n2 * x.d()};
 }
 
