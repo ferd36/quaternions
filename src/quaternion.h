@@ -169,7 +169,7 @@ public:
   Quaternion unreal() const { return {0, _b, _c, _d}; }
 
   /**
-   * The squared of the norm of the Quaternion.
+   * The square of the norm of the Quaternion.
    * (The square is sometimes useful, and it avoids paying for a sqrt).
    */
   T norm_squared() const {
@@ -1028,20 +1028,27 @@ inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T>& a) {
 }
 
 // TODO: sqrt
-// TOOD: sin, cos, tan ...
 template<typename T>
 inline Quaternion<T> cos(const Quaternion<T>& x)
 {
-  T z = abs(x.unreal());
-  T w = -std::sin(x.real()) * std::sinh(z) / z;
+  T z = x.unreal_norm_squared();
+  if (z == 0)
+    return {std::cos(x.a())};
+  // if (x.real() == 0) return {1};
+  z = std::sqrt(z);
+  T w = -std::sin(x.real()) * std::sinh(z) / z; // z > 0 by construction
   return {std::cos(x.real()) * std::cosh(z), w * x.b(), w * x.c(), w * x.d()};
 }
 
 template<typename T>
 inline Quaternion<T> sin(const Quaternion<T>& x)
 {
-  T z = abs(x.unreal());
-  T w = std::cos(x.real()) * std::sinh(z) / z;
+  T z = x.unreal_norm_squared();
+  if (z == 0)
+    return {std::sin(x.a())};
+  // if (x.real() == 0) return {0};
+  z = std::sqrt(z);
+  T w = std::cos(x.real()) * std::sinh(z) / z; // z > 0 by construction
   return {std::sin(x.real()) * std::cosh(z), w * x.b(), w * x.c(), w * x.d()};
 }
 
@@ -1053,9 +1060,12 @@ inline Quaternion<T> sin(const Quaternion<T>& x)
 template<typename T>
 inline Quaternion<T> tan(const Quaternion<T>& x)
 {
-  T z = abs(x.unreal());
+  T z = x.unreal_norm_squared();
+  if (z == 0)
+    return {std::tan(x.a())};
+  z = std::sqrt(z);
   T n = std::sinh(2*z);
-  T d = std::cos(2*x.a()) + std::cosh(2*z);
+  T d = std::cos(2*x.a()) + std::cosh(2*z); // hmmm, I couldn't find a case with real a that would yield d = 0
   T r = n/(z*d);
   return {std::sin(2*x.a())/d, r*x.b(), r*x.c(), r*x.d()};
 }
@@ -1075,7 +1085,7 @@ inline Quaternion<T> sinh(const Quaternion<T>& x)
 template<typename T>
 inline Quaternion<T> tanh(const Quaternion<T>& x)
 {
-  return sinh(x)/cosh(x);
+  return sinh(x)/cosh(x); // TODO: cosh never zero for quaternions too?
 }
 
 /**

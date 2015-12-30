@@ -926,6 +926,25 @@ void test_trigo() {
     assert(nearly_equal(tan(x), sin(x)/cos(x), 1e-6));
   }
   {
+    for (double t = 0; t < 6.28; t += .01) {
+      assert(nearly_equal(sin(Qd(t)), sin(t), 1e-6));
+      assert(nearly_equal(cos(Qd(t)), cos(t), 1e-6));
+      assert(nearly_equal(tan(Qd(t)), tan(t), 1e-6));
+    }
+  }
+  {
+    for (double t = 0; t < 6.28; t += .01) {
+      assert(nearly_equal(sin(Qd(0,t)), sin(Cd(0,t)), 1e-6));
+      assert(nearly_equal(cos(Qd(0,t)), cos(Cd(0,t)), 1e-6));
+      assert(nearly_equal(tan(Qd(0,t)), tan(Cd(0,t)), 1e-6));
+    }
+  }
+  {
+    Qd x{-3.141592653589793/4};
+    Cd y{-3.141592653589793/4,0};
+    assert(nearly_equal(tan(x), tan(y), 1e-6));
+  }
+  {
     for (size_t i = 0; i < 1000; ++i) {
       Qd x = random_quaternion<float>(rng);
       qd qx(x.a(), x.b(), x.c(), x.d());
