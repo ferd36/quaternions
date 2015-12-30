@@ -940,11 +940,6 @@ void test_trigo() {
     }
   }
   {
-    Qd x{-3.141592653589793/4};
-    Cd y{-3.141592653589793/4,0};
-    assert(nearly_equal(tan(x), tan(y), 1e-6));
-  }
-  {
     for (size_t i = 0; i < 1000; ++i) {
       Qd x = random_quaternion<float>(rng);
       qd qx(x.a(), x.b(), x.c(), x.d());
@@ -1000,6 +995,20 @@ void test_hyper_trigo() {
       Qd x = random_quaternion<float>(rng);
       qd qx(x.a(), x.b(), x.c(), x.d());
       assert(nearly_equal(tanh(x), tanh(qx), 1e-6));
+    }
+  }
+  { // TODO: relative precision around 0 is not too good
+    for (double t = -4; t < 4; t += .1) {
+      assert(nearly_equal(sinh(Qd(t)), sinh(t), 1e-1));
+      assert(nearly_equal(cosh(Qd(t)), cosh(t), 1e-1));
+      assert(nearly_equal(tanh(Qd(t)), tanh(t), 1e-1));
+    }
+  }
+  {
+    for (double t = -4; t < 4; t += .1) {
+      assert(nearly_equal(sinh(Qd(0,t)), sinh(Cd(0,t)), 1e-6));
+      assert(nearly_equal(cosh(Qd(0,t)), cosh(Cd(0,t)), 1e-6));
+      assert(nearly_equal(tanh(Qd(0,t)), tanh(Cd(0,t)), 1e-6));
     }
   }
 }
