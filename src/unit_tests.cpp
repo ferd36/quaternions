@@ -1100,6 +1100,16 @@ void test_boost_rational() {
   }
 }
 
+void test_precision() {
+  cout << "Testing precision" << endl;
+  {
+    Qd x(0,1,0,0);
+    for (size_t i = 0; i < 100; ++i)
+      x = Qd_i * (2 + exp(log(x)) / x - 2);
+    assert(x == Qd_i);
+  }
+}
+
 /**
  * Between standard C++, boost and vectorclass which uses intrinsics, no difference.
  * The compiler is probably optimizing well enough, or the intrinsics are not used properly.
@@ -1319,6 +1329,8 @@ int main(int argc, char** argv) {
   test_io();
   test_io_eps();
   test_io_style();
+
+  test_precision();
 
   cout << endl;
   test_exp_speed();
