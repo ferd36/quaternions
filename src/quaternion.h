@@ -232,17 +232,17 @@ public:
   }
 
   /**
-   * Unary minus.
-   */
-  Quaternion operator-() const {
-    return {-_a, -_b, -_c, -_d};
-  }
-
-  /**
   * Unary plus.
   */
   Quaternion operator+() const {
     return *this;
+  }
+
+  /**
+   * Unary minus.
+  */
+  Quaternion operator-() const {
+    return {-_a, -_b, -_c, -_d};
   }
 
   /**
