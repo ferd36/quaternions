@@ -26,6 +26,7 @@
 #include "quaternion_io.h"
 
 #include <set>
+#include <unordered_set>
 #include <random>
 #include <chrono>
 #include <iomanip>
@@ -1059,6 +1060,16 @@ void test_axby() {
   }
 }
 
+void test_swap() {
+  cout << "Testing swap" << endl;
+  {
+    Qd x(1,2,3,4), y(5,6,7,8);
+    std::swap(x,y);
+    assert(x == Qd(5,6,7,8));
+    assert(y == Qd(1,2,3,4));
+  }
+}
+
 void test_io() {
   stringstream s;
   s << Qf() << Qf(1) << Qf(-1) << Qf(0,1) << Qf(0,-1) << Qf(0,0,1) << Qf(0,0,-1);
@@ -1090,11 +1101,32 @@ void test_io_style() {
   assert(s.str() == "1+2i+3j+4k {1,2,3,4}");
 }
 
+void test_hash() {
+  cout << "Testing hash" << endl;
+  {
+    Qf x(1,2,3,4);
+    QuaternionHash<Qf> h;
+    assert(h(x) == 7330271889411790626);
+  }
+}
+
 void test_stl() {
   cout << "Testing STL" << endl;
-  vector<Qf> qs{{1,2,3,4},{5,6,7,8},{1,3,5,7},{2,4,6,8}};
-  auto v = accumulate(qs.begin(), qs.end(), Qf_1, multiplies<Qf>());
-  assert(v == Qf_1 * Qf(1,2,3,4) * Qf(5,6,7,8) * Qf(1,3,5,7) * Qf(2,4,6,8));
+  {
+    vector<Qf> qs{{1, 2, 3, 4},
+                  {5, 6, 7, 8},
+                  {1, 3, 5, 7},
+                  {2, 4, 6, 8}};
+    auto v = accumulate(qs.begin(), qs.end(), Qf_1, multiplies<Qf>());
+    assert(v == Qf_1 * Qf(1, 2, 3, 4) * Qf(5, 6, 7, 8) * Qf(1, 3, 5, 7) * Qf(2, 4, 6, 8));
+  }
+
+  {
+    unordered_set<Qd,QuaternionHash<Qd>> q_set = {{1,2,3,4},{5,6,7,8},{1,2,3,4}};
+    assert(q_set.size() == 2);
+    auto v = accumulate(q_set.begin(), q_set.end(), Qd_0, plus<Qd>());
+    assert(v == Qd(1,2,3,4) + Qd(5,6,7,8));
+  }
 }
 
 /**
@@ -1335,6 +1367,7 @@ int main(int argc, char** argv) {
   test_unary_w_complex();
   test_unary_w_quaternion();
   test_operators();
+  test_hash();
   test_stl();
   test_boost_rational();
   test_pow2();
@@ -1349,6 +1382,7 @@ int main(int argc, char** argv) {
   test_trigo();
   test_hyper_trigo();
   test_axby();
+  test_swap();
   test_io();
   test_io_eps();
   test_io_style();

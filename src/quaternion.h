@@ -590,6 +590,67 @@ inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
   }
 }
 
+/**
+ * fash-hash.
+ *
+ * TODO: try xxhash
+ */
+template <typename T>
+struct QuaternionHash : public std::unary_function<Quaternion<T>, size_t> {
+
+  inline size_t operator()(const Quaternion<T> &x) {
+
+    auto mix = [](uint64_t h) {
+      (h) ^= (h) >> 23;
+      (h) *= 0x2127599bf4325c37ULL;
+      (h) ^= (h) >> 47;
+      return h; };
+
+    const uint64_t len = 4 * sizeof(T); // in bytes, Qf is 4*4, Qd is 4*8, and Qld 4*16
+    const uint64_t m = 0x880355f21e6d1965ULL;
+    const uint64_t *pos = (const uint64_t *) &x;
+    const uint64_t *end = pos + (len / 8);
+    //const unsigned char *pos2;
+    uint64_t h = 31 ^(len * m);
+    uint64_t v;
+
+    while (pos != end) {
+      v = *pos++;
+      h ^= mix(v);
+      h *= m;
+    }
+
+    return mix(h);
+
+    // We are always divisible by 8 exactly!
+//    pos2 = (const unsigned char *) pos;
+//    v = 0;
+//
+//    switch (len & 7) {
+//      case 7:
+//        v ^= (uint64_t) pos2[6] << 48;
+//      case 6:
+//        v ^= (uint64_t) pos2[5] << 40;
+//      case 5:
+//        v ^= (uint64_t) pos2[4] << 32;
+//      case 4:
+//        v ^= (uint64_t) pos2[3] << 24;
+//      case 3:
+//        v ^= (uint64_t) pos2[2] << 16;
+//      case 2:
+//        v ^= (uint64_t) pos2[1] << 8;
+//      case 1:
+//        v ^= (uint64_t) pos2[0];
+//        h ^= mix(v);
+//        h *= m;
+//      case 0:
+//        ; // cannot happen
+//    }
+//
+//    return mix(h);
+  }
+};
+
 /** +
  * Returns the conjugate of x, as a new Quaternion (x is unchanged).
  */
