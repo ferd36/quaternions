@@ -87,7 +87,7 @@ struct QuaternionIO {
 /**
  * IO manipulators to control the format when printing quaternions out to a stream.
  */
-long double QuaternionIO::scalar_zero_threshold;
+long double QuaternionIO::scalar_zero_threshold = 0;
 int QuaternionIO::print_style;
 
 struct SetScalarZeroThreshold { long double eps = 0; };

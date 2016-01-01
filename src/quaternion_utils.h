@@ -54,6 +54,7 @@ inline bool is_scalar_zero(T x, T1 eps = 0) {
  * Compares 2 floating point numbers "relatively": if the numbers are
  * very large, differences are still "small" if they are "small"
  * relative to the magnitudes of the quantities.
+ * TODO: need absolute difference comparison (not relative) too
  */
 template<typename T, typename T2>
 inline bool is_near_equal_relative(T x, T y, T2 eps = 0) {

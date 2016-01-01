@@ -375,19 +375,19 @@ void test_accessors() {
 
   {
     Qf x(3.14);
-    float a = x;
+    float a = x.to_real();
     assert(a == 3.14f);
   }
 
   {
     Qf x(3.14, 2.71);
-    Cf c = x;
+    Cf c = x.to_complex();
     assert(c.real() == 3.14f && c.imag() == 2.71f);
   }
 
   {
     Qf x(1,2,3,4);
-    array<float,4> a = x; // can cast to array directly
+    array<float,4> a = x.to_array();
     array<float,4> r{{1,2,3,4}};
     assert(a == r); // exact equality expected (operator== is in std)
   }
@@ -680,7 +680,7 @@ void test_unary_w_quaternion() {
   {
     Qf x(1), y(3.14);
     x += y;
-    assert(std::abs(x - 4.14f) < 1e-6);
+    assert(std::abs(x.to_real() - 4.14f) < 1e-6);
   }
 
   {
@@ -722,7 +722,7 @@ void test_unary_w_quaternion() {
 
 void test_operators() {
   cout << "Testing operators" << endl;
-
+  
   {
     assert(Qf(1,2,3,4) * 3 == Qf(3,6,9,12));
   }
@@ -1104,9 +1104,18 @@ void test_precision() {
   cout << "Testing precision" << endl;
   {
     Qd x(0,1,0,0);
-    for (size_t i = 0; i < 100; ++i)
-      x = Qd_i * (2 + exp(log(x)) / x - 2);
-    assert(x == Qd_i);
+    x = Qd_i * (2.0 + exp(log(x)) / x - 2.0);
+    assert(nearly_equal(x, Qd_i, 1e-16));
+  }
+
+  {
+    Qd x(0.0001,0.002,3.5,3.1415926535);
+    assert(nearly_equal(exp(log(x)), x, 1e-8));
+  }
+
+  {
+    Qf x(0.0001,0.002,3.5,3.1415926535);
+    assert(abs(exp(log(x)) - x) < 1e-6);
   }
 }
 
@@ -1330,6 +1339,7 @@ int main(int argc, char** argv) {
   test_io_eps();
   test_io_style();
 
+  cout << endl;
   test_precision();
 
   cout << endl;

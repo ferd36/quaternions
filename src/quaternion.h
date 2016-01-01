@@ -141,24 +141,27 @@ public:
 
   /**
    * Only for real Quaternions, will assert if not real.
+   * TODO: remove this? they get triggered "accidentally"?
+   * Plus, it tries to convert to the base type sometimes to carry
+   * out computations!!
    */
-  operator T() const {
-    assert(_b == 0 && _c == 0 && _d == 0);
+  T to_real() const {
+    assert(is_real());
     return _a;
   }
 
   /**
    * Only for complex, will assert if not complex.
    */
-  operator std::complex<T>() const {
-    assert(_c == 0 && _d == 0);
-    return std::complex<T>(_a,_b);
+  std::complex<T> to_complex() const {
+    assert(is_complex());
+    return {_a, _b};
   }
 
   /**
    * Ordered list form.
    */
-  operator std::array<T,4>() const {
+  std::array<T,4> to_array() const {
     return {{_a, _b, _c, _d}};
   }
 
@@ -802,15 +805,51 @@ inline bool operator!=(const std::complex<T2>& y, const Quaternion<T>& x) {
 }
 
 // TODO: equality of Quaternion and complex, of Quaternion and array/container
+// TODO: y by const ref?
 
 template<typename T>
 inline Quaternion<T> operator+(const Quaternion<T>& x, T y) {
-  return {x.a() + y, x.b(), x.c(), x.d()};
+  return Quaternion<T>(x) += y;
+}
+
+template<typename T>
+inline Quaternion<T> operator+(T y, const Quaternion<T>& x) {
+  return x + y;
+}
+
+template<typename T>
+inline Quaternion<T> operator+(const Quaternion<T>& x, std::complex<T>& y) {
+  return Quaternion<T>(x) += y;
+}
+
+template<typename T>
+inline Quaternion<T> operator+(std::complex<T>& y, const Quaternion<T>& x) {
+  return x + y;
 }
 
 template<typename T>
 inline Quaternion<T> operator+(const Quaternion<T>& x, const Quaternion<T>& y) {
   return Quaternion<T>(x) += y;
+}
+
+template<typename T>
+inline Quaternion<T> operator-(const Quaternion<T>& x, T y) {
+  return Quaternion<T>(x) -= y;
+}
+
+template<typename T>
+inline Quaternion<T> operator-(T y, const Quaternion<T>& x) {
+  return Quaternion<T>(x) += -y;
+}
+
+template<typename T>
+inline Quaternion<T> operator-(const Quaternion<T>& x, std::complex<T>& y) {
+  return Quaternion<T>(x) -= y;
+}
+
+template<typename T>
+inline Quaternion<T> operator-(std::complex<T>& y, const Quaternion<T>& x) {
+  return x + (-y);
 }
 
 template<typename T>
@@ -823,6 +862,26 @@ inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T>& y) {
  * Boost: as fast as boost implementation.
  */
 template<typename T>
+inline Quaternion<T> operator*(const Quaternion<T>& x, T y) {
+  return Quaternion<T>(x) *= y;
+}
+
+template<typename T>
+inline Quaternion<T> operator*(T y, const Quaternion<T>& x) {
+  return x * y;
+}
+
+template<typename T>
+inline Quaternion<T> operator*(const Quaternion<T>& x, std::complex<T>& y) {
+  return Quaternion<T>(x) *= y;
+}
+
+template<typename T>
+inline Quaternion<T> operator*(std::complex<T>& y, const Quaternion<T>& x) {
+  return x * y;
+}
+
+template<typename T>
 inline Quaternion<T> operator*(const Quaternion<T>& x, const Quaternion<T>& y) {
   return Quaternion<T>(x) *= y;
 }
@@ -832,9 +891,24 @@ inline Quaternion<T> inverse(const Quaternion<T>& x) {
   return conj(x) / norm_squared(x);
 }
 
+template<typename T>
+inline Quaternion<T> operator/(const Quaternion<T>& x, T y) {
+  return Quaternion<T>(x) /= y;
+}
+
 template<typename T, typename T1>
-inline Quaternion<T> operator/(T1 k, const Quaternion<T>& x) {
-  return k * inverse(x);
+inline Quaternion<T> operator/(T1 y, const Quaternion<T>& x) {
+  return y * inverse(x);
+}
+
+template<typename T>
+inline Quaternion<T> operator/(const Quaternion<T>& x, std::complex<T>& y) {
+  return Quaternion<T>(x) /= y;
+}
+
+template<typename T>
+inline Quaternion<T> operator/(std::complex<T>& y, const Quaternion<T>& x) {
+  return y * inverse(x);
 }
 
 template<typename T>
