@@ -42,17 +42,12 @@
 /**
  * A Quaternion class.
  * TODO: provide same operations as boost
- * TODO: provide round to zero, floor, ceil
  * TODO: remove copies/constructions in expressions
- * TODO: fast sinus? (or combined operationrs)
- * TODO: IEEE NaN?
+ * TODO: IEEE 754/IEC 559?
  * TODO: study matrix representation and isomorphism
  * TODO: check references to make sure functionality covered
- * TODO: preconditions
  * TODO: remove dependency on boost (to e.g. build simply on appveyor)
- * TODO: sort out when to provide member functions v external functions
  * TODO: integer Quaternions, binary Quaternions
- * TODO: http://www.gamedev.net/page/resources/_/technical/math-and-physics/Quaternion-powers-r1095
  */
 template<typename T =double> // assert operations for numeric is_specialized??
 // T has to be real or integer for exp, log, can't accept e.g. complex
