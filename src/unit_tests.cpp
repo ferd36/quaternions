@@ -1059,17 +1059,6 @@ void test_axby() {
   }
 }
 
-void test_dot_sum_product() {
-  cout << "Testing dot sum product" << endl;
-  {
-    Qf q1(1,2,3,4), q2(5,6,7,8), q3(2,4,6,8);
-    Qf q[] = {q1,q2,q3};
-    float s[] = {-1,2,-3};
-    // TODO: just accumulate? Qf(). is clumsy
-    assert(Qf().dot_sum_product(s, s + 3, q) == -1 * q1 + 2 * q2 - 3 * q3);
-  }
-}
-
 void test_io() {
   stringstream s;
   s << Qf() << Qf(1) << Qf(-1) << Qf(0,1) << Qf(0,-1) << Qf(0,0,1) << Qf(0,0,-1);
@@ -1360,7 +1349,6 @@ int main(int argc, char** argv) {
   test_trigo();
   test_hyper_trigo();
   test_axby();
-  test_dot_sum_product();
   test_io();
   test_io_eps();
   test_io_style();

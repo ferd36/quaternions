@@ -406,34 +406,6 @@ public:
     return *this;
   }
 
-  /**
-   * k1 * this Quaternion + k2 * y
-   * Improves performance by reducing number of constructions/copies.
-   * TODO: move to Quaternion algorithms? but faster here?
-   */
-  template<typename K>
-  Quaternion axby(K k1, K k2, const Quaternion &y) {
-    _a = k1 * _a + k2 * y._a;
-    _b = k1 * _b + k2 * y._b;
-    _c = k1 * _c + k2 * y._c;
-    _d = k1 * _d + k2 * y._d;
-    return *this;
-  }
-
-  /**
-   * TODO: does this have merit versus std::accumulate? faster?
-   */
-  template <typename S_it, typename Q_it>
-  Quaternion dot_sum_product(S_it s_begin, S_it s_end, Q_it q_begin) {
-    for (; s_begin != s_end; ++s_begin, ++q_begin) {
-      _a += *s_begin * q_begin->a();
-      _b += *s_begin * q_begin->b();
-      _c += *s_begin * q_begin->c();
-      _d += *s_begin * q_begin->d();
-    }
-    return *this;
-  }
-
 private:
   T _a, _b, _c, _d; // the full state for a Quaternion
 };
@@ -1104,7 +1076,7 @@ inline Quaternion<T> sin(const Quaternion<T>& x)
 /**
  * TODO: optimize instruction count
  * TODO: reciprocals
- * TODO: checkout /0
+ * TODO: check /0
  */
 template<typename T>
 inline Quaternion<T> tan(const Quaternion<T>& x)
@@ -1139,10 +1111,19 @@ inline Quaternion<T> tanh(const Quaternion<T>& x)
 
 /**
  * result = a*x + b*y
+ * TODO: k1,k2 can't be complex!
  */
 template<typename T, typename K>
 inline Quaternion<T> axby(K k1, const Quaternion<T>& x, K k2, const Quaternion<T>& y) {
-  return Quaternion<T>(x).axby(k1, k2, y);
+
+  T a = k1 * x.a() + k2 * y.a();
+  T b = k1 * x.b() + k2 * y.b();
+  T c = k1 * x.c() + k2 * y.c();
+  T d = k1 * x.d() + k2 * y.d();
+
+  return {a, b, c, d};
 }
+
+// TODO: operator<< and operator>>
 
 #endif //QUATERNIONS_QUATERNION_H
