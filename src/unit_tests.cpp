@@ -722,16 +722,42 @@ void test_unary_w_quaternion() {
 
 void test_operators() {
   cout << "Testing operators" << endl;
-  
   {
-    assert(Qf(1,2,3,4) * 3 == Qf(3,6,9,12));
+    assert(Qd(1,2,3,4) + 4 == Qd(5,2,3,4));
+    assert(Qd(1,2,3,4) + 4 == 4 + Qd(1,2,3,4));
+  }
+  {
+    assert(Qd(1,2,3,4) - 4 == Qd(-3,2,3,4));
+    assert(Qd(1,2,3,4) - 4 == -4 + Qd(1,2,3,4));
+  }
+  {
+    assert(Qd(1,2,3,4) * 4 == Qd(4,8,12,16));
+    assert(Qd(1,2,3,4) * 4 == 4 * Qd(1,2,3,4));
+  }
+  {
+    assert(Qd(1,2,3,4) / 4 == Qd(1.0/4,2.0/4,3.0/4,1.0));
+    assert(4 / Qd(1,2,3,4) == 4 * inverse(Qd(1,2,3,4)));
   }
 
   {
-    assert(3 / Qf(1,2) == 3.0f / Cf(1,2));
-    assert(3 / Qf(1,2,3,4) == 3.0f / qf(1,2,3,4));
+    assert(Qd(1,2,3,4) + Cd(1,2) == Qd(2,4,3,4));
+    assert(Qd(1,2,3,4) + Cd(1,2) == Cd(1,2) + Qd(1,2,3,4));
   }
+  {
+    assert(Qd(1,2,3,4) - Cd(1,2) == Qd(0,0,3,4));
+    assert(Qd(1,2,3,4) - Cd(1,2) == -Cd(1,2) + Qd(1,2,3,4));
+  }
+  {
 
+    assert(Qd(1,2,3,4) * Cd(1,2) == qd(1,2,3,4) * Cd(1,2));
+    assert(Qd(1,2,3,4) * Cd(1,2) == Qd(-3,4,11,-2));
+    assert(Qd(1,2,3,4) * Cd(1,2) == Cd(1,2) * Qd(1,2,3,4));
+  }
+  {
+    assert(Qd(1,2,3,4) / Cd(1,2) == qd(1,2,3,4) / Cd(1,2));
+    assert(Qd(1,2,3,4) / Cd(1,2) == Qd(1,0,-1,2));
+    assert(Cd(1,2) / Qd(1,2,3,4) == Cd(1,2) * inverse(Qd(1,2,3,4)));
+  }
   {
     assert(Qf(1,2,3,4) + Qf(4,5,6,7) == Qf(5,7,9,11));
     assert(Qf(1,2,3,4) - Qf(4,5,6,7) == Qf(-3,-3,-3,-3));

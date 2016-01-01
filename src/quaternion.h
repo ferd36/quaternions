@@ -623,30 +623,6 @@ inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
   }
 }
 
-/**
- * Multiplication by a constant on the left.
- */
-template<typename T, typename T1>
-inline Quaternion<T> operator*(T1 k, const Quaternion<T>& x) {
-  return Quaternion<T>(x) *= k;
-}
-
-// Same, swapping the lhs and rhs.
-template<typename T, typename T1>
-inline Quaternion<T> operator*(const Quaternion<T>& x, T1 k) {
-  return k * x;
-}
-
-// TODO: multiplication by a complex number
-
-/**
- * Division by a number.
- */
-template<typename T, typename T1>
-inline Quaternion<T> operator/(const Quaternion<T>& x, T1 k) {
-  return Quaternion<T>(x) /= k;
-}
-
 /** +
  * Returns the conjugate of x, as a new Quaternion (x is unchanged).
  */
@@ -807,13 +783,13 @@ inline bool operator!=(const std::complex<T2>& y, const Quaternion<T>& x) {
 // TODO: equality of Quaternion and complex, of Quaternion and array/container
 // TODO: y by const ref?
 
-template<typename T>
-inline Quaternion<T> operator+(const Quaternion<T>& x, T y) {
+template<typename T, typename T1>
+inline Quaternion<T> operator+(const Quaternion<T>& x, T1 y) {
   return Quaternion<T>(x) += y;
 }
 
-template<typename T>
-inline Quaternion<T> operator+(T y, const Quaternion<T>& x) {
+template<typename T, typename T1>
+inline Quaternion<T> operator+(T1 y, const Quaternion<T>& x) {
   return x + y;
 }
 
@@ -832,13 +808,13 @@ inline Quaternion<T> operator+(const Quaternion<T>& x, const Quaternion<T>& y) {
   return Quaternion<T>(x) += y;
 }
 
-template<typename T>
-inline Quaternion<T> operator-(const Quaternion<T>& x, T y) {
+template<typename T, typename T1>
+inline Quaternion<T> operator-(const Quaternion<T>& x, T1 y) {
   return Quaternion<T>(x) -= y;
 }
 
-template<typename T>
-inline Quaternion<T> operator-(T y, const Quaternion<T>& x) {
+template<typename T, typename T1>
+inline Quaternion<T> operator-(T1 y, const Quaternion<T>& x) {
   return Quaternion<T>(x) += -y;
 }
 
@@ -861,13 +837,13 @@ inline Quaternion<T> operator-(const Quaternion<T>& x, const Quaternion<T>& y) {
  * SSE operations: tried 2 implementations (SO and vectorclass): not faster.
  * Boost: as fast as boost implementation.
  */
-template<typename T>
-inline Quaternion<T> operator*(const Quaternion<T>& x, T y) {
+template<typename T, typename T1>
+inline Quaternion<T> operator*(const Quaternion<T>& x, T1 y) {
   return Quaternion<T>(x) *= y;
 }
 
-template<typename T>
-inline Quaternion<T> operator*(T y, const Quaternion<T>& x) {
+template<typename T, typename T1>
+inline Quaternion<T> operator*(T1 y, const Quaternion<T>& x) {
   return x * y;
 }
 
@@ -891,8 +867,8 @@ inline Quaternion<T> inverse(const Quaternion<T>& x) {
   return conj(x) / norm_squared(x);
 }
 
-template<typename T>
-inline Quaternion<T> operator/(const Quaternion<T>& x, T y) {
+template<typename T, typename T1>
+inline Quaternion<T> operator/(const Quaternion<T>& x, T1 y) {
   return Quaternion<T>(x) /= y;
 }
 
