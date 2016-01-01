@@ -598,7 +598,7 @@ inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
 template <typename T>
 struct QuaternionHash : public std::unary_function<Quaternion<T>, size_t> {
 
-  inline size_t operator()(const Quaternion<T> &x) {
+  inline size_t operator()(const Quaternion<T> &x) const {
 
     auto mix = [](uint64_t h) {
       (h) ^= (h) >> 23;
