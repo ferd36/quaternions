@@ -48,6 +48,8 @@
  * TODO: check references to make sure functionality covered
  * TODO: remove dependency on boost (to e.g. build simply on appveyor)
  * TODO: integer Quaternions, binary Quaternions
+ * TODO: std::complex is too slow? IEEE 754?
+ * TODO: expression templates?
  */
 template<typename T =double> // assert operations for numeric is_specialized??
 // T has to be real or integer for exp, log, can't accept e.g. complex
