@@ -37,7 +37,7 @@
 
 #include "quaternion_utils.h"
 
-// TODO: add namespace
+namespace quaternion {
 
 /**
  * A Quaternion class.
@@ -91,7 +91,7 @@ public:
    * TODO: make sure we can't use the next constructor here
    */
   template<typename T1 = T>
-  Quaternion(T1* it)
+  Quaternion(T1 *it)
       : _a(*it), _b(*++it), _c(*++it), _d(*++it) { }
 
   /**
@@ -112,7 +112,7 @@ public:
    * Assignment operator.
    */
   template<typename T1>
-  Quaternion &operator=(const Quaternion<T1>& other) {
+  Quaternion& operator=(const Quaternion<T1>& other) {
     _a = other.a();
     _b = other.b();
     _c = other.c();
@@ -133,8 +133,8 @@ public:
   /**
    * The complex components of this Quaternion.
    */
-  std::complex<T> c1() const { return {_a,_b}; }
-  std::complex<T> c2() const { return {_c,_d}; }
+  std::complex<T> c1() const { return {_a, _b}; }
+  std::complex<T> c2() const { return {_c, _d}; }
 
   /**
    * Only for real Quaternions, will assert if not real.
@@ -158,7 +158,7 @@ public:
   /**
    * Ordered list form.
    */
-  std::array<T,4> to_array() const {
+  std::array<T, 4> to_array() const {
     return {{_a, _b, _c, _d}};
   }
 
@@ -194,16 +194,16 @@ public:
   /**
    * Return true if this Quaternion has norm 1, false otherwise.
    */
-  template <typename T1 =T>
-  bool is_unit(T1 eps =0) const {
+  template<typename T1 =T>
+  bool is_unit(T1 eps = 0) const {
     return is_scalar_zero(norm_squared() - T(1), eps);
   }
 
   /**
    * Return true if this Quaternion is real, false otherwise.
    */
-  template <typename T1 =T>
-  bool is_real(T1 eps =0) const {
+  template<typename T1 =T>
+  bool is_real(T1 eps = 0) const {
     return is_scalar_zero(_b, eps)
            && is_scalar_zero(_c, eps)
            && is_scalar_zero(_d, eps);
@@ -212,16 +212,16 @@ public:
   /**
    * Return true if this Quaternion is complex, false otherwise.
    */
-  template <typename T1 =T>
-  bool is_complex(T1 eps =0) const {
+  template<typename T1 =T>
+  bool is_complex(T1 eps = 0) const {
     return is_scalar_zero(_c, eps) && is_scalar_zero(_d, eps);
   }
 
   /**
    * Return true if this Quaternion is real, false otherwise.
    */
-  template <typename T1 =T>
-  bool is_unreal(T1 eps =0) const {
+  template<typename T1 =T>
+  bool is_unreal(T1 eps = 0) const {
     return is_scalar_zero(_a, eps)
            && !(is_scalar_zero(_b, eps)
                 && is_scalar_zero(_c, eps)
@@ -309,7 +309,7 @@ public:
     T at = _a * y.real() - _b * y.imag();
     T bt = _a * y.imag() + _b * y.real();
     T ct = _c * y.real() + _d * y.imag();
-    T dt = - _c * y.imag() + _d * y.real();
+    T dt = -_c * y.imag() + _d * y.real();
 
     _a = at;
     _b = bt;
@@ -327,7 +327,7 @@ public:
 
     T n2 = y.real() * y.real() + y.imag() * y.imag();
     T at = _a * y.real() + _b * y.imag();
-    T bt = - _a * y.imag() + _b * y.real();
+    T bt = -_a * y.imag() + _b * y.real();
     T ct = _c * y.real() - _d * y.imag();
     T dt = _c * y.imag() + _d * y.real();
 
@@ -354,7 +354,7 @@ public:
   /**
    * Unary -=.
    */
-  template <typename T1>
+  template<typename T1>
   Quaternion operator-=(const Quaternion<T1>& y) {
     _a -= y._a;
     _b -= y._b;
@@ -367,7 +367,7 @@ public:
    * Unary multiplication.
    * 28 operations
    */
-  template <typename T1>
+  template<typename T1>
   Quaternion operator*=(const Quaternion<T1>& y) {
 
     T at = _a * y.a() - _b * y.b() - _c * y.c() - _d * y.d();
@@ -386,14 +386,14 @@ public:
   /**
    * Unary division with other Quaternion.
    */
-  template <typename T1>
+  template<typename T1>
   Quaternion operator/=(const Quaternion<T1>& y) {
 
     T n2 = y.norm_squared();
     T at = _a * y.a() + _b * y.b() + _c * y.c() + _d * y.d();
-    T bt = - _a * y.b() + _b * y.a() - _c * y.d() + _d * y.c();
-    T ct = - _a * y.c() + _b * y.d() + _c * y.a() - _d * y.b();
-    T dt = - _a * y.d() - _b * y.c() + _c * y.b() + _d * y.a();
+    T bt = -_a * y.b() + _b * y.a() - _c * y.d() + _d * y.c();
+    T ct = -_a * y.c() + _b * y.d() + _c * y.a() - _d * y.b();
+    T dt = -_a * y.d() - _b * y.c() + _c * y.b() + _d * y.a();
 
     _a = at / n2;
     _b = bt / n2;
@@ -437,7 +437,7 @@ const Qld Qld_i(0, 1);
 const Qld Qld_j(0, 0, 1);
 const Qld Qld_k(0, 0, 0, 1);
 
-template <typename T>
+template<typename T>
 inline Quaternion<T> spherical(T rho, T theta, T phi1, T phi2) {
 
   T d = std::sin(phi2);
@@ -450,7 +450,7 @@ inline Quaternion<T> spherical(T rho, T theta, T phi1, T phi2) {
   return {rho * a, rho * b, rho * c, rho * d};
 }
 
-template <typename T>
+template<typename T>
 inline Quaternion<T> semipolar(T rho, T alpha, T theta1, T theta2) {
 
   T ca = std::cos(alpha);
@@ -463,7 +463,7 @@ inline Quaternion<T> semipolar(T rho, T alpha, T theta1, T theta2) {
   return {rho * a, rho * b, rho * c, rho * d};
 }
 
-template <typename T>
+template<typename T>
 inline Quaternion<T> multipolar(T rho1, T theta1, T rho2, T theta2) {
 
   T a = rho1 * std::cos(theta1);
@@ -474,7 +474,7 @@ inline Quaternion<T> multipolar(T rho1, T theta1, T rho2, T theta2) {
   return {a, b, c, d};
 }
 
-template <typename T>
+template<typename T>
 inline Quaternion<T> cylindrospherical(T t, T radius, T longitude, T latitude) {
 
   T cl = std::cos(latitude);
@@ -485,7 +485,7 @@ inline Quaternion<T> cylindrospherical(T t, T radius, T longitude, T latitude) {
   return {t, b, c, d};
 }
 
-template <typename T>
+template<typename T>
 inline Quaternion<T> cylindrical(T r, T angle, T h1, T h2) {
 
   T a = r * std::cos(angle);
@@ -497,7 +497,7 @@ inline Quaternion<T> cylindrical(T r, T angle, T h1, T h2) {
 /**
  * The polar representation of a Quaternion.
  */
-template <typename T>
+template<typename T>
 using polar_representation = std::array<T, 5>;
 
 /**
@@ -507,10 +507,10 @@ using polar_representation = std::array<T, 5>;
  * - the polar angle theta,
  * - and each of the components of the "unreal unit direction".
  */
-template <typename T>
+template<typename T>
 inline polar_representation<T> to_polar_representation(const Quaternion<T>& x) {
   T nu = x.unreal_norm_squared();
-  T n = std::sqrt(nu + x.a()*x.a());
+  T n = std::sqrt(nu + x.a() * x.a());
   assert(nu >= 0);
   if (nu > 0) {
     T theta = std::acos(x.a() / n);
@@ -525,13 +525,13 @@ inline polar_representation<T> to_polar_representation(const Quaternion<T>& x) {
 /**
  * The type used for matrix representations of Quaternions.
  */
-template <typename T>
+template<typename T>
 using matrix_representation = std::array<std::array<std::complex<T>, 2>, 2>;
 
 /**
  * Returns a matrix representation of a Quaternion.
  */
-template <typename T>
+template<typename T>
 matrix_representation<T> to_matrix_representation(const Quaternion<T>& x) {
   std::array<std::complex<T>, 2> r0{{std::complex<T>(x.a(), x.b()), std::complex<T>(x.c(), x.d())}};
   std::array<std::complex<T>, 2> r1{{std::complex<T>(-x.c(), x.d()), std::complex<T>(x.a(), -x.b())}};
@@ -541,26 +541,26 @@ matrix_representation<T> to_matrix_representation(const Quaternion<T>& x) {
 /**
  * A 3D rotation matrix.
  */
-template <typename T>
+template<typename T>
 using rotation_matrix = std::array<std::array<T, 3>, 3>;
 
 /**
  * Returns a 3D rotation matrix.
  */
-template <typename T>
+template<typename T>
 inline rotation_matrix<T> to_rotation_matrix(const Quaternion<T>& x) {
   // 21 operations?
-  T a2 = x.a()*x.a(), b2 = x.b()*x.b(), c2 = x.c()*x.c(), d2 = x.d()*x.d();
-  T ab = x.a()*x.b(), ac = x.a()*x.c(), ad = x.a()*x.d();
-  T bc = x.b()*x.c(), bd = x.b()*x.d();
-  T cd = x.c()*x.d();
-  std::array<T, 3> r0{{a2+b2-c2-d2,2*(bc-ad),2*(bd+ac)}};
-  std::array<T, 3> r1{{2*(bc+ad),a2-b2+c2-d2,2*(cd-ab)}};
-  std::array<T, 3> r2{{2*(bd-ac),2*(cd+ab),a2-b2-c2+d2}};
+  T a2 = x.a() * x.a(), b2 = x.b() * x.b(), c2 = x.c() * x.c(), d2 = x.d() * x.d();
+  T ab = x.a() * x.b(), ac = x.a() * x.c(), ad = x.a() * x.d();
+  T bc = x.b() * x.c(), bd = x.b() * x.d();
+  T cd = x.c() * x.d();
+  std::array<T, 3> r0{{a2 + b2 - c2 - d2, 2 * (bc - ad), 2 * (bd + ac)}};
+  std::array<T, 3> r1{{2 * (bc + ad), a2 - b2 + c2 - d2, 2 * (cd - ab)}};
+  std::array<T, 3> r2{{2 * (bd - ac), 2 * (cd + ab), a2 - b2 - c2 + d2}};
   return {{r0, r1, r2}};
 }
 
-template <typename T>
+template<typename T>
 inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
   T t = rm[0][0] + rm[1][1] + rm[2][2];
   if (t > 0) {
@@ -597,16 +597,17 @@ inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
  *
  * TODO: try xxhash
  */
-template <typename T>
+template<typename T>
 struct QuaternionHash : public std::unary_function<Quaternion<T>, size_t> {
 
-  inline size_t operator()(const Quaternion<T> &x) const {
+  inline size_t operator()(const Quaternion<T>& x) const {
 
     auto mix = [](uint64_t h) {
       (h) ^= (h) >> 23;
       (h) *= 0x2127599bf4325c37ULL;
       (h) ^= (h) >> 47;
-      return h; };
+      return h;
+    };
 
     const uint64_t len = 4 * sizeof(T); // in bytes, Qf is 4*4, Qd is 4*8, and Qld 4*16
     const uint64_t m = 0x880355f21e6d1965ULL;
@@ -629,7 +630,7 @@ struct QuaternionHash : public std::unary_function<Quaternion<T>, size_t> {
  * Returns the conjugate of x, as a new Quaternion (x is unchanged).
  */
 template<typename T>
-inline Quaternion<T> conj(const Quaternion<T> &x) {
+inline Quaternion<T> conj(const Quaternion<T>& x) {
   return {x.a(), -x.b(), -x.c(), -x.d()};
 }
 
@@ -637,23 +638,23 @@ inline Quaternion<T> conj(const Quaternion<T> &x) {
  * Norms on a Quaternion.
  */
 template<typename T>
-inline T norm_squared(const Quaternion<T> &x) {
+inline T norm_squared(const Quaternion<T>& x) {
   return x.norm_squared();
 }
 
 // abs = l2 norm = euclidean norm
 template<typename T>
-inline T abs(const Quaternion<T> &x) {
+inline T abs(const Quaternion<T>& x) {
   return x.abs();
 }
 
 template<typename T>
-inline T unreal_norm_squared(const Quaternion<T> &x) {
+inline T unreal_norm_squared(const Quaternion<T>& x) {
   return x.unreal_norm_squared();
 }
 
 // Hamming
-template <typename T>
+template<typename T>
 inline T norm_l0(const Quaternion<T>& x) {
   return (x.a() != 0) + (x.b() != 0) + (x.c() != 0) + (x.d() != 0);
 }
@@ -665,11 +666,11 @@ inline T norm_l1(const Quaternion<T>& x) {
 }
 
 template<typename T, typename T1>
-inline T norm_lk(const Quaternion<T> &x, T1 k) {
-  return std::pow(std::pow(std::abs(x.a()),k)
-                  + std::pow(std::abs(x.b()),k)
-                  + std::pow(std::abs(x.c()),k)
-                  + std::pow(std::abs(x.d()),k),1.0/k);
+inline T norm_lk(const Quaternion<T>& x, T1 k) {
+  return std::pow(std::pow(std::abs(x.a()), k)
+                  + std::pow(std::abs(x.b()), k)
+                  + std::pow(std::abs(x.c()), k)
+                  + std::pow(std::abs(x.d()), k), 1.0 / k);
 }
 
 // norm sup = max norm = norm inf
@@ -683,27 +684,114 @@ inline T norm_sup(const Quaternion<T>& x) {
  * Quaternion tests.
  */
 template<typename T, typename T1 =T>
-inline bool is_unit(const Quaternion<T>& x, T1 eps =0) {
+inline bool is_unit(const Quaternion<T>& x, T1 eps = 0) {
   return x.is_unit(eps);
 }
 
 template<typename T, typename T1 =T>
-inline bool is_real(const Quaternion<T>& x, T1 eps =0) {
+inline bool is_real(const Quaternion<T>& x, T1 eps = 0) {
   return x.is_real(eps);
 }
 
 template<typename T, typename T1 =T>
-inline bool is_complex(const Quaternion<T>& x, T1 eps =0) {
+inline bool is_complex(const Quaternion<T>& x, T1 eps = 0) {
   return x.is_complex(eps);
 }
 
 template<typename T, typename T1 =T>
-inline bool is_unreal(const Quaternion<T>& x, T1 eps =0) {
+inline bool is_unreal(const Quaternion<T>& x, T1 eps = 0) {
   return x.is_unreal(eps);
 }
 
 /**
- * Equality.
+ * Equality:
+ * - Quaternion <-> real
+ * - Quaternion <-> complex
+ * - Quaternion <-> quaternion
+ */
+
+/**
+ * Quaternion <-> real
+ *
+ * For these equality operators, the goal is to allow e.g.
+ * Qd(0,0,0,0) == 0, which is very nice to read, and pretty unambiguous,
+ * but we must take care that the compiler doesn't try to use these with
+ * T2 being an "exotic" type that we wouldn't want. That's why we have
+ * "IS_CONVERTIBLE".
+ *
+ * operator== returns false if the Quaternion is not real.
+ * If the Quaternion is real, it returns true if x.a() == y.
+ */
+template <typename T, typename T2, IS_CONVERTIBLE(T2, T)>
+inline bool operator==(const Quaternion<T>& x, T2 y) {
+  return x.is_real() && x.a() == y;
+}
+
+template <typename T, typename T2, IS_CONVERTIBLE(T2, T)>
+inline bool operator==(T2 y, const Quaternion<T>& x) {
+  return x == y;
+}
+
+template <typename T, typename T2, IS_CONVERTIBLE(T2, T)>
+inline bool operator!=(const Quaternion<T>& x, T2 y) {
+  return !(x == y);
+}
+
+template <typename T, typename T2, IS_CONVERTIBLE(T2, T)>
+inline bool operator!=(T2 y, const Quaternion<T>& x) {
+  return !(x == y);
+}
+
+template <typename T, typename T2, typename T3, IS_CONVERTIBLE(T2, T), IS_CONVERTIBLE(T3,T)>
+inline bool nearly_equal(const Quaternion<T>& x, T2 y, T3 eps) {
+  return x.is_real() && is_nearly_equal(x.a(), y, eps);
+}
+
+template <typename T, typename T2, typename T3, IS_CONVERTIBLE(T2, T), IS_CONVERTIBLE(T3,T)>
+inline bool nearly_equal(T2 y, const Quaternion<T>& x, T3 eps) {
+  return x.is_real() && is_nearly_equal(x.a(), y, eps);
+}
+
+/**
+ * Quaternion <-> std::complex
+ *
+ * operator== here returns false if the Quaternion is not complex.
+ */
+template<typename T, typename T2, IS_CONVERTIBLE(T2,T)>
+inline bool operator==(const Quaternion<T>& x, const std::complex<T2>& y) {
+  return is_complex(x) && x.a() == y.real() && x.b() == y.imag();
+}
+
+template<typename T, typename T2, IS_CONVERTIBLE(T2,T)>
+inline bool operator!=(const Quaternion<T>& x, const std::complex<T2>& y) {
+  return !(x == y);
+}
+
+// Same, swapping the lhs and rhs.
+template<typename T, typename T2, IS_CONVERTIBLE(T2,T)>
+inline bool operator==(const std::complex<T2>& y, const Quaternion<T>& x) {
+  return x == y;
+}
+
+template<typename T, typename T2, IS_CONVERTIBLE(T2,T)>
+inline bool operator!=(const std::complex<T2>& y, const Quaternion<T>& x) {
+  return x != y;
+}
+
+template <typename T, typename T2, typename T3, IS_CONVERTIBLE(T2, T), IS_CONVERTIBLE(T3,T)>
+inline bool nearly_equal(const Quaternion<T>& x, const std::complex<T2>& y, T3 eps) {
+  return is_complex(x, eps)
+         && is_nearly_equal(x.a(), y.real(), eps)
+         && is_nearly_equal(x.b(), y.imag(), eps);
+}
+
+template <typename T, typename T2, typename T3, IS_CONVERTIBLE(T2, T), IS_CONVERTIBLE(T3,T)>
+inline bool nearly_equal(const std::complex<T2>& y, const Quaternion<T>& x, T3 eps) {
+  return nearly_equal(x, y, eps);
+}
+
+/**
+ * Quaternion <-> Quaternion
  */
 template<typename T>
 inline bool operator==(const Quaternion<T>& x, const Quaternion<T>& y) {
@@ -715,71 +803,12 @@ inline bool operator!=(const Quaternion<T>& x, const Quaternion<T>& y) {
   return !(x == y);
 }
 
-/**
- * This is more costly, but very useful in practice: Quaternions transcendentals
- * require a lot of floating point operations, so accuracy degrades quickly.
- */
-template <typename T, typename T1> // T1 allows eps to be the default type double
-inline bool nearly_equal(const Quaternion<T>& x, const Quaternion<T>& y, T1 eps) {
-  return is_near_equal_relative(x.a(), y.a(), eps)
-         && is_near_equal_relative(x.b(), y.b(), eps)
-         && is_near_equal_relative(x.c(), y.c(), eps)
-         && is_near_equal_relative(x.d(), y.d(), eps);
-}
-
-template<typename T, typename T2>
-inline bool operator==(const Quaternion<T>& x, T2 y) {
-  return is_real(x) && x.a() == y;
-}
-
-template<typename T, typename T2>
-inline bool operator!=(const Quaternion<T>& x, T2 y) {
-  return !(x == y);
-}
-
-// Same, swapping the lhs and rhs.
-template<typename T, typename T2>
-inline bool operator==(T2 y, const Quaternion<T>& x) {
-  return x == y;
-}
-
-template<typename T, typename T2>
-inline bool operator!=(T2 y, const Quaternion<T>& x) {
-  return x != y;
-}
-
-template <typename T, typename  T1>
-inline bool nearly_equal(const Quaternion<T>& x, T1 y, T1 eps) {
-  return is_real(x, eps) && is_near_equal_relative(x.a(), y, eps);
-}
-
-template<typename T, typename T2>
-inline bool operator==(const Quaternion<T>& x, const std::complex<T2>& y) {
-  return is_complex(x) && x.a() == y.real() && x.b() == y.imag();
-}
-
-template<typename T, typename T2>
-inline bool operator!=(const Quaternion<T>& x, const std::complex<T2>& y) {
-  return !(x == y);
-}
-
-// TODO: make name uniform with is_near_equal_relative
-template <typename T, typename T1>
-inline bool nearly_equal(const Quaternion<T>& x, const std::complex<T>& y, T1 eps) {
-  return is_complex(x, eps)
-         && is_near_equal_relative(x.a(), y.real(), eps)
-         && is_near_equal_relative(x.b(), y.imag(), eps);
-}
-
-// Same, swapping the lhs and rhs.
-template<typename T, typename T2>
-inline bool operator==(const std::complex<T2>& y, const Quaternion<T>& x) {
-  return x == y;
-}
-
-template<typename T, typename T2>
-inline bool operator!=(const std::complex<T2>& y, const Quaternion<T>& x) {
-  return x != y;
+template <typename T, typename T2, typename T3, IS_CONVERTIBLE(T2, T), IS_CONVERTIBLE(T3,T)>
+inline bool nearly_equal(const Quaternion<T>& x, const Quaternion<T2>& y, T3 eps) {
+  return is_nearly_equal(x.a(), y.a(), eps)
+         && is_nearly_equal(x.b(), y.b(), eps)
+         && is_nearly_equal(x.c(), y.c(), eps)
+         && is_nearly_equal(x.d(), y.d(), eps);
 }
 
 // TODO: equality of Quaternion and complex, of Quaternion and array/container
@@ -957,7 +986,7 @@ inline Quaternion<T> log(const Quaternion<T>& x) {
     if (x.a() > 0)
       return {std::log(x.a())};
     else { // TODO: reduce number of instructions
-      std::complex<T> l = log(std::complex<T>(x.a(),0)); // TODO: is that correct?
+      std::complex<T> l = log(std::complex<T>(x.a(), 0)); // TODO: is that correct?
       return {l.real(), l.imag()};
     }
   }
@@ -1062,7 +1091,7 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
 template<typename T>
 inline Quaternion<T> pow(const Quaternion<T>& x, T a) {
   if (std::floor(a) == a) // TODO: worth it for speed? helps with stability
-    return pow(x, (int)a);
+    return pow(x, (int) a);
   return exp(a * log(x));
 }
 
@@ -1080,8 +1109,7 @@ inline Quaternion<T> pow(const Quaternion<T>& x, const Quaternion<T>& a) {
 
 // TODO: sqrt
 template<typename T>
-inline Quaternion<T> cos(const Quaternion<T>& x)
-{
+inline Quaternion<T> cos(const Quaternion<T>& x) {
   T z = x.unreal_norm_squared();
   if (z == 0)
     return {std::cos(x.a())};
@@ -1092,8 +1120,7 @@ inline Quaternion<T> cos(const Quaternion<T>& x)
 }
 
 template<typename T>
-inline Quaternion<T> sin(const Quaternion<T>& x)
-{
+inline Quaternion<T> sin(const Quaternion<T>& x) {
   T z = x.unreal_norm_squared();
   if (z == 0)
     return {std::sin(x.a())};
@@ -1109,34 +1136,30 @@ inline Quaternion<T> sin(const Quaternion<T>& x)
  * TODO: check /0
  */
 template<typename T>
-inline Quaternion<T> tan(const Quaternion<T>& x)
-{
+inline Quaternion<T> tan(const Quaternion<T>& x) {
   T z = x.unreal_norm_squared();
   if (z == 0)
     return {std::tan(x.a())};
   z = std::sqrt(z);
-  T n = std::sinh(2*z);
-  T d = std::cos(2*x.a()) + std::cosh(2*z); // hmmm, I couldn't find a case with real a that would yield d = 0
-  T r = n/(z*d);
-  return {std::sin(2*x.a())/d, r*x.b(), r*x.c(), r*x.d()};
+  T n = std::sinh(2 * z);
+  T d = std::cos(2 * x.a()) + std::cosh(2 * z); // hmmm, I couldn't find a case with real a that would yield d = 0
+  T r = n / (z * d);
+  return {std::sin(2 * x.a()) / d, r * x.b(), r * x.c(), r * x.d()};
 }
 
 template<typename T>
-inline Quaternion<T> cosh(const Quaternion<T>& x)
-{
-  return (exp(x) + exp(-x))/2;
+inline Quaternion<T> cosh(const Quaternion<T>& x) {
+  return (exp(x) + exp(-x)) / 2;
 }
 
 template<typename T>
-inline Quaternion<T> sinh(const Quaternion<T>& x)
-{
-  return (exp(x) - exp(-x))/2;
+inline Quaternion<T> sinh(const Quaternion<T>& x) {
+  return (exp(x) - exp(-x)) / 2;
 }
 
 template<typename T>
-inline Quaternion<T> tanh(const Quaternion<T>& x)
-{
-  return sinh(x)/cosh(x); // TODO: cosh never zero for quaternions too?
+inline Quaternion<T> tanh(const Quaternion<T>& x) {
+  return sinh(x) / cosh(x); // TODO: cosh never zero for quaternions too?
 }
 
 /**
@@ -1155,5 +1178,6 @@ inline Quaternion<T> axby(K k1, const Quaternion<T>& x, K k2, const Quaternion<T
 }
 
 // TODO: operator<< and operator>>
+} // end namespace quaternion
 
 #endif //QUATERNIONS_QUATERNION_H

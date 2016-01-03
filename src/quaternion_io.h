@@ -30,6 +30,8 @@
 #include "quaternion.h"
 #include "quaternion_utils.h"
 
+namespace quaternion {
+
 /**
  * Facilities to display quaternions for humans as well as facilities to read/write them with C++ streams.
  */
@@ -45,8 +47,8 @@ struct QuaternionIO {
    * Print a quaternion to a stream in various formats.
    * TODO: introduce eps and make faster with constants?
    */
-  template <typename T>
-  static std::ostream& print(std::ostream &out, const Quaternion<T>& q) {
+  template<typename T>
+  static std::ostream& print(std::ostream& out, const Quaternion <T>& q) {
     if (print_style == 0) {
       if (q == 0)
         return out << 0;
@@ -90,27 +92,33 @@ struct QuaternionIO {
 long double QuaternionIO::scalar_zero_threshold = 0;
 int QuaternionIO::print_style;
 
-struct SetScalarZeroThreshold { long double eps = 0; };
+struct SetScalarZeroThreshold {
+  long double eps = 0;
+};
 inline SetScalarZeroThreshold set_display_eps(long double eps) {
   SetScalarZeroThreshold sszt;
   sszt.eps = eps;
   return sszt;
 }
 
-inline std::ostream &operator<<(std::ostream &out, SetScalarZeroThreshold sszt) {
+inline std::ostream& operator<<(std::ostream& out, SetScalarZeroThreshold sszt) {
   QuaternionIO::scalar_zero_threshold = sszt.eps;
   return out;
 }
 
-enum DisplayStyle { q_nice, q_compact };
-struct SetDisplayStyle { DisplayStyle style; };
+enum DisplayStyle {
+  q_nice, q_compact
+};
+struct SetDisplayStyle {
+  DisplayStyle style;
+};
 inline SetDisplayStyle set_display_style(DisplayStyle ds) {
   SetDisplayStyle sds;
   sds.style = ds;
   return sds;
 }
 
-inline std::ostream &operator<<(std::ostream &out, SetDisplayStyle sds) {
+inline std::ostream& operator<<(std::ostream& out, SetDisplayStyle sds) {
   QuaternionIO::print_style = sds.style;
   return out;
 }
@@ -122,8 +130,9 @@ inline std::ostream &operator<<(std::ostream &out, SetDisplayStyle sds) {
  * TODO: control format for file or human readable. Also write operator>>
  */
 template<typename T>
-inline std::ostream &operator<<(std::ostream &out, const Quaternion<T> &q) {
+inline std::ostream& operator<<(std::ostream& out, const Quaternion <T>& q) {
   return QuaternionIO::print(out, q);
 }
 
+} // end namespace quaternion
 #endif //QUATERNIONS_QUATERNION_IO_H

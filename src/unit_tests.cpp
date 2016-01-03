@@ -36,12 +36,13 @@
 
 using namespace std;
 using namespace boost;
+using namespace quaternion;
 
 //----------------------------------------------------------------------------------------------------------------------
 // Test utilities
 //----------------------------------------------------------------------------------------------------------------------
 ///**
-// * Prints out arrays to a stream
+// * Prints out arrays to a stream - sometimes useful when debugging unit tests
 // */
 //template <typename T, size_t n>
 //inline ostream& operator<<(ostream& out, const array<T,n>& x) {
@@ -73,38 +74,40 @@ using namespace boost;
  * Boost is required only for testing, to compare against a known implementation,
  * so this method is not provided alongside the other nearly_equal in quaternion.h.
  */
-template <typename T, typename T1>
-inline bool nearly_equal(const Quaternion<T>& us, const boost::math::quaternion<T>& them, T1 eps) {
-  return is_near_equal_relative(us.a(), them.R_component_1(), eps)
-         && is_near_equal_relative(us.b(), them.R_component_2(), eps)
-         && is_near_equal_relative(us.c(), them.R_component_3(), eps)
-         && is_near_equal_relative(us.d(), them.R_component_4(), eps);
-}
-
-/**
- * This method useful in unit tests, to compare against boost, which has
- * a (supposedly) well tested quaternion library.
- * NOTE: hard to compare large values, requires floating point relative comparison.
- * TODO: maybe remove this and keep only a nearly_equal for uniformity
- */
 template <typename T>
-inline bool operator==(const Quaternion<T>& x, const boost::math::quaternion<T>& boost_y) {
-  return nearly_equal(x, boost_y, 1e-6);
+inline bool operator==(const quaternion::Quaternion<T>& us, const boost::math::quaternion<T>& them) {
+  return us.a() == them.R_component_1()
+         && us.b() == them.R_component_2()
+         && us.c() == them.R_component_3()
+         && us.d() == them.R_component_4();
 }
 
-template <typename T, typename T2>
-inline bool nearly_equal(T x, T y, T2 eps) {
-  return is_near_equal_relative(x, y, eps);
+template <typename T>
+inline bool operator==(const boost::math::quaternion<T>& them, const quaternion::Quaternion<T>& us) {
+  return us == them;
+}
+
+
+template <typename T, typename T1>
+inline bool nearly_equal(const quaternion::Quaternion<T>& us, const boost::math::quaternion<T>& them, T1 eps) {
+  return is_nearly_equal(us.a(), them.R_component_1(), eps)
+         && is_nearly_equal(us.b(), them.R_component_2(), eps)
+         && is_nearly_equal(us.c(), them.R_component_3(), eps)
+         && is_nearly_equal(us.d(), them.R_component_4(), eps);
+}
+
+template <typename T, typename T1>
+inline bool nearly_equal(const boost::math::quaternion<T>& them, const quaternion::Quaternion<T>& us, T1 eps) {
+  return is_nearly_equal(us, them, eps);
 }
 
 /**
  * This used to test e.g. the polar representation of the quaternions.
- * TODO: this could go into utils because of generality
  */
 template <typename T, size_t n>
 inline bool nearly_equal(const std::array<T,n>& x, const std::array<T,n>& y, T eps) {
   for (size_t i = 0; i < n; ++i)
-    if (!is_near_equal_relative(x[i], y[i], eps))
+    if (!is_nearly_equal(x[i], y[i], eps))
       return false;
   return true;
 };
@@ -116,7 +119,7 @@ template <typename T, size_t n1, size_t n2>
 inline bool nearly_equal(const std::array<std::array<T,n1>,n2>& x, const std::array<std::array<T,n1>,n2>& y, T eps) {
   for (size_t i = 0; i < n1; ++i)
     for (size_t j = 0; j < n2; ++j)
-      if (!is_near_equal_relative(x[i][j], y[i][j], eps))
+      if (!is_nearly_equal(x[i][j], y[i][j], eps))
         return false;
   return true;
 };
@@ -147,7 +150,7 @@ typedef boost::math::quaternion<float> qf;
 typedef boost::math::quaternion<double> qd;
 
 void test_nearly_equal() {
-  cout << "Testing nearly equal" << endl;
+  cout << "Testing nearly equal for std::array" << endl;
 
   {
     array<array<float,3>,3> A;
@@ -178,7 +181,7 @@ void test_constructors() {
     Qf x;
     assert(x.a() == 0 && x.b() == 0 && x.c() == 0 && x.d() == 0);
     assert(x.real() == 0);
-    assert(x.unreal() == 0);
+    assert(x.unreal() == Qf_0);
   }
 
   {
@@ -301,27 +304,27 @@ void test_trigonometric_constructors() {
 
   {
     Qd x = spherical(10.0, 3.1415, 3.1415/2.0, 3.1415/4.0);
-    assert(x == boost::math::spherical(10.0, 3.1415, 3.1415/2, 3.1415/4));
+    assert(nearly_equal(x, boost::math::spherical(10.0, 3.1415, 3.1415 / 2, 3.1415 / 4), 1e-6));
   }
 
   {
     Qd x = semipolar(10.0, 3.1415, 3.1415/2, 3.1415/4);
-    assert(x == boost::math::semipolar(10.0, 3.1415, 3.1415/2, 3.1415/4));
+    assert(nearly_equal(x, boost::math::semipolar(10.0, 3.1415, 3.1415 / 2, 3.1415 / 4), 1e-6));
   }
 
   {
     Qd x = multipolar(10.0, 3.1415, 3.1415/2, 3.1415/4);
-    assert(x == boost::math::multipolar(10.0, 3.1415, 3.1415/2, 3.1415/4));
+    assert(nearly_equal(x, boost::math::multipolar(10.0, 3.1415, 3.1415 / 2, 3.1415 / 4), 1e-6));
   }
 
   {
     Qd x = cylindrospherical(-2.0, -3.0, 3.1415/2, 3.1415/4);
-    assert(x == boost::math::cylindrospherical(-2.0, -3.0, 3.1415/2, 3.1415/4));
+    assert(nearly_equal(x, boost::math::cylindrospherical(-2.0, -3.0, 3.1415 / 2, 3.1415 / 4), 1e-6));
   }
 
   {
     Qd x = cylindrical(-2.0, 3.1415/2, 3.0, 4.0);
-    assert(x == boost::math::cylindrical(-2.0, 3.1415/2, 3.0, 4.0));
+    assert(nearly_equal(x, boost::math::cylindrical(-2.0, 3.1415 / 2, 3.0, 4.0), 1e-6));
   }
 }
 
@@ -448,22 +451,22 @@ void test_to_polar_representation() {
     assert(nearly_equal(to_polar_representation(Qd(-3)), expected, 1e-6));
 
     expected = {{1,3.1415926f/2,1,0,0}};
-    assert(nearly_equal(to_polar_representation(Qd(0,1)), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0, 1)), expected, 1e-6));
 
     expected = {{3,3.1415926f/2,-1,0,0}};
-    assert(nearly_equal(to_polar_representation(Qd(0,-3)), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0, -3)), expected, 1e-6));
 
     expected = {{1,3.1415926f/2,0,1,0}};
-    assert(nearly_equal(to_polar_representation(Qd(0,0,1)), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0, 0, 1)), expected, 1e-6));
 
     expected = {{2.5,3.1415926f/2,0,-1,0}};
-    assert(nearly_equal(to_polar_representation(Qd(0,0,-2.5)), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0, 0, -2.5)), expected, 1e-6));
 
     expected = {{1,3.1415926f/2,0,0,1}};
-    assert(nearly_equal(to_polar_representation(Qd(0,0,0,1)), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0, 0, 0, 1)), expected, 1e-6));
 
     expected = {{3.5,3.1415926f/2,0,0,-1}};
-    assert(nearly_equal(to_polar_representation(Qd(0,0,0,-3.5)), expected, 1e-6));
+    assert(nearly_equal(to_polar_representation(Qd(0, 0, 0, -3.5)), expected, 1e-6));
   }
 }
 
@@ -546,12 +549,12 @@ void test_norms() {
     assert(norm_squared(x) == 1 + 4 + 9 + 16);
     assert(std::abs(abs(x) - std::sqrt(1 + 4 + 9 + 16)) < 1e-6);
     assert(normalize(x).is_unit(1e-6));
-    assert(nearly_equal(normalize(x), x/std::sqrt(1+4+9+16), 1e-6));
+    assert(nearly_equal(normalize(x), x / std::sqrt(1 + 4 + 9 + 16), 1e-6));
     assert(unreal_norm_squared(x) == 29);
     assert(norm_l0(x) == 4);
     assert(norm_l1(x) == 10);
     assert(norm_sup(x) == 4);
-    assert(nearly_equal(norm_lk(x, .5), pow(1 + sqrt(2) + sqrt(3) + sqrt(4), 2), 1e-6));
+    assert(is_nearly_equal(norm_lk(x, .5), pow(1 + sqrt(2) + sqrt(3) + sqrt(4), 2), 1e-6));
   }
 
   {
@@ -563,7 +566,7 @@ void test_norms() {
     assert(!is_unit(x));
     assert(is_unit(normalize(x), 1e-6));
     assert(!is_unreal(x));
-    assert(nearly_equal(norm_lk(x, .5), pow(1 + sqrt(2) + sqrt(3) + sqrt(4),2), 1e-6));
+    assert(is_nearly_equal(norm_lk(x, .5), pow(1 + sqrt(2) + sqrt(3) + sqrt(4), 2), 1e-6));
     x -= 1;
     assert(is_unreal(x, 1e-6));
   }
@@ -584,20 +587,20 @@ void test_equality() {
   assert(Qf(1,2,3) != Qf(4,5,6));
   assert(Qf(1,2,3,4) == Qf(1, 2, 3, 4));
   assert(Qf(1,2,3,4) != Qf(4,3,2,1));
-  assert(nearly_equal(Qf(1,2,3,4), Qf(1,2,3,4), 0));
-  assert(nearly_equal(Qf(1,2,3,4), Qf(1,2,3,4), 1e-6));
-  assert(nearly_equal(Qf(1,2,3,4), Qf(1,2,3,3.9999999f), 1e-6));
-  assert(!nearly_equal(Qf(1,2,3,4), Qf(0,2,3,3.9999999f), 1e-6));
-  assert(!nearly_equal(Qf(1,2,3,4), Qf(1), 1e-6));
-  assert(!nearly_equal(Qf(1,2,3,4), Qf(1,2), 1e-6));
-  assert(!nearly_equal(Qf(1,2,3,4), Qf(1,2,3), 1e-6));
-  assert(!nearly_equal(Qf(1,2,3,4), Cf(1), 1e-6));
-  assert(!nearly_equal(Qf(1,2,3,4), Cf(1,2), 1e-6));
+  assert(nearly_equal(Qf(1, 2, 3, 4), Qf(1, 2, 3, 4), 0));
+  assert(nearly_equal(Qf(1, 2, 3, 4), Qf(1, 2, 3, 4), 1e-6));
+  assert(nearly_equal(Qf(1, 2, 3, 4), Qf(1, 2, 3, 3.9999999f), 1e-6));
+  assert(!nearly_equal(Qf(1, 2, 3, 4), Qf(0, 2, 3, 3.9999999f), 1e-6));
+  assert(!nearly_equal(Qf(1, 2, 3, 4), Qf(1), 1e-6));
+  assert(!nearly_equal(Qf(1, 2, 3, 4), Qf(1, 2), 1e-6));
+  assert(!nearly_equal(Qf(1, 2, 3, 4), Qf(1, 2, 3), 1e-6));
+  assert(!nearly_equal(Qf(1, 2, 3, 4), Cf(1), 1e-6));
+  assert(!nearly_equal(Qf(1, 2, 3, 4), Cf(1, 2), 1e-6));
   assert(nearly_equal(Qf(1), Cf(1), 1e-6));
   assert(!nearly_equal(Qf(1), Cf(2), 1e-6));
-  assert(nearly_equal(Qf(1,2), Cf(1,2), 1e-6));
-  assert(!nearly_equal(Qf(1), Cf(1,2), 1e-6));
-  assert(!nearly_equal(Qf(3,4), Cf(1,2), 1e-6));
+  assert(nearly_equal(Qf(1, 2), Cf(1, 2), 1e-6));
+  assert(!nearly_equal(Qf(1), Cf(1, 2), 1e-6));
+  assert(!nearly_equal(Qf(3, 4), Cf(1, 2), 1e-6));
 }
 
 void test_plus_minus() {
@@ -654,13 +657,13 @@ void test_unary_w_complex() {
   {
     Qf x(1,2), y(3.14, 2.718);
     x += y;
-    assert(nearly_equal(x, Cf(4.14,4.718), 1e-6));
+    assert(nearly_equal(x, Cf(4.14, 4.718), 1e-6));
   }
 
   {
     Qf x(1,2), y(3.14, 2.718);
     x -= y;
-    assert(nearly_equal(x, Cf(-2.14f,-0.718f), 1e-6));
+    assert(nearly_equal(x, Cf(-2.14f, -0.718f), 1e-6));
   }
 
   {
@@ -672,7 +675,7 @@ void test_unary_w_complex() {
   {
     Qf x(1,2,3,4); Cf y(5,6);
     x /= y;
-    assert(nearly_equal(x, Qf(1,2,3,4) / Qf(5,6), 1e-6));
+    assert(nearly_equal(x, Qf(1, 2, 3, 4) / Qf(5, 6), 1e-6));
   }
 }
 
@@ -687,7 +690,7 @@ void test_unary_w_quaternion() {
   {
     Qf x(1,2), y(3.14, 2.718);
     x += y;
-    assert(nearly_equal(x, Cf(4.14,4.718), 1e-6));
+    assert(nearly_equal(x, Cf(4.14, 4.718), 1e-6));
   }
 
   {
@@ -704,7 +707,7 @@ void test_unary_w_quaternion() {
     qf q1(1,2,3,4), q2(5,6,7,8);
     x *= y;
     assert(x == Qf(-60,12,30,24));
-    assert(q1 * q2 == x);
+    assert(x == q1 * q2);
     Qd z(1,1,1,1);
     x *= z;
     assert(x == Qf(-126,-42,-18,-54));
@@ -717,7 +720,7 @@ void test_unary_w_quaternion() {
     assert(nearly_equal(x, q1 / q2, 1e-6));
     Qd z(1,1,1,1);
     x /= z;
-    assert(nearly_equal(x, (q1/q2)/qf(1,1,1,1), 1e-6));
+    assert(nearly_equal(x, (q1 / q2) / qf(1, 1, 1, 1), 1e-6));
   }
 }
 
@@ -765,7 +768,7 @@ void test_operators() {
   }
   {
     assert(Qf(1,2,3,4) * Qf(4,-5,6,-7) == qf(1,2,3,4) * qf(4,-5,6,-7));
-    assert(Qf(1,2,3,4) / Qf(4,-5,6,-7) == qf(1,2,3,4) / qf(4,-5,6,-7));
+    assert(nearly_equal(Qf(1,2,3,4) / Qf(4,-5,6,-7), qf(1,2,3,4) / qf(4,-5,6,-7), 1e-6));
   }
 }
 
@@ -814,26 +817,26 @@ void test_pow() {
   assert(pow(Qf_j, 0) == 1);
   assert(pow(Qf_k, 0) == 1);
 
-  assert(nearly_equal(pow(Qf(1),-1),Qf(1),1e-6));
-  assert(nearly_equal(pow(Qf(2),-3),Qf(1.0f/8),1e-6));
-  assert(nearly_equal(pow(Qf(-2),-3),Qf(-1.0f/8),1e-6));
-  assert(nearly_equal(pow(Qd_i,-2),pow(Cd(0,1),-2.0f),1e-15));
+  assert(nearly_equal(pow(Qf(1), -1), Qf(1), 1e-6));
+  assert(nearly_equal(pow(Qf(2), -3), Qf(1.0f / 8), 1e-6));
+  assert(nearly_equal(pow(Qf(-2), -3), Qf(-1.0f / 8), 1e-6));
+  assert(nearly_equal(pow(Qd_i, -2), pow(Cd(0, 1), -2.0f), 1e-15));
   // TODO: verify
-  assert(nearly_equal(pow(Qd_j,-2),Qd(-1),1e-10));
-  assert(nearly_equal(pow(Qd_k,-2),Qd(-1),1e-10));
+  assert(nearly_equal(pow(Qd_j, -2), Qd(-1), 1e-10));
+  assert(nearly_equal(pow(Qd_k, -2), Qd(-1), 1e-10));
 
   assert(pow(Qf_1, 0.5f) == 1);
   assert(nearly_equal(pow(-Qf_1, 0.5f), Qf_i, 1e-6));
-  assert(nearly_equal(pow(Qf_i, 0.5f), sqrt(Cf(0,1)), 1e-6));
-  assert(nearly_equal(pow(-Qf_i, 0.5f), sqrt(Cf(0,-1)), 1e-6));
-  assert(nearly_equal(pow(Qf_j, 0.5f), Qf(1.0f/sqrt(2.0f), 0, 1.0f/sqrt(2.0f)), 1e-6));
-  assert(nearly_equal(pow(-Qf_j, 0.5f), Qf(1.0f/sqrt(2.0f), 0, -1.0f/sqrt(2.0f)), 1e-6));
-  assert(nearly_equal(pow(Qf_k, 0.5f), Qf(1.0f/sqrt(2.0f), 0, 0, 1.0f/sqrt(2.0f)), 1e-6));
-  assert(nearly_equal(pow(-Qf_k, 0.5f), Qf(1.0f/sqrt(2.0f), 0, 0, -1.0f/sqrt(2.0f)), 1e-6));
+  assert(nearly_equal(pow(Qf_i, 0.5f), sqrt(Cf(0, 1)), 1e-6));
+  assert(nearly_equal(pow(-Qf_i, 0.5f), sqrt(Cf(0, -1)), 1e-6));
+  assert(nearly_equal(pow(Qf_j, 0.5f), Qf(1.0f / sqrt(2.0f), 0, 1.0f / sqrt(2.0f)), 1e-6));
+  assert(nearly_equal(pow(-Qf_j, 0.5f), Qf(1.0f / sqrt(2.0f), 0, -1.0f / sqrt(2.0f)), 1e-6));
+  assert(nearly_equal(pow(Qf_k, 0.5f), Qf(1.0f / sqrt(2.0f), 0, 0, 1.0f / sqrt(2.0f)), 1e-6));
+  assert(nearly_equal(pow(-Qf_k, 0.5f), Qf(1.0f / sqrt(2.0f), 0, 0, -1.0f / sqrt(2.0f)), 1e-6));
   assert(pow(Qf_1, -0.33f) == 1);
-  assert(nearly_equal(pow(-Qf_1, -0.33f), pow(Cf(-1,0), -0.33f), 1e-6));
-  assert(nearly_equal(pow(Qf_i, -0.33f), pow(Cf(0,1), -0.33f), 1e-6));
-  assert(nearly_equal(pow(-Qf_i, -0.33f), pow(Cf(0,-1), -0.33f), 1e-6));
+  assert(nearly_equal(pow(-Qf_1, -0.33f), pow(Cf(-1, 0), -0.33f), 1e-6));
+  assert(nearly_equal(pow(Qf_i, -0.33f), pow(Cf(0, 1), -0.33f), 1e-6));
+  assert(nearly_equal(pow(-Qf_i, -0.33f), pow(Cf(0, -1), -0.33f), 1e-6));
 
   for (size_t i = 0; i < 1000; ++i) {
     int n = (int) random() % 20;
@@ -848,7 +851,7 @@ void test_pow() {
   for (size_t i = 0; i < 1000; ++i) {
     long double n = ((long double)(random() % 20))/(1 + (long double)(random() % 15));
     Qld x(1+rand()%5,rand()%5,rand()%5,rand()%5);
-    assert(nearly_equal(pow(x,n), exp(n * log(x)), 1e-5));
+    assert(nearly_equal(pow(x, n), exp(n * log(x)), 1e-5));
   }
 }
 
@@ -864,7 +867,7 @@ void test_q_pow() {
   for (size_t i = 0; i < 10; ++i) {
     Qld x(rand()%5,rand()%5,rand()%5,rand()%5);
     Qld y(rand()%5,rand()%5,rand()%5,rand()%5);
-    assert(nearly_equal(pow(x,y), exp(y * log(x)), 1e-6));
+    assert(nearly_equal(pow(x, y), exp(y * log(x)), 1e-6));
   }
 }
 
@@ -950,7 +953,7 @@ void test_trigo() {
   }
   {
     Qd x{1,2,3,4};
-    assert(nearly_equal(tan(x), sin(x)/cos(x), 1e-6));
+    assert(nearly_equal(tan(x), sin(x) / cos(x), 1e-6));
   }
   {
     for (double t = 0; t < 6.28; t += .01) {
@@ -961,9 +964,9 @@ void test_trigo() {
   }
   {
     for (double t = 0; t < 6.28; t += .01) {
-      assert(nearly_equal(sin(Qd(0,t)), sin(Cd(0,t)), 1e-6));
-      assert(nearly_equal(cos(Qd(0,t)), cos(Cd(0,t)), 1e-6));
-      assert(nearly_equal(tan(Qd(0,t)), tan(Cd(0,t)), 1e-6));
+      assert(nearly_equal(sin(Qd(0, t)), sin(Cd(0, t)), 1e-6));
+      assert(nearly_equal(cos(Qd(0, t)), cos(Cd(0, t)), 1e-6));
+      assert(nearly_equal(tan(Qd(0, t)), tan(Cd(0, t)), 1e-6));
     }
   }
   {
@@ -993,15 +996,15 @@ void test_hyper_trigo() {
   cout << "Testing hyperbolic trigonometric functions" << endl;
   {
     Qd x{1,2,3,4};
-    assert(nearly_equal(sinh(x), (exp(x) - exp(-x))/2, 1e-6));
+    assert(nearly_equal(sinh(x), (exp(x) - exp(-x)) / 2, 1e-6));
   }
   {
     Qd x{1,2,3,4};
-    assert(nearly_equal(cosh(x), (exp(x) + exp(-x))/2, 1e-6));
+    assert(nearly_equal(cosh(x), (exp(x) + exp(-x)) / 2, 1e-6));
   }
   {
     Qd x{1,2,3,4};
-    assert(nearly_equal(tanh(x), sinh(x)/cosh(x), 1e-6));
+    assert(nearly_equal(tanh(x), sinh(x) / cosh(x), 1e-6));
   }
   {
     for (size_t i = 0; i < 1000; ++i) {
@@ -1033,9 +1036,9 @@ void test_hyper_trigo() {
   }
   {
     for (double t = -4; t < 4; t += .1) {
-      assert(nearly_equal(sinh(Qd(0,t)), sinh(Cd(0,t)), 1e-6));
-      assert(nearly_equal(cosh(Qd(0,t)), cosh(Cd(0,t)), 1e-6));
-      assert(nearly_equal(tanh(Qd(0,t)), tanh(Cd(0,t)), 1e-6));
+      assert(nearly_equal(sinh(Qd(0, t)), sinh(Cd(0, t)), 1e-6));
+      assert(nearly_equal(cosh(Qd(0, t)), cosh(Cd(0, t)), 1e-6));
+      assert(nearly_equal(tanh(Qd(0, t)), tanh(Cd(0, t)), 1e-6));
     }
   }
 }

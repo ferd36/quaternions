@@ -33,11 +33,13 @@
 #include <type_traits>
 
 /**
- * A couple of macros to use in template declarations in order to select
- * the correct function.
+ * A few macros to use in template declarations in order to select
+ * the correct function. These are annoying to read directly in the source code,
+ * so I #define them here, and the source becomes more readable.
  */
 #define IS_ITERATOR(X) typename std::enable_if<!std::is_same<typename std::iterator_traits<X>::value_type, void>::value>::type* =nullptr
 #define IS_NOT_ITERATOR(X) typename std::enable_if<std::is_same<typename std::iterator_traits<X>::value_type, void>::value>::type* =nullptr
+#define IS_CONVERTIBLE(FROM,TO) typename std::enable_if<std::is_convertible<FROM,TO>::value>::type* =nullptr
 
 /**
  * Utility function to work with numbers approximately equal to zero.
@@ -56,8 +58,8 @@ inline bool is_scalar_zero(T x, T1 eps = 0) {
  * relative to the magnitudes of the quantities.
  * TODO: need absolute difference comparison (not relative) too
  */
-template<typename T, typename T2>
-inline bool is_near_equal_relative(T x, T y, T2 eps = 0) {
+template <typename T, typename T2, typename T3, IS_CONVERTIBLE(T2, T), IS_CONVERTIBLE(T3,T)>
+inline bool is_nearly_equal(T x, T2 y, T3 eps = 0) {
   if (x == 0)
     return is_scalar_zero(y, eps);
   else if (y == 0)
