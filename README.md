@@ -57,7 +57,7 @@ A C++11 library to work with quaternions, as a single header file.
 
 ## Quaternion synopsis
 
-### Quaternion<\T\> members
+### Quaternion\<T\> members
 #### Constructors
     Quaternion(T a=0, T b=0, T c=0, T d=0)
 
