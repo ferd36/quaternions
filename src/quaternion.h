@@ -29,6 +29,8 @@
 #ifndef QUATERNIONS_QUATERNION_H
 #define QUATERNIONS_QUATERNION_H
 
+#include <math.h> // for atan2
+
 #include <limits>
 #include <array>
 #include <complex>
@@ -69,7 +71,7 @@ public:
   * Specifying only a != and b != 0 makes the Quaternion an ordinary complex number.
   */
   Quaternion(T a = 0, T b = 0, T c = 0, T d = 0)
-      : _a(a), _b(b), _c(c), _d(d) { }
+  : _a(a), _b(b), _c(c), _d(d) { }
 
   /**
    * Construct a Quaternion from at most 4 components of type T.
@@ -78,7 +80,7 @@ public:
    */
   template<typename T1 = T, IS_NOT_ITERATOR(T1)>
   Quaternion(T1 a = 0, T1 b = 0, T1 c = 0, T1 d = 0)
-      : _a(a), _b(b), _c(c), _d(d) { }
+  : _a(a), _b(b), _c(c), _d(d) { }
 
   /**
    * Construct a Quaternion from 2 complex<T>.
@@ -86,7 +88,7 @@ public:
    */
   template<typename T1>
   Quaternion(const std::complex<T1>& x, const std::complex<T1>& y = std::complex<T1>(0, 0))
-      : _a(x.real()), _b(x.imag()), _c(y.real()), _d(y.imag()) { }
+  : _a(x.real()), _b(x.imag()), _c(y.real()), _d(y.imag()) { }
 
   /**
    * Construct from a pointer to a range of 4 elements ("float[4]").
@@ -94,21 +96,21 @@ public:
    */
   template<typename T1 = T>
   Quaternion(T1 *it)
-      : _a(*it), _b(*++it), _c(*++it), _d(*++it) { }
+  : _a(*it), _b(*++it), _c(*++it), _d(*++it) { }
 
   /**
    * Construct from an iterator to a range of 4 elements.
    */
   template<typename It, IS_ITERATOR(It)>
   Quaternion(It it)
-      : _a(*it), _b(*++it), _c(*++it), _d(*++it) { }
+  : _a(*it), _b(*++it), _c(*++it), _d(*++it) { }
 
   /**
    * Copy constructor.
    */
   template<typename T1>
   Quaternion(const Quaternion<T1>& y)
-      : _a(y.a()), _b(y.b()), _c(y.c()), _d(y.d()) { }
+  : _a(y.a()), _b(y.b()), _c(y.c()), _d(y.d()) { }
 
   /**
    * Assignment operator.
@@ -592,6 +594,37 @@ inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
               0.25 * s};
     }
   }
+}
+
+/**
+ * Returns three angles Euler angles {heading, attitude, bank} in radians.
+ */
+template <typename T>
+inline std::array<T, 3> to_euler(const Quaternion<T>& x, T eps = 1e-12) {
+  const T pi = 3.14159265358979323846;
+  T v = x.a()*x.b()+x.c()*x.d();
+  if (std::abs(v - 0.5) < eps) {
+    return {{2*atan2(x.a(),x.c()), +pi/2, 0}};
+  }
+  if (std::abs(v + 0.5) < eps) {
+    return {{2*atan2(x.a(),x.c()), -pi/2, 0}};
+  }
+  return {{atan2(2*(x.b()*x.c()-x.a()*x.d()), 1-2*(x.b()*x.b()-x.c()*x.c())),
+          std::asin(2*v),
+          atan2(2*(x.a()*x.c()-x.b()*x.d()), 1-2*(x.a()*x.a()-x.c()*x.c()))}};
+}
+
+/**
+ * Returns the quaternion corresponding to the three Euler angles
+ * {heading, attitude, bank} expressed in radians.
+ */
+template <typename T>
+inline Quaternion<T> from_euler(const std::array<T, 3>& x) {
+  T c0 = std::cos(x[0]/2), s0 = std::sin(x[0]/2);
+  T c1 = std::cos(x[1]/2), s1 = std::sin(x[1]/2);
+  T c2 = std::cos(x[2]/2), s2 = std::sin(x[2]/2);
+  T c0c1 = c0*c1, s0s1 = s0*s1, s0c1 = s0*c1, c0s1 = c0*s1;
+  return {c0c1*c2-s0s1*s2,s0s1*c2+c0c1*s2,s0c1*c2+c0s1*s2,c0s1*c2-s0c1*s2};
 }
 
 /**
