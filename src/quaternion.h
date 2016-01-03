@@ -550,6 +550,8 @@ using rotation_matrix = std::array<std::array<T, 3>, 3>;
 
 /**
  * Returns a 3D rotation matrix.
+ * This is the "homogeneous" expression to convert to a rotation matrix,
+ * which works if the Quaternoin is not a unit Quaternion.
  */
 template<typename T>
 inline rotation_matrix<T> to_rotation_matrix(const Quaternion<T>& x) {
@@ -597,25 +599,27 @@ inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
 }
 
 /**
- * Returns three angles Euler angles {heading, attitude, bank} in radians.
+ * Returns three Euler angles {heading, attitude, bank} in radians.
+ * x is required to be a unit quaternion.
  */
 template <typename T>
 inline std::array<T, 3> to_euler(const Quaternion<T>& x, T eps = 1e-12) {
+  assert(x.is_unit(eps));
   const T pi = 3.14159265358979323846;
-  T v = x.a()*x.b()+x.c()*x.d();
+  T v = x.a()*x.c()-x.b()*x.d();
   if (std::abs(v - 0.5) < eps) {
     return {{2*atan2(x.a(),x.c()), +pi/2, 0}};
   }
   if (std::abs(v + 0.5) < eps) {
     return {{2*atan2(x.a(),x.c()), -pi/2, 0}};
   }
-  return {{atan2(2*(x.b()*x.c()-x.a()*x.d()), 1-2*(x.b()*x.b()-x.c()*x.c())),
+  return {{atan2(2*(x.a()*x.b() + x.c()*x.d()), 1-2*(x.b()*x.b()+x.c()*x.c())),
           std::asin(2*v),
-          atan2(2*(x.a()*x.c()-x.b()*x.d()), 1-2*(x.a()*x.a()-x.c()*x.c()))}};
+          atan2(2*(x.a()*x.d()+x.b()*x.c()), 1-2*(x.c()*x.c()+x.d()*x.d()))}};
 }
 
 /**
- * Returns the quaternion corresponding to the three Euler angles
+ * Returns a unit quaternion corresponding to the three Euler angles
  * {heading, attitude, bank} expressed in radians.
  */
 template <typename T>

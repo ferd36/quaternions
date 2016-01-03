@@ -44,16 +44,16 @@ using namespace quaternion;
 ///**
 // * Prints out arrays to a stream - sometimes useful when debugging unit tests
 // */
-//template <typename T, size_t n>
-//inline ostream& operator<<(ostream& out, const array<T,n>& x) {
-//  out << "{";
-//  for (size_t i = 0; i < n; ++i) {
-//    out << x[i];
-//    if (i < n-1)
-//      out << ",";
-//  }
-//  return out << "}";
-//}
+template <typename T, size_t n>
+inline ostream& operator<<(ostream& out, const array<T,n>& x) {
+  out << "{";
+  for (size_t i = 0; i < n; ++i) {
+    out << x[i];
+    if (i < n-1)
+      out << ",";
+  }
+  return out << "}";
+}
 //
 ///**
 // * Prints out a vector of elements of type T to a stream
@@ -506,6 +506,21 @@ void test_to_rotation_matrix() {
     RM r = to_rotation_matrix(x);
     Qd y = from_rotation_matrix(r);
     assert(y == Qd_k);
+  }
+}
+
+void test_euler_angles() {
+  cout << "Testing Euler angles" << endl;
+  const double pi = 3.14159265358979323846;
+  {
+    //assert((to_euler(Qd_0) == std::array<double,3>{{0,0,0}})); only unit quaternions
+    assert((to_euler(Qd_i) == std::array<double,3>{{pi,0,0}}));
+    assert((to_euler(Qd_j) == std::array<double,3>{{pi,0,pi}}));
+    assert((to_euler(Qd_k) == std::array<double,3>{{0,0,pi}}));
+  }
+  {
+    Qd x = from_euler(std::array<double,3>{{0,0,pi}});
+    cout << x << endl;
   }
 }
 
@@ -1362,6 +1377,7 @@ int main(int argc, char** argv) {
   test_to_matrix_representation();
   test_to_polar_representation();
   test_to_rotation_matrix();
+  test_euler_angles();
   test_norms();
   test_equality();
   test_plus_minus();
