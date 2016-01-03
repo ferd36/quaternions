@@ -41,6 +41,7 @@ namespace quaternion {
 
 /**
  * A Quaternion class.
+ * todo: fix the location of quaternion.h to make it easy to include after git clone
  * TODO: provide same operations as boost
  * TODO: remove copies/constructions in expressions
  * TODO: IEEE 754/IEC 559?
