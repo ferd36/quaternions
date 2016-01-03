@@ -35,6 +35,9 @@ A C++11 library to work with quaternions, as a single header file.
 - Expression templates: unless the expression templates do some serious work, gcc can optimize the code to get very
   good performance, essentially equal to expression templates. So expression templates seem to be an older technique
   that's no longer required by modern compilers(although clang seems to lag compared to gcc in terms of optimization).
+- The std::complex class is reputed to be slow, mostly because it does a lot of work to comply with IEEE-754/IEC-559
+  apparently. Maybe the worst of this is that this compliance is not optional, and some developers have complained
+  that absolutely correct handling of the sign of infinities should not be forced on them.
 
 ## IEEE-754/IEC-559 compliance
 - If the compiler supports IEC-559, which can be verified by calling std::numeric_limits::is_iec559,
