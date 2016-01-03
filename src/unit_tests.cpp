@@ -82,23 +82,12 @@ inline bool operator==(const quaternion::Quaternion<T>& us, const boost::math::q
          && us.d() == them.R_component_4();
 }
 
-template <typename T>
-inline bool operator==(const boost::math::quaternion<T>& them, const quaternion::Quaternion<T>& us) {
-  return us == them;
-}
-
-
 template <typename T, typename T1>
 inline bool nearly_equal(const quaternion::Quaternion<T>& us, const boost::math::quaternion<T>& them, T1 eps) {
   return is_nearly_equal(us.a(), them.R_component_1(), eps)
          && is_nearly_equal(us.b(), them.R_component_2(), eps)
          && is_nearly_equal(us.c(), them.R_component_3(), eps)
          && is_nearly_equal(us.d(), them.R_component_4(), eps);
-}
-
-template <typename T, typename T1>
-inline bool nearly_equal(const boost::math::quaternion<T>& them, const quaternion::Quaternion<T>& us, T1 eps) {
-  return is_nearly_equal(us, them, eps);
 }
 
 /**
@@ -1073,6 +1062,16 @@ void test_swap() {
   }
 }
 
+void test_integer_quaternions() {
+  cout << "Testing integer quaternions" << endl;
+  {
+    using Qi = Quaternion<int>;
+    Qi x(1,2,3,4), y(5,6,7,8);
+    assert(x + y == Qi(6,8,10,12));
+  }
+  // TODO: more tests here
+}
+
 void test_io() {
   stringstream s;
   s << Qf() << Qf(1) << Qf(-1) << Qf(0,1) << Qf(0,-1) << Qf(0,0,1) << Qf(0,0,-1);
@@ -1166,15 +1165,6 @@ void test_precision() {
   {
     Qf x(0.0001,0.002,3.5,3.1415926535);
     assert(abs(exp(log(x)) - x) < 1e-6);
-  }
-}
-
-void test_integer_quaternions() {
-  cout << "Testing integer quaternions" << endl;
-  {
-    using Qi = Quaternion<int>;
-    Qi x(1,2,3,4), y(5,6,7,8);
-    cout << (x + y) << endl;
   }
 }
 
@@ -1395,6 +1385,7 @@ int main(int argc, char** argv) {
   test_hyper_trigo();
   test_axby();
   test_swap();
+  test_integer_quaternions();
   test_io();
   test_io_eps();
   test_io_style();

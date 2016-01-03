@@ -29,7 +29,7 @@ install:
   - pip install --user travis requests[security] cpp-coveralls
 
 script:
-  - make -f Makefile.mk 
+  - make -f Makefile.mk
   - ./unit_tests
   - valgrind --leak-check=full ./unit_tests
 
