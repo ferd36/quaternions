@@ -19,7 +19,7 @@ A C++11 library to work with quaternions, as a single header file.
 - The methods provided have been designed to make it as natural as possible to use quaternion::Quaternion.
 
 ## Usage
-- include <quaternions/src/quaternion.h>
+- include \\<quaternions/src/quaternion.h\\>
 - using namespace quaternion;
 - To build the unit tests: cmake . ; make OR make -f Makefile.mk
 - To make the doc: doxygen Doxyfile.
@@ -44,7 +44,7 @@ A C++11 library to work with quaternions, as a single header file.
 
 ## Tested with:
 - clang
-- gcc
+- gcc 4.8
 
 ## Requirements
 - Boost is required for the unit tests, but not for the Quaternion class itself.
@@ -57,27 +57,27 @@ A C++11 library to work with quaternions, as a single header file.
 
 ## Quaternion synopsis
 
-### Quaternion<T> members
+### Quaternion\<T\> members
 #### Constructors
 Quaternion (T a=0, T b=0, T c=0, T d=0)
 
-template<typename T1 = T, IS_NOT_ITERATOR(T1)>
+template\<typename T1 = T, IS_NOT_ITERATOR(T1)\>
 Quaternion (T1 a=0, T1 b=0, T1 c=0, T1 d=0)
 
-template<typename T1>
-Quaternion (const std::complex<T1> &x, const std::complex<T1> &y=std::complex<T1>(0, 0))
+template\<typename T1\>
+Quaternion (const std::complex\<T1\> &x, const std::complex\<T1\> &y=std::complex\<T1\>(0, 0))
 
-template<typename T1 = T>
+template\<typename T1 = T\>
 Quaternion (T1 *it)
 
-template<typename It, IS_ITERATOR(It)>
+template\<typename It, IS_ITERATOR(It)\>
 Quaternion (It it)
 
-template<typename T1>
-Quaternion (const Quaternion<T1> &y)
+template\<typename T1\>
+Quaternion (const Quaternion\<T1\> &y)
 
-template<typename T1>
-Quaternion & operator=(const Quaternion<T1> &other)
+template\<typename T1\>
+Quaternion & operator=(const Quaternion\<T1\> &other)
 
 #### Accessors
 T a () const
@@ -85,12 +85,12 @@ T b () const
 T c () const
 T d () const
 
-std::complex<T> c1 () const
-std::complex<T> c2 () const
+std::complex\<T\> c1 () const
+std::complex\<T\> c2 () const
 
 T to_real () const
-std::complex<T> to_complex () const
-std::array<T, 4> to_array () const
+std::complex\<T\> to_complex () const
+std::array\<T, 4\> to_array () const
 
 T real () const
 Quaternion unreal () const
@@ -100,16 +100,16 @@ T abs () const
 T unreal_norm_squared () const
 
 #### Tests
-template<typename T1 = T>
+template\<typename T1 = T\>
 bool is_unit (T1 eps=0) const
 
-template<typename T1 = T>
+template\<typename T1 = T\>
 bool is_real (T1 eps=0) const
 
-template<typename T1 = T>
+template\<typename T1 = T\>
 bool is_complex (T1 eps=0) const
 
-template<typename T1 = T>
+template\<typename T1 = T\>
 bool is_unreal (T1 eps=0) const
 
 #### Arithmetic
@@ -120,44 +120,44 @@ Quaternion operator-= (T y)
 Quaternion operator*= (T k)
 Quaternion operator/= (T k)
 
-template<typename T1>
-Quaternion operator+= (const std::complex<T1> &y)
+template\<typename T1\>
+Quaternion operator+= (const std::complex\<T1\> &y)
 
-template<typename T1>
-Quaternion operator-= (const std::complex<T1> &y)
+template\<typename T1\>
+Quaternion operator-= (const std::complex\<T1\> &y)
 
-template<typename T1>
-Quaternion operator*= (const std::complex<T1> &y)
+template\<typename T1\>
+Quaternion operator*= (const std::complex\<T1\> &y)
 
-template<typename T1>
-Quaternion operator/= (const std::complex<T1> &y)
+template\<typename T1\>
+Quaternion operator/= (const std::complex\<T1\> &y)
 
-template<typename T1>
-Quaternion operator+= (const Quaternion<T1> &y)
+template\<typename T1\>
+Quaternion operator+= (const Quaternion\<T1\> &y)
 
-template<typename T1>
-Quaternion operator-= (const Quaternion<T1> &y)
+template\<typename T1\>
+Quaternion operator-= (const Quaternion\<T1\> &y)
 
-template<typename T1>
-Quaternion operator*= (const Quaternion<T1> &y)
+template\<typename T1\>
+Quaternion operator*= (const Quaternion\<T1\> &y)
 
-template<typename T1>
-Quaternion operator/= (const Quaternion<T1> &y)
+template\<typename T1\>
+Quaternion operator/= (const Quaternion\<T1\> &y)
 
 
 ### Typedef
-typedef Quaternion<float> Qf
-typedef Quaternion<double> Qd
-typedef Quaternion<long double> Qld
+typedef Quaternion\<float\> Qf
+typedef Quaternion\<double\> Qd
+typedef Quaternion\<long double\> Qld
 
-template<typename T>
-using polar_representation = std::array<T, 5>
+template\<typename T\>
+using polar_representation = std::array\<T, 5\>
 
-template<typename T>
-using matrix_representation = std::array<std::array<std::complex<T>, 2>, 2>
+template\<typename T\>
+using matrix_representation = std::array\<std::array\<std::complex\<T\>, 2\>, 2\>
 
-template<typename T>
-using rotation_matrix = std::array<std::array<T, 3>, 3>
+template\<typename T\>
+using rotation_matrix = std::array\<std::array\<T, 3\>, 3\>
 
 ### Enumerations
 enum  DisplayStyle { q_nice, q_compact }
@@ -180,237 +180,237 @@ const Qld Qld_k(0, 0, 0, 1)
 
 ### Functions
 #### Constructors
-template<typename T>
-Quaternion<T> spherical(T rho, T theta, T phi1, T phi2)
+template\<typename T\>
+Quaternion\<T\> spherical(T rho, T theta, T phi1, T phi2)
 
-template<typename T>
-Quaternion<T> semipolar(T rho, T alpha, T theta1, T theta2)
+template\<typename T\>
+Quaternion\<T\> semipolar(T rho, T alpha, T theta1, T theta2)
 
-template<typename T>
-Quaternion<T> multipolar(T rho1, T theta1, T rho2, T theta2)
+template\<typename T\>
+Quaternion\<T\> multipolar(T rho1, T theta1, T rho2, T theta2)
 
-template<typename T>
-Quaternion<T> cylindrospherical(T t, T radius, T longitude, T latitude)
+template\<typename T\>
+Quaternion\<T\> cylindrospherical(T t, T radius, T longitude, T latitude)
 
-template<typename T>
-Quaternion<T> cylindrical(T r, T angle, T h1, T h2)
+template\<typename T\>
+Quaternion\<T\> cylindrical(T r, T angle, T h1, T h2)
 
-template<typename T>
-polar_representation<T> to_polar_representation(const Quaternion<T> &x)
+template\<typename T\>
+polar_representation\<T\> to_polar_representation(const Quaternion\<T\> &x)
 
-template<typename T>
-matrix_representation<T> to_matrix_representation(const Quaternion<T> &x)
+template\<typename T\>
+matrix_representation\<T\> to_matrix_representation(const Quaternion\<T\> &x)
 
-template<typename T>
-rotation_matrix<T> to_rotation_matrix(const Quaternion<T> &x)
+template\<typename T\>
+rotation_matrix\<T\> to_rotation_matrix(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> from_rotation_matrix(const rotation_matrix<T> &rm)
+template\<typename T\>
+Quaternion\<T\> from_rotation_matrix(const rotation_matrix\<T\> &rm)
 
 #### Various
-template<typename T>
-Quaternion<T> conj(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> conj(const Quaternion\<T\> &x)
 
-template<typename T>
-T norm_squared(const Quaternion<T> &x)
+template\<typename T\>
+T norm_squared(const Quaternion\<T\> &x)
 
-template<typename T>
-T abs(const Quaternion<T> &x)
+template\<typename T\>
+T abs(const Quaternion\<T\> &x)
 
-template<typename T>
-T unreal_norm_squared(const Quaternion<T> &x)
+template\<typename T\>
+T unreal_norm_squared(const Quaternion\<T\> &x)
 
-template<typename T>
-T norm_l0(const Quaternion<T> &x)
+template\<typename T\>
+T norm_l0(const Quaternion\<T\> &x)
 
-template<typename T>
-T norm_l1(const Quaternion<T> &x)
+template\<typename T\>
+T norm_l1(const Quaternion\<T\> &x)
 
-template<typename T , typename T1>
-T norm_lk(const Quaternion<T> &x, T1 k)
+template\<typename T , typename T1\>
+T norm_lk(const Quaternion\<T\> &x, T1 k)
 
-template<typename T>
-T norm_sup(const Quaternion<T> &x)
+template\<typename T\>
+T norm_sup(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> normalize(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> normalize(const Quaternion\<T\> &x)
 
 #### Tests
-template<typename T , typename T1 = T>
-bool is_unit(const Quaternion<T> &x, T1 eps=0)
+template\<typename T , typename T1 = T\>
+bool is_unit(const Quaternion\<T\> &x, T1 eps=0)
 
-template<typename T , typename T1 = T>
-bool is_real(const Quaternion<T> &x, T1 eps=0)
+template\<typename T , typename T1 = T\>
+bool is_real(const Quaternion\<T\> &x, T1 eps=0)
 
-template<typename T , typename T1 = T>
-bool is_complex(const Quaternion<T> &x, T1 eps=0)
+template\<typename T , typename T1 = T\>
+bool is_complex(const Quaternion\<T\> &x, T1 eps=0)
 
-template<typename T , typename T1 = T>
-bool is_unreal(const Quaternion<T> &x, T1 eps=0)
+template\<typename T , typename T1 = T\>
+bool is_unreal(const Quaternion\<T\> &x, T1 eps=0)
 
 #### Equality
-template<typename T , typename T2 , IS_CONVERTIBLE(T2, T)>
-bool operator==(const Quaternion<T> &x, T2 y)
+template\<typename T , typename T2 , IS_CONVERTIBLE(T2, T)\>
+bool operator==(const Quaternion\<T\> &x, T2 y)
 
-template<typename T , typename T2 , IS_CONVERTIBLE(T2, T)>
-bool operator==(T2 y, const Quaternion<T> &x)
+template\<typename T , typename T2 , IS_CONVERTIBLE(T2, T)\>
+bool operator==(T2 y, const Quaternion\<T\> &x)
 
-template<typename T , typename T2 , IS_CONVERTIBLE(T2, T)>
-bool operator!=(const Quaternion<T> &x, T2 y)
+template\<typename T , typename T2 , IS_CONVERTIBLE(T2, T)\>
+bool operator!=(const Quaternion\<T\> &x, T2 y)
 
-template<typename T , typename T2 , IS_CONVERTIBLE(T2, T)>
-bool operator!=(T2 y, const Quaternion<T> &x)
+template\<typename T , typename T2 , IS_CONVERTIBLE(T2, T)\>
+bool operator!=(T2 y, const Quaternion\<T\> &x)
 
-template<typename T , typename T2 , typename T3 , IS_CONVERTIBLE(T2, T) , IS_CONVERTIBLE(T3, T)>
-bool nearly_equal(const Quaternion<T> &x, T2 y, T3 eps)
+template\<typename T , typename T2 , typename T3 , IS_CONVERTIBLE(T2, T) , IS_CONVERTIBLE(T3, T)\>
+bool nearly_equal(const Quaternion\<T\> &x, T2 y, T3 eps)
 
-template<typename T , typename T2 , typename T3 , IS_CONVERTIBLE(T2, T) , IS_CONVERTIBLE(T3, T)>
-bool nearly_equal(T2 y, const Quaternion<T> &x, T3 eps)
+template\<typename T , typename T2 , typename T3 , IS_CONVERTIBLE(T2, T) , IS_CONVERTIBLE(T3, T)\>
+bool nearly_equal(T2 y, const Quaternion\<T\> &x, T3 eps)
 
-template<typename T , typename T2 , IS_CONVERTIBLE(T2, T)>
-bool operator==(const Quaternion<T> &x, const std::complex<T2> &y)
+template\<typename T , typename T2 , IS_CONVERTIBLE(T2, T)\>
+bool operator==(const Quaternion\<T\> &x, const std::complex\<T2\> &y)
 
-template<typename T , typename T2 , IS_CONVERTIBLE(T2, T)>
-bool operator!=(const Quaternion<T> &x, const std::complex<T2> &y)
+template\<typename T , typename T2 , IS_CONVERTIBLE(T2, T)\>
+bool operator!=(const Quaternion\<T\> &x, const std::complex\<T2\> &y)
 
-template<typename T , typename T2 , IS_CONVERTIBLE(T2, T)>
-bool operator==(const std::complex<T2> &y, const Quaternion<T> &x)
+template\<typename T , typename T2 , IS_CONVERTIBLE(T2, T)\>
+bool operator==(const std::complex\<T2\> &y, const Quaternion\<T\> &x)
 
-template<typename T , typename T2 , IS_CONVERTIBLE(T2, T)>
-bool operator!=(const std::complex<T2> &y, const Quaternion<T> &x)
+template\<typename T , typename T2 , IS_CONVERTIBLE(T2, T)\>
+bool operator!=(const std::complex\<T2\> &y, const Quaternion\<T\> &x)
 
-template<typename T , typename T2 , typename T3 , IS_CONVERTIBLE(T2, T) , IS_CONVERTIBLE(T3, T)>
-bool nearly_equal(const Quaternion<T> &x, const std::complex<T2> &y, T3 eps)
+template\<typename T , typename T2 , typename T3 , IS_CONVERTIBLE(T2, T) , IS_CONVERTIBLE(T3, T)\>
+bool nearly_equal(const Quaternion\<T\> &x, const std::complex\<T2\> &y, T3 eps)
 
-template<typename T , typename T2 , typename T3 , IS_CONVERTIBLE(T2, T) , IS_CONVERTIBLE(T3, T)>
-bool nearly_equal(const std::complex<T2> &y, const Quaternion<T> &x, T3 eps)
+template\<typename T , typename T2 , typename T3 , IS_CONVERTIBLE(T2, T) , IS_CONVERTIBLE(T3, T)\>
+bool nearly_equal(const std::complex\<T2\> &y, const Quaternion\<T\> &x, T3 eps)
 
-template<typename T>
-bool operator==(const Quaternion<T> &x, const Quaternion<T> &y)
+template\<typename T\>
+bool operator==(const Quaternion\<T\> &x, const Quaternion\<T\> &y)
 
-template<typename T>
-bool operator!=(const Quaternion<T> &x, const Quaternion<T> &y)
+template\<typename T\>
+bool operator!=(const Quaternion\<T\> &x, const Quaternion\<T\> &y)
 
-template<typename T , typename T2 , typename T3 , IS_CONVERTIBLE(T2, T) , IS_CONVERTIBLE(T3, T)>
-bool nearly_equal(const Quaternion<T> &x, const Quaternion<T2> &y, T3 eps)
+template\<typename T , typename T2 , typename T3 , IS_CONVERTIBLE(T2, T) , IS_CONVERTIBLE(T3, T)\>
+bool nearly_equal(const Quaternion\<T\> &x, const Quaternion\<T2\> &y, T3 eps)
 
 #### Arithmetic
-template<typename T , typename T1>
-Quaternion<T> operator+(const Quaternion<T> &x, T1 y)
+template\<typename T , typename T1\>
+Quaternion\<T\> operator+(const Quaternion\<T\> &x, T1 y)
 
-template<typename T , typename T1>
-Quaternion<T> operator+(T1 y, const Quaternion<T> &x)
+template\<typename T , typename T1\>
+Quaternion\<T\> operator+(T1 y, const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> operator+(const Quaternion<T> &x, std::complex<T> &y)
+template\<typename T\>
+Quaternion\<T\> operator+(const Quaternion\<T\> &x, std::complex\<T\> &y)
 
-template<typename T>
-Quaternion<T> operator+(std::complex<T> &y, const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> operator+(std::complex\<T\> &y, const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> operator+(const Quaternion<T> &x, const Quaternion<T> &y)
+template\<typename T\>
+Quaternion\<T\> operator+(const Quaternion\<T\> &x, const Quaternion\<T\> &y)
 
-template<typename T , typename T1>
-Quaternion<T> operator-(const Quaternion<T> &x, T1 y)
+template\<typename T , typename T1\>
+Quaternion\<T\> operator-(const Quaternion\<T\> &x, T1 y)
 
-template<typename T , typename T1>
-Quaternion<T> operator-(T1 y, const Quaternion<T> &x)
+template\<typename T , typename T1\>
+Quaternion\<T\> operator-(T1 y, const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> operator-(const Quaternion<T> &x, std::complex<T> &y)
+template\<typename T\>
+Quaternion\<T\> operator-(const Quaternion\<T\> &x, std::complex\<T\> &y)
 
-template<typename T>
-Quaternion<T> operator-(std::complex<T> &y, const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> operator-(std::complex\<T\> &y, const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> operator-(const Quaternion<T> &x, const Quaternion<T> &y)
+template\<typename T\>
+Quaternion\<T\> operator-(const Quaternion\<T\> &x, const Quaternion\<T\> &y)
 
-template<typename T , typename T1>
-Quaternion<T> operator*(const Quaternion<T> &x, T1 y)
+template\<typename T , typename T1\>
+Quaternion\<T\> operator*(const Quaternion\<T\> &x, T1 y)
 
-template<typename T , typename T1>
-Quaternion<T> operator*(T1 y, const Quaternion<T> &x)
+template\<typename T , typename T1\>
+Quaternion\<T\> operator*(T1 y, const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> operator*(const Quaternion<T> &x, std::complex<T> &y)
+template\<typename T\>
+Quaternion\<T\> operator*(const Quaternion\<T\> &x, std::complex\<T\> &y)
 
-template<typename T>
-Quaternion<T> operator*(std::complex<T> &y, const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> operator*(std::complex\<T\> &y, const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> operator*(const Quaternion<T> &x, const Quaternion<T> &y)
+template\<typename T\>
+Quaternion\<T\> operator*(const Quaternion\<T\> &x, const Quaternion\<T\> &y)
 
-template<typename T>
-Quaternion<T> inverse(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> inverse(const Quaternion\<T\> &x)
 
-template<typename T , typename T1>
-Quaternion<T> operator/(const Quaternion<T> &x, T1 y)
+template\<typename T , typename T1\>
+Quaternion\<T\> operator/(const Quaternion\<T\> &x, T1 y)
 
-template<typename T , typename T1>
-Quaternion<T> operator/(T1 y, const Quaternion<T> &x)
+template\<typename T , typename T1\>
+Quaternion\<T\> operator/(T1 y, const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> operator/(const Quaternion<T> &x, std::complex<T> &y)
+template\<typename T\>
+Quaternion\<T\> operator/(const Quaternion\<T\> &x, std::complex\<T\> &y)
 
-template<typename T>
-Quaternion<T> operator/(std::complex<T> &y, const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> operator/(std::complex\<T\> &y, const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> operator/(const Quaternion<T> &x, const Quaternion<T> &y)
+template\<typename T\>
+Quaternion\<T\> operator/(const Quaternion\<T\> &x, const Quaternion\<T\> &y)
 
 #### Dot, cross product, commutator
-template<typename T>
-T dot(const Quaternion<T> &x, const Quaternion<T> &y)
+template\<typename T\>
+T dot(const Quaternion\<T\> &x, const Quaternion\<T\> &y)
 
-template<typename T>
-Quaternion<T> cross(const Quaternion<T> &x, const Quaternion<T> &y)
+template\<typename T\>
+Quaternion\<T\> cross(const Quaternion\<T\> &x, const Quaternion\<T\> &y)
 
-template<typename T>
-Quaternion<T> commutator(const Quaternion<T> &x, const Quaternion<T> &y)
+template\<typename T\>
+Quaternion\<T\> commutator(const Quaternion\<T\> &x, const Quaternion\<T\> &y)
 
 #### Transcendentals
-template<typename T>
-Quaternion<T> exp(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> exp(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> log(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> log(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> pow2(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> pow2(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> pow3(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> pow3(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> pow4(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> pow4(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> pow(const Quaternion<T> &x, int expt)
+template\<typename T\>
+Quaternion\<T\> pow(const Quaternion\<T\> &x, int expt)
 
-template<typename T>
-Quaternion<T> pow(const Quaternion<T> &x, T a)
+template\<typename T\>
+Quaternion\<T\> pow(const Quaternion\<T\> &x, T a)
 
-template<typename T>
-Quaternion<T> pow(const Quaternion<T> &x, const Quaternion<T> &a)
+template\<typename T\>
+Quaternion\<T\> pow(const Quaternion\<T\> &x, const Quaternion\<T\> &a)
 
-template<typename T>
-Quaternion<T> cos(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> cos(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> sin(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> sin(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> tan(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> tan(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> cosh(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> cosh(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> sinh(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> sinh(const Quaternion\<T\> &x)
 
-template<typename T>
-Quaternion<T> tanh(const Quaternion<T> &x)
+template\<typename T\>
+Quaternion\<T\> tanh(const Quaternion\<T\> &x)
 
 #### Algorithms
-template<typename T , typename K>
-Quaternion<T> axby(K k1, const Quaternion<T> &x, K k2, const Quaternion<T> &y)
+template\<typename T , typename K\>
+Quaternion\<T\> axby(K k1, const Quaternion\<T\> &x, K k2, const Quaternion\<T\> &y)
