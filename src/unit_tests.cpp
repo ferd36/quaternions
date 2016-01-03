@@ -1169,6 +1169,15 @@ void test_precision() {
   }
 }
 
+void test_integer_quaternions() {
+  cout << "Testing integer quaternions" << endl;
+  {
+    using Qi = Quaternion<int>;
+    Qi x(1,2,3,4), y(5,6,7,8);
+    cout << (x + y) << endl;
+  }
+}
+
 /**
  * Between standard C++, boost and vectorclass which uses intrinsics, no difference.
  * The compiler is probably optimizing well enough, or the intrinsics are not used properly.
