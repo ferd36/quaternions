@@ -405,24 +405,48 @@ void test_conjugate() {
   }
 }
 
-void test_to_matrix_representation() {
-  cout << "Testing matrix representation" << endl;
-  typedef matrix_representation<double> MR;
+void test_complex_matrix_2d_representation() {
+  cout << "Testing complex matrix 2d representation" << endl;
+  using MR = complex_matrix_2d<double>;
 
   {
-    assert(to_matrix_representation(Qd()) == MR());
+    assert(to_complex_matrix_2d(Qd()) == MR());
+    assert(from_complex_matrix_2d(MR()) == 0);
   }
   {
     MR r;
     r[0] = {{Cd(1,0), Cd()}};
     r[1] = {{Cd(), Cd(1,0)}};
-    assert(to_matrix_representation(Qd(1)) == r);
+    assert(to_complex_matrix_2d(Qd_1) == r);
+    assert(from_complex_matrix_2d(r) == Qd_1);
+  }
+  {
+    MR r;
+    r[0] = {{Cd(0,1), Cd()}};
+    r[1] = {{Cd(), Cd(0,-1)}};
+    assert(to_complex_matrix_2d(Qd_i) == r);
+    assert(from_complex_matrix_2d(r) == Qd_i);
+  }
+  {
+    MR r;
+    r[0] = {{Cd(), Cd(1,0)}};
+    r[1] = {{Cd(-1,0), Cd()}};
+    assert(to_complex_matrix_2d(Qd_j) == r);
+    assert(from_complex_matrix_2d(r) == Qd_j);
+  }
+  {
+    MR r;
+    r[0] = {{Cd(), Cd(0,1)}};
+    r[1] = {{Cd(0,1), Cd()}};
+    assert(to_complex_matrix_2d(Qd_k) == r);
+    assert(from_complex_matrix_2d(r) == Qd_k);
   }
   {
     MR r;
     r[0] = {{Cd(1, 2), Cd(3, 4)}};
     r[1] = {{Cd(-3, 4), Cd(1, -2)}};
-    assert(to_matrix_representation(Qd(1,2,3,4)) == r);
+    assert(to_complex_matrix_2d(Qd(1,2,3,4)) == r);
+    assert(from_complex_matrix_2d(r) == Qd(1,2,3,4));
   }
 }
 
@@ -512,15 +536,21 @@ void test_to_rotation_matrix() {
 void test_euler_angles() {
   cout << "Testing Euler angles" << endl;
   const double pi = 3.14159265358979323846;
+  using A = std::array<double,3>;
   {
     //assert((to_euler(Qd_0) == std::array<double,3>{{0,0,0}})); only unit quaternions
-    assert((to_euler(Qd_i) == std::array<double,3>{{pi,0,0}}));
-    assert((to_euler(Qd_j) == std::array<double,3>{{pi,0,pi}}));
-    assert((to_euler(Qd_k) == std::array<double,3>{{0,0,pi}}));
+    assert((to_euler(Qd_i) == A{{0,0,pi}}));
+    assert((to_euler(Qd_j) == A{{pi,0,0}}));
+    assert((to_euler(Qd_k) == A{{pi,0,pi}}));
   }
   {
-    Qd x = from_euler(std::array<double,3>{{0,0,pi}});
-    cout << x << endl;
+    cout << from_euler(A{{pi,0,0}}) << endl;
+    cout << from_euler(A{{0,pi,0}}) << endl;
+    cout << from_euler(A{{0,0,pi}}) << endl;
+    assert(nearly_equal(from_euler(A{{0,0,pi}}), Qd_i, 1e-16));
+    assert(nearly_equal(from_euler(A{{pi,0,0}}), Qd_j, 1e-16));
+    cout << from_euler(A{{pi,0,pi}}) << endl;
+    assert(nearly_equal(from_euler(A{{pi,0,pi}}), Qd_k, 1e-1));
   }
 }
 
@@ -1374,7 +1404,7 @@ int main(int argc, char** argv) {
   test_IJK();
   test_accessors();
   test_conjugate();
-  test_to_matrix_representation();
+  test_complex_matrix_2d_representation();
   test_to_polar_representation();
   test_to_rotation_matrix();
   test_euler_angles();

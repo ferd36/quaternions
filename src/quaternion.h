@@ -527,19 +527,33 @@ inline polar_representation<T> to_polar_representation(const Quaternion<T>& x) {
 }
 
 /**
- * The type used for matrix representations of Quaternions.
+ * The type used for 2x2 complex matrix representations of Quaternions.
  */
 template<typename T>
-using matrix_representation = std::array<std::array<std::complex<T>, 2>, 2>;
+using complex_matrix_2d = std::array<std::array<std::complex<T>, 2>, 2>;
 
 /**
- * Returns a matrix representation of a Quaternion.
+ * Returns a 2x2 complex matrix representation of a Quaternion:
+ * [ a + b i,  c + d i]
+ * [ -c + d i, a - b i]
  */
 template<typename T>
-matrix_representation<T> to_matrix_representation(const Quaternion<T>& x) {
-  std::array<std::complex<T>, 2> r0{{std::complex<T>(x.a(), x.b()), std::complex<T>(x.c(), x.d())}};
-  std::array<std::complex<T>, 2> r1{{std::complex<T>(-x.c(), x.d()), std::complex<T>(x.a(), -x.b())}};
-  return {{r0, r1}};
+inline complex_matrix_2d<T> to_complex_matrix_2d(const Quaternion<T>& x) {
+  complex_matrix_2d<T> cm;
+  cm[0][0] = {x.a(), x.b()}; cm[0][1] = {x.c(), x.d()};
+  cm[1][0] = -conj(cm[0][1]); cm[1][1] = conj(cm[0][0]);
+  return cm;
+}
+
+/**
+ * Returns a Quaternion from a 2x2 complex matrix:
+ * [ a + b i,  c + d i]
+ * [ -c + d i, a - b i]
+ */
+template <typename T>
+Quaternion<T> from_complex_matrix_2d(const complex_matrix_2d<T>& cm) {
+  assert(cm[1][1] == conj(cm[0][0]) && cm[1][0] == -conj(cm[0][1]));
+  return {cm[0][0].real(), cm[0][0].imag(), cm[0][1].real(), cm[0][1].imag()};
 }
 
 /**
@@ -601,26 +615,29 @@ inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
 /**
  * Returns three Euler angles {heading, attitude, bank} in radians.
  * x is required to be a unit quaternion.
+ *
+ * WARNING: conversion to/from Euler angles is not ready.
  */
 template <typename T>
 inline std::array<T, 3> to_euler(const Quaternion<T>& x, T eps = 1e-12) {
   assert(x.is_unit(eps));
   const T pi = 3.14159265358979323846;
-  T v = x.a()*x.c()-x.b()*x.d();
+  T v = x.b()*x.c()+x.a()*x.d();
   if (std::abs(v - 0.5) < eps) {
-    return {{2*atan2(x.a(),x.c()), +pi/2, 0}};
+    return {{2*atan2(x.b(),x.a()), +pi/2, 0}};
   }
   if (std::abs(v + 0.5) < eps) {
-    return {{2*atan2(x.a(),x.c()), -pi/2, 0}};
+    return {{-2*atan2(x.b(),x.a()), -pi/2, 0}};
   }
-  return {{atan2(2*(x.a()*x.b() + x.c()*x.d()), 1-2*(x.b()*x.b()+x.c()*x.c())),
+  return {{atan2(2*(x.a()*x.c() - x.b()*x.d()), 1-2*(x.c()*x.c()+x.d()*x.d())),
           std::asin(2*v),
-          atan2(2*(x.a()*x.d()+x.b()*x.c()), 1-2*(x.c()*x.c()+x.d()*x.d()))}};
+          atan2(2*(x.a()*x.b()-x.c()*x.d()), 1-2*(x.b()*x.b()+x.d()*x.d()))}};
 }
 
 /**
  * Returns a unit quaternion corresponding to the three Euler angles
  * {heading, attitude, bank} expressed in radians.
+ * The conventions used are with the 3,2,1 convention ??? TODO: verify
  */
 template <typename T>
 inline Quaternion<T> from_euler(const std::array<T, 3>& x) {
@@ -628,7 +645,7 @@ inline Quaternion<T> from_euler(const std::array<T, 3>& x) {
   T c1 = std::cos(x[1]/2), s1 = std::sin(x[1]/2);
   T c2 = std::cos(x[2]/2), s2 = std::sin(x[2]/2);
   T c0c1 = c0*c1, s0s1 = s0*s1, s0c1 = s0*c1, c0s1 = c0*s1;
-  return {c0c1*c2-s0s1*s2,s0s1*c2+c0c1*s2,s0c1*c2+c0s1*s2,c0s1*c2-s0c1*s2};
+  return {c0c1*c2-s0s1*s2,s0s1*c2+c0c1*s2,s0c1*c2+s0s1*s2,-c0s1*s2+s0c1*s2};
 }
 
 /**
