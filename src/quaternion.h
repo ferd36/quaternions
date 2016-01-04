@@ -29,9 +29,10 @@
 #ifndef QUATERNIONS_QUATERNION_H
 #define QUATERNIONS_QUATERNION_H
 
-#include <math.h> // for atan2
+#include <math.h> // for atan2, which handles signs for us properly
 
 #include <limits>
+#include <type_traits>
 #include <array>
 #include <complex>
 #include <iterator>
@@ -55,15 +56,31 @@ namespace quaternion {
  * TODO: std::complex is too slow? IEEE 754?
  * TODO: expression templates?
  */
-template<typename T =double> // assert operations for numeric is_specialized??
-// T has to be real or integer for exp, log, can't accept e.g. complex
-// if custom type, check requirements - can't have complex
+template<typename T =double>
 class Quaternion {
 public:
   /**
    * The value of each component of a Quaternion.
+   * See below for allowed type.
    */
   typedef T value_type;
+
+  /**
+   * For now, the types that we can handle are restricted, to make sure
+   * that we are not asked to handle a type that would lead to bugs
+   * (e.g. unsigned T when we have signed operations, or complex T).
+   * boost::rational is technically OK, and I verified in tests,
+   * but I don't want to depend on boost in this header, so we'll allow
+   * boost::rational if there is demand for it.
+   */
+  static_assert(std::is_same<T, bool>() // this one could require a specialized implementation
+                || std::is_same<T, int>()
+                || std::is_same<T, long>()
+                || std::is_same<T, long long>()
+                || std::is_same<T, float>()
+                || std::is_same<T, double>()
+                || std::is_same<T, long double>(),
+                "Invalid scalar type for Quaternion");
 
   /**
   * Construct a Quaternion from at most 4 components of type T.
@@ -688,11 +705,16 @@ inline Quaternion<T> from_euler(const std::array<T, 3>& x) {
 }
 
 /**
+ * Hash of a quaternion - that makes it possible to use quaternions
+ * as keys in std::set/std::map, if ever needed.
+ *
  * fash-hash.
  *
  * TODO: try xxhash
+ * TODO: is that useful??
+ * TODO: provide lexicographic order on quaternions?
  */
-template<typename T>
+template <typename T>
 struct QuaternionHash : public std::unary_function<Quaternion<T>, size_t> {
 
   inline size_t operator()(const Quaternion<T>& x) const {

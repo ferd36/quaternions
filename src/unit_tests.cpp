@@ -1274,8 +1274,8 @@ void test_hash() {
   cout << "Testing hash" << endl;
   {
     Qf x(1,2,3,4);
-    QuaternionHash<Qf> h;
-    assert(h(x) == 7330271889411790626);
+    QuaternionHash<Qf::value_type> h;
+    assert(h(x) == 4040899601354814717);
   }
 }
 
@@ -1291,7 +1291,7 @@ void test_stl() {
   }
 
   {
-    unordered_set<Qd,QuaternionHash<Qd>> q_set = {{1,2,3,4},{5,6,7,8},{1,2,3,4}};
+    unordered_set<Qd,QuaternionHash<double>> q_set = {{1,2,3,4},{5,6,7,8},{1,2,3,4}};
     assert(q_set.size() == 2);
     auto v = accumulate(q_set.begin(), q_set.end(), Qd_0, plus<Qd>());
     assert(v == Qd(1,2,3,4) + Qd(5,6,7,8));
@@ -1301,20 +1301,22 @@ void test_stl() {
 /**
  * Some operations don't compile with boost rational, in particular
  * those that involve e.g. std::fabs (like operator<< does!).
+ * This works fine, but I'm disabling it for now so that Quaternion.h does
+ * not depend on boost at all.
  */
-void test_boost_rational() {
-  cout << "Testing with boost::rational" << endl;
-  typedef rational<long> Rl;
-  typedef Quaternion<Rl> Qrl;
-  {
-    Qrl x({1,2},{3,4},{5,6},{7,8}), y({2,3},{4,5},{6,7},{8,9});
-    Qrl z = x * y;
-    assert(z.a() == Rl(-554,315));
-    assert(z.b() == Rl(481,540));
-    assert(z.c() == Rl(641,630));
-    assert(z.d() == Rl(253,252));
-  }
-}
+//void test_boost_rational() {
+//  cout << "Testing with boost::rational" << endl;
+//  typedef rational<long> Rl;
+//  typedef Quaternion<Rl> Qrl;
+//  {
+//    Qrl x({1,2},{3,4},{5,6},{7,8}), y({2,3},{4,5},{6,7},{8,9});
+//    Qrl z = x * y;
+//    assert(z.a() == Rl(-554,315));
+//    assert(z.b() == Rl(481,540));
+//    assert(z.c() == Rl(641,630));
+//    assert(z.d() == Rl(253,252));
+//  }
+//}
 
 void test_precision() {
   cout << "Testing precision" << endl;
@@ -1540,7 +1542,7 @@ int main(int argc, char** argv) {
   test_operators();
   test_hash();
   test_stl();
-  test_boost_rational();
+  //test_boost_rational(); disabled for now, but keep, works fine
   test_pow2();
   test_pow3();
   test_pow();
