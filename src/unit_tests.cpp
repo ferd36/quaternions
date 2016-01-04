@@ -41,11 +41,11 @@ using namespace quaternion;
 //----------------------------------------------------------------------------------------------------------------------
 // Test utilities
 //----------------------------------------------------------------------------------------------------------------------
-///**
-// * Prints out arrays to a stream - sometimes useful when debugging unit tests
-// */
+/**
+ * Prints out arrays to a stream - sometimes useful when debugging unit tests
+ */
 template <typename T, size_t n>
-inline ostream& operator<<(ostream& out, const array<T,n>& x) {
+inline ostream& operator<<(ostream& out, const std::array<T,n>& x) {
   out << "{";
   for (size_t i = 0; i < n; ++i) {
     out << x[i];
@@ -54,20 +54,20 @@ inline ostream& operator<<(ostream& out, const array<T,n>& x) {
   }
   return out << "}";
 }
-//
-///**
-// * Prints out a vector of elements of type T to a stream
-// */
-//template <typename T>
-//inline ostream& operator<<(ostream& out, const vector<T>& x) {
-//  out << "(";
-//  for (size_t i = 0; i < x.size(); ++i) {
-//    out << x[i];
-//    if (i < x.size()-1)
-//      out << ",";
-//  }
-//  return out << ")";
-//}
+
+/**
+ * Prints out a vector of elements of type T to a stream
+ */
+template <typename T>
+inline ostream& operator<<(ostream& out, const std::vector<T>& x) {
+  out << "(";
+  for (size_t i = 0; i < x.size(); ++i) {
+    out << x[i];
+    if (i < x.size()-1)
+      out << ",";
+  }
+  return out << ")";
+}
 
 /**
  * Compare a boost quaternion to quaternion, within epsilon.
@@ -105,13 +105,84 @@ inline bool nearly_equal(const std::array<T,n>& x, const std::array<T,n>& y, T e
  * This used to test e.g. the rotation matrices.
  */
 template <typename T, size_t n1, size_t n2>
-inline bool nearly_equal(const std::array<std::array<T,n1>,n2>& x, const std::array<std::array<T,n1>,n2>& y, T eps) {
+inline bool
+nearly_equal(const std::array<std::array<T,n1>,n2>& x, const std::array<std::array<T,n1>,n2>& y, T eps) {
   for (size_t i = 0; i < n1; ++i)
     for (size_t j = 0; j < n2; ++j)
       if (!is_nearly_equal(x[i][j], y[i][j], eps))
         return false;
   return true;
 };
+
+/**
+ * Transpose of a square matrix.
+ */
+template <typename T, size_t n>
+inline std::array<std::array<T,n>,n> transpose(const std::array<std::array<T,n>,n>& a) {
+  std::array<std::array<T,n>,n> r;
+  for (size_t i = 0; i < n; ++i)
+    for (size_t j = 0; j < n; ++j)
+      r[i][j] = a[j][i];
+  return r;
+}
+
+/**
+ * Conjugate of a square matrix.
+ * Using "conj" because it is the std:: name for the conjugate of a std::complex.
+ * TODO: need 1 function for both real and complex matrices.
+ */
+template <typename T, size_t n>
+inline std::array<std::array<T,n>,n> conj(const std::array<std::array<T,n>,n>& a) {
+  std::array<std::array<T,n>,n> r;
+  for (size_t i = 0; i < n; ++i)
+    for (size_t j = 0; j < n; ++j)
+      r[i][j] = conj(a[i][j]);
+  return r;
+}
+
+/**
+ * Initialize a m x n matrix from a list of values of size m * n.
+ */
+template <size_t m, size_t n = m, typename T =double>
+inline std::array<std::array<T,n>,m> make_mat(std::initializer_list<T> l) {
+  std::array<std::array<T,n>,m> mr;
+  const double* it = l.begin();
+  for (size_t i = 0; i < m; ++i)
+    for (size_t j = 0; j < n; ++j)
+      mr[i][j] = *it++;
+  return mr;
+};
+
+/**
+ * Square matrix addition.
+ */
+template <typename T, size_t n>
+inline std::array<std::array<T,n>,n>
+operator+(const std::array<std::array<T,n>,n>& a, const std::array<std::array<T,n>,n>& b) {
+  std::array<std::array<T,n>,n> r;
+  for (size_t i = 0; i < n; ++i)
+    for (size_t j = 0; j < n; ++j)
+      r[i][j] = a[i][j] + b[i][j];
+  return r;
+}
+
+/**
+ * Square matrix multiplication.
+ * TODO: move to mat utils lib
+ */
+template <typename T, size_t n>
+inline std::array<std::array<T,n>,n>
+operator*(const std::array<std::array<T,n>,n>& a, const std::array<std::array<T,n>,n>& b) {
+  std::array<std::array<T,n>,n> r;
+  for (size_t i = 0; i < n; ++i)
+    for (size_t j = 0; j < n; ++j) {
+      T val = 0;
+      for (size_t k = 0; k < n; ++k)
+      val += a[i][k] * b[k][j];
+      r[i][j] = val;
+  }
+  return r;
+}
 
 /**
  * A random number generator, for the speed tests.
@@ -447,6 +518,57 @@ void test_complex_matrix_2d_representation() {
     r[1] = {{Cd(-3, 4), Cd(1, -2)}};
     assert(to_complex_matrix_2d(Qd(1,2,3,4)) == r);
     assert(from_complex_matrix_2d(r) == Qd(1,2,3,4));
+  }
+  {
+    Qd x(1,2,3,4);
+    assert(from_complex_matrix_2d(to_complex_matrix_2d(x)) == x);
+    MR m = to_complex_matrix_2d(x);
+    assert(to_complex_matrix_2d(from_complex_matrix_2d(m)) == m);
+    assert(norm_squared(x) == m[0][0]*m[1][1] - m[0][1]*m[1][0]);
+    MR ct;
+    ct[0] = {{conj(m[0][0]),conj(m[1][0])}};
+    ct[1] = {{conj(m[0][1]),conj(m[1][1])}};
+    assert(to_complex_matrix_2d(conj(x)) == ct);
+  }
+  {
+    Qd x(1,2,3,4), y(5,6,7,8);
+    MR mx = to_complex_matrix_2d(x);
+    MR my = to_complex_matrix_2d(y);
+    assert(to_complex_matrix_2d(x + y) == mx + my);
+    assert(to_complex_matrix_2d(x * y) == mx * my);
+  }
+}
+
+
+void test_real_matrix_4d_representation() {
+  cout << "Testing real matrix 4d representation" << endl;
+  using MR = real_matrix_4d<double>;
+  auto mat4d = make_mat<4,4,double>;
+  {
+    assert(to_real_matrix_4d(Qd_0) == mat4d({0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0}));
+    assert(to_real_matrix_4d(Qd_1) == mat4d({1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1}));
+    assert(to_real_matrix_4d(Qd_i) == mat4d({0,1,0,0, -1,0,0,0, 0,0,0,-1, 0,0,1,0}));
+    assert(to_real_matrix_4d(Qd_j) == mat4d({0,0,1,0, 0,0,0,1, -1,0,0,0, 0,-1,0,0}));
+    assert(to_real_matrix_4d(Qd_k) == mat4d({0,0,0,1, 0,0,-1,0, 0,1,0,0, -1,0,0,0}));
+  }
+  {
+    Qd x(1,2,3,4);
+    assert(from_real_matrix_4d(to_real_matrix_4d(x)) == x);
+    MR m = to_real_matrix_4d(x);
+    assert(to_real_matrix_4d(from_real_matrix_4d(m)) == m);
+    // TODO: write 4 by 4 determinant test, maybe when I have a det function in mat utils lib
+    //assert(norm_squared(x) == m[0][0]*m[1][1] - m[0][1]*m[1][0]);
+//    MR ct;
+//    ct[0] = {{conj(m[0][0]),conj(m[1][0])}};
+//    ct[1] = {{conj(m[0][1]),conj(m[1][1])}};
+//    assert(to_complex_matrix_2d(conj(x)) == ct);
+  }
+  {
+//    Qd x(1,2,3,4), y(5,6,7,8);
+//    MR mx = to_complex_matrix_2d(x);
+//    MR my = to_complex_matrix_2d(y);
+//    assert(to_complex_matrix_2d(x + y) == mx + my);
+//    assert(to_complex_matrix_2d(x * y) == mx * my);
   }
 }
 
@@ -1405,6 +1527,7 @@ int main(int argc, char** argv) {
   test_accessors();
   test_conjugate();
   test_complex_matrix_2d_representation();
+  test_real_matrix_4d_representation();
   test_to_polar_representation();
   test_to_rotation_matrix();
   test_euler_angles();

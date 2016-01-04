@@ -527,13 +527,13 @@ inline polar_representation<T> to_polar_representation(const Quaternion<T>& x) {
 }
 
 /**
- * The type used for 2x2 complex matrix representations of Quaternions.
+ * Type used for 2x2 complex matrix representations of Quaternions.
  */
 template<typename T>
 using complex_matrix_2d = std::array<std::array<std::complex<T>, 2>, 2>;
 
 /**
- * Returns a 2x2 complex matrix representation of a Quaternion:
+ * Returns a 2x2 complex matrix representation of a Quaternion x:
  * [ a + b i,  c + d i]
  * [ -c + d i, a - b i]
  */
@@ -546,14 +546,53 @@ inline complex_matrix_2d<T> to_complex_matrix_2d(const Quaternion<T>& x) {
 }
 
 /**
- * Returns a Quaternion from a 2x2 complex matrix:
+ * Returns a Quaternion from a 2x2 complex matrix cm:
  * [ a + b i,  c + d i]
  * [ -c + d i, a - b i]
  */
 template <typename T>
-Quaternion<T> from_complex_matrix_2d(const complex_matrix_2d<T>& cm) {
+inline Quaternion<T> from_complex_matrix_2d(const complex_matrix_2d<T>& cm) {
   assert(cm[1][1] == conj(cm[0][0]) && cm[1][0] == -conj(cm[0][1]));
   return {cm[0][0].real(), cm[0][0].imag(), cm[0][1].real(), cm[0][1].imag()};
+}
+
+/**
+ * Type used for 4x4 real matrix representation of a quaternion.
+ * TODO: how do we ensure that T behaves like a real, and not a complex?
+ * It needs to allow boost fractions, and custom types, but that don't behave like complex.
+ * i.e. only 1 root of unity?
+ */
+template <typename T>
+using real_matrix_4d = std::array<std::array<T,4>,4>;
+
+/**
+ * Returns a 4x4 real matrix representation from a Quaternion x:
+ * [ a  b  c  d ]
+ * [-b  a -d  c ]
+ * [-c  d  a -b ]
+ * [-d -c  b  a ]
+ */
+template <typename T>
+inline real_matrix_4d<T> to_real_matrix_4d(const Quaternion<T>& x) {
+  real_matrix_4d<T> rm;
+  rm[0] = {{x.a(), x.b(), x.c(), x.d()}};
+  rm[1] = {{-x.b(), x.a(), -x.d(), x.c()}};
+  rm[2] = {{-x.c(), x.d(), x.a(), -x.b()}};
+  rm[3] = {{-x.d(), -x.c(), x.b(), x.a()}};
+  return rm;
+}
+
+/**
+ * Returns a Quaternion from a 4x4 real matrix rm:
+ * [ a  b  c  d ]
+ * [-b  a -d  c ]
+ * [-c  d  a -b ]
+ * [-d -c  b  a ]
+ */
+template <typename T>
+inline Quaternion<T> from_real_matrix_4d(const real_matrix_4d<T>& rm) {
+  // TODO: asserts
+  return {rm[0][0],rm[0][1],rm[0][2],rm[0][3]};
 }
 
 /**

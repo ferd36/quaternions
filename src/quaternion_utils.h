@@ -38,6 +38,8 @@ namespace quaternion {
  * A few macros to use in template declarations in order to select
  * the correct function. These are annoying to read directly in the source code,
  * so I #define them here, and the source becomes more readable.
+ * NOTE: if not keeping these macros on one line, use \ at end of line, and leave last line without "\"
+ * or trouble will ensue.
  */
 #define IS_ITERATOR(X) typename std::enable_if<!std::is_same<typename std::iterator_traits<X>::value_type, void>::value>::type* =nullptr
 #define IS_NOT_ITERATOR(X) typename std::enable_if<std::is_same<typename std::iterator_traits<X>::value_type, void>::value>::type* =nullptr
