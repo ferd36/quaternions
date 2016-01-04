@@ -126,20 +126,20 @@ inline array<array<T,n>,n> transpose(const array<array<T,n>,n>& a) {
 }
 
 template <typename T>
-inline T det(array<array<T,2>,2> m) {
+inline T det(const array<array<T,2>,2>& m) {
   return m[0][0] * m[1][1] - m[0][1] * m[1][0];
 }
 
 template <typename T, size_t n>
-inline T det(array<array<T,n>,n> m) {
+inline T det(const array<array<T,n>,n>& m) {
   T d = 0;
-  for (size_t i = 0; i < n; ++i) {
+  for (size_t j = 0; j < n; ++j) {
     array<array<T,n-1>,n-1> sub;
-    for (size_t k = 0; k < n; ++k)
-      for (size_t l = 1; l < n; ++l)
-        if (i != k)
-          sub[k - (k > i)][l] = m[k][l];
-    d += ((i % 2) ? -1 : 1) * det(sub);
+    for (size_t k = 1; k < n; ++k)
+      for (size_t l = 0; l < n; ++l)
+        if (l != j)
+          sub[k-1][l - (l > j)] = m[k][l];
+    d += ((j % 2) ? -1 : 1) * m[0][j] * det(sub);
   }
   return d;
 }
@@ -196,7 +196,7 @@ operator*(const array<array<T,n>,n>& a, const array<array<T,n>,n>& b) {
     for (size_t j = 0; j < n; ++j) {
       T val = 0;
       for (size_t k = 0; k < n; ++k)
-      val += a[i][k] * b[k][j];
+        val += a[i][k] * b[k][j];
       r[i][j] = val;
   }
   return r;
@@ -262,6 +262,14 @@ void test_det() {
     assert(det(mat22({1,0,1,1})) == 1);
     assert(det(mat22({0,1,1,0})) == -1);
     assert(det(mat22({1,2,3,4})) == -2);
+  }
+  {
+    auto mat33 = make_mat<3,3,double>;
+    assert(det(mat33({0,0,0, 0,0,0, 0,0,0})) == 0);
+    assert(det(mat33({1,0,0, 0,1,0, 0,0,1})) == 1);
+    assert(det(mat33({1,0,0, 0,1,2, 0,3,4})) == -2);
+    assert(det(mat33({1,2,3, 4,5,6, 7,8,9})) == 0);
+    assert(det(mat33({1,8,3, 2,5,7, 4,6,9})) == 59);
   }
 }
 
