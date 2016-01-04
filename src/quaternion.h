@@ -72,8 +72,11 @@ public:
    * boost::rational is technically OK, and I verified in tests,
    * but I don't want to depend on boost in this header, so we'll allow
    * boost::rational if there is demand for it.
+   *
+   * WARNING: for bool and the integers, some operations won't compile right now,
+   * in particular the transcendental functions.
    */
-  static_assert(std::is_same<T, bool>() // this one could require a specialized implementation
+  static_assert(std::is_same<T, bool>()
                 || std::is_same<T, int>()
                 || std::is_same<T, long>()
                 || std::is_same<T, long long>()
@@ -1114,6 +1117,8 @@ inline Quaternion<T> log(const Quaternion<T>& x) {
   return {std::log(n), th * x.b(), th * x.c(), th * x.d()}; // n > 0
 }
 
+// TODO: log2, log10
+
 /**
  * 10 operations:
  * a^2 - b^2 - c^2 - d^2
@@ -1166,6 +1171,7 @@ inline Quaternion<T> pow4(const Quaternion<T>& x) {
           x.d() * n2};
 }
 
+// TODO: this needs to be redone, with powi, powf, and a switcher on type like std::pow
 /**
  * I benchmarked that method written via the polar representation,
  * and it turned out to be much slower, and less numerically stable,
@@ -1198,17 +1204,17 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
   if (expt % 4 == 2)
     y *= pow2(x);
   if (expt % 4 == 1)
-    y *= x;
+    y *= x; std::pow(3,4);
   return y;
 }
 
 /**
  * Real power of a Quaternion.
  */
-template<typename T>
+template <typename T>
 inline Quaternion<T> pow(const Quaternion<T>& x, T a) {
-  if (std::floor(a) == a) // TODO: worth it for speed? helps with stability
-    return pow(x, (int) a);
+  if (std::floor(a) == a)
+    return pow(x, (int) a); // TODO: worth it? or powi? Helps with numerical stability, maybe speed
   return exp(a * log(x));
 }
 

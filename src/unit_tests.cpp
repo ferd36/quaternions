@@ -28,7 +28,6 @@
 #include <set>
 #include <unordered_set>
 #include <random>
-#include <chrono>
 #include <iomanip>
 
 #include <boost/math/quaternion.hpp>
@@ -45,7 +44,7 @@ using namespace quaternion;
  * Prints out arrays to a stream - sometimes useful when debugging unit tests
  */
 template <typename T, size_t n>
-inline ostream& operator<<(ostream& out, const std::array<T,n>& x) {
+inline ostream& operator<<(ostream& out, const array<T,n>& x) {
   out << "{";
   for (size_t i = 0; i < n; ++i) {
     out << x[i];
@@ -94,7 +93,7 @@ inline bool nearly_equal(const quaternion::Quaternion<T>& us, const boost::math:
  * This used to test e.g. the polar representation of the quaternions.
  */
 template <typename T, size_t n>
-inline bool nearly_equal(const std::array<T,n>& x, const std::array<T,n>& y, T eps) {
+inline bool nearly_equal(const array<T,n>& x, const array<T,n>& y, T eps) {
   for (size_t i = 0; i < n; ++i)
     if (!is_nearly_equal(x[i], y[i], eps))
       return false;
@@ -106,7 +105,7 @@ inline bool nearly_equal(const std::array<T,n>& x, const std::array<T,n>& y, T e
  */
 template <typename T, size_t n1, size_t n2>
 inline bool
-nearly_equal(const std::array<std::array<T,n1>,n2>& x, const std::array<std::array<T,n1>,n2>& y, T eps) {
+nearly_equal(const array<array<T,n1>,n2>& x, const array<array<T,n1>,n2>& y, T eps) {
   for (size_t i = 0; i < n1; ++i)
     for (size_t j = 0; j < n2; ++j)
       if (!is_nearly_equal(x[i][j], y[i][j], eps))
@@ -118,12 +117,31 @@ nearly_equal(const std::array<std::array<T,n1>,n2>& x, const std::array<std::arr
  * Transpose of a square matrix.
  */
 template <typename T, size_t n>
-inline std::array<std::array<T,n>,n> transpose(const std::array<std::array<T,n>,n>& a) {
-  std::array<std::array<T,n>,n> r;
+inline array<array<T,n>,n> transpose(const array<array<T,n>,n>& a) {
+  array<array<T,n>,n> r;
   for (size_t i = 0; i < n; ++i)
     for (size_t j = 0; j < n; ++j)
       r[i][j] = a[j][i];
   return r;
+}
+
+template <typename T>
+inline T det(array<array<T,2>,2> m) {
+  return m[0][0] * m[1][1] - m[0][1] * m[1][0];
+}
+
+template <typename T, size_t n>
+inline T det(array<array<T,n>,n> m) {
+  T d = 0;
+  for (size_t i = 0; i < n; ++i) {
+    array<array<T,n-1>,n-1> sub;
+    for (size_t k = 0; k < n; ++k)
+      for (size_t l = 1; l < n; ++l)
+        if (i != k)
+          sub[k - (k > i)][l] = m[k][l];
+    d += ((i % 2) ? -1 : 1) * det(sub);
+  }
+  return d;
 }
 
 /**
@@ -132,8 +150,8 @@ inline std::array<std::array<T,n>,n> transpose(const std::array<std::array<T,n>,
  * TODO: need 1 function for both real and complex matrices.
  */
 template <typename T, size_t n>
-inline std::array<std::array<T,n>,n> conj(const std::array<std::array<T,n>,n>& a) {
-  std::array<std::array<T,n>,n> r;
+inline array<array<T,n>,n> conj(const array<array<T,n>,n>& a) {
+  array<array<T,n>,n> r;
   for (size_t i = 0; i < n; ++i)
     for (size_t j = 0; j < n; ++j)
       r[i][j] = conj(a[i][j]);
@@ -144,8 +162,8 @@ inline std::array<std::array<T,n>,n> conj(const std::array<std::array<T,n>,n>& a
  * Initialize a m x n matrix from a list of values of size m * n.
  */
 template <size_t m, size_t n = m, typename T =double>
-inline std::array<std::array<T,n>,m> make_mat(std::initializer_list<T> l) {
-  std::array<std::array<T,n>,m> mr;
+inline array<array<T,n>,m> make_mat(std::initializer_list<T> l) {
+  array<array<T,n>,m> mr;
   const double* it = l.begin();
   for (size_t i = 0; i < m; ++i)
     for (size_t j = 0; j < n; ++j)
@@ -157,9 +175,9 @@ inline std::array<std::array<T,n>,m> make_mat(std::initializer_list<T> l) {
  * Square matrix addition.
  */
 template <typename T, size_t n>
-inline std::array<std::array<T,n>,n>
-operator+(const std::array<std::array<T,n>,n>& a, const std::array<std::array<T,n>,n>& b) {
-  std::array<std::array<T,n>,n> r;
+inline array<array<T,n>,n>
+operator+(const array<array<T,n>,n>& a, const array<array<T,n>,n>& b) {
+  array<array<T,n>,n> r;
   for (size_t i = 0; i < n; ++i)
     for (size_t j = 0; j < n; ++j)
       r[i][j] = a[i][j] + b[i][j];
@@ -171,9 +189,9 @@ operator+(const std::array<std::array<T,n>,n>& a, const std::array<std::array<T,
  * TODO: move to mat utils lib
  */
 template <typename T, size_t n>
-inline std::array<std::array<T,n>,n>
-operator*(const std::array<std::array<T,n>,n>& a, const std::array<std::array<T,n>,n>& b) {
-  std::array<std::array<T,n>,n> r;
+inline array<array<T,n>,n>
+operator*(const array<array<T,n>,n>& a, const array<array<T,n>,n>& b) {
+  array<array<T,n>,n> r;
   for (size_t i = 0; i < n; ++i)
     for (size_t j = 0; j < n; ++j) {
       T val = 0;
@@ -210,7 +228,7 @@ typedef boost::math::quaternion<float> qf;
 typedef boost::math::quaternion<double> qd;
 
 void test_nearly_equal() {
-  cout << "Testing nearly equal for std::array" << endl;
+  cout << "Testing nearly equal for array" << endl;
 
   {
     array<array<float,3>,3> A;
@@ -229,6 +247,21 @@ void test_nearly_equal() {
     B[1] = {{0, 1, 0}};
     B[2] = {{0, 0, 2}};
     assert(!nearly_equal(A, B, 1e-6f));
+  }
+}
+
+void test_det() {
+  cout << "Testing det" << endl;
+  {
+    auto mat22 = make_mat<2,2,double>;
+    assert(det(mat22({0,0,0,0})) == 0);
+    assert(det(mat22({1,0,0,0})) == 0);
+    assert(det(mat22({1,1,0,0})) == 0);
+    assert(det(mat22({1,0,0,1})) == 1);
+    assert(det(mat22({1,0,1,0})) == 0);
+    assert(det(mat22({1,0,1,1})) == 1);
+    assert(det(mat22({0,1,1,0})) == -1);
+    assert(det(mat22({1,2,3,4})) == -2);
   }
 }
 
@@ -658,9 +691,9 @@ void test_to_rotation_matrix() {
 void test_euler_angles() {
   cout << "Testing Euler angles" << endl;
   const double pi = 3.14159265358979323846;
-  using A = std::array<double,3>;
+  using A = array<double,3>;
   {
-    //assert((to_euler(Qd_0) == std::array<double,3>{{0,0,0}})); only unit quaternions
+    //assert((to_euler(Qd_0) == array<double,3>{{0,0,0}})); only unit quaternions
     assert((to_euler(Qd_i) == A{{0,0,pi}}));
     assert((to_euler(Qd_j) == A{{pi,0,0}}));
     assert((to_euler(Qd_k) == A{{pi,0,pi}}));
@@ -1229,12 +1262,25 @@ void test_swap() {
   }
 }
 
+void test_binary_quaternions() {
+  cout << "Testing binary quaternions" << endl;
+  {
+    using Qb = Quaternion<bool>;
+    Qb x(0,1,0,1), y(1,0,1,0);
+    assert(x * y == Qb(0,0,0,1));
+    //cout << pow(x, 5) << endl; this doesn't compile, requires the "negative" of a binary number
+    //cout << exp(x) << endl; // this doesn't compile for now
+  }
+}
+
 void test_integer_quaternions() {
   cout << "Testing integer quaternions" << endl;
   {
     using Qi = Quaternion<int>;
     Qi x(1,2,3,4), y(5,6,7,8);
     assert(x + y == Qi(6,8,10,12));
+    //cout << pow(x, 5) << endl; TODO this almost works, but pow needs to be refactored
+    //cout << exp(x) << endl; // this doesn't compile for now
   }
   // TODO: more tests here
 }
@@ -1522,6 +1568,7 @@ void test_tan_speed() {
 int main(int argc, char** argv) {
 
   test_nearly_equal();
+  test_det();
 
   test_constructors();
   test_trigonometric_constructors();
@@ -1556,7 +1603,8 @@ int main(int argc, char** argv) {
   test_hyper_trigo();
   test_axby();
   test_swap();
-  test_integer_quaternions();
+  test_binary_quaternions(); // really requires specialized implementation
+  test_integer_quaternions(); // some operations don't work (transencentals)
   test_io();
   test_io_eps();
   test_io_style();
