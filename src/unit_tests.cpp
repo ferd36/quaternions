@@ -27,6 +27,7 @@
 
 #include <set>
 #include <unordered_set>
+#include <chrono> // definitely needed on some platforms, but not with clang
 #include <random>
 #include <iomanip>
 
