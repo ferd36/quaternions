@@ -1285,6 +1285,19 @@ void test_integer_quaternions() {
   // TODO: more tests here
 }
 
+void test_quaternion_matrix() {
+  cout << "Testing quaternion matrix: ";
+  {
+    constexpr size_t n = 8; // increasing n quickly becomes a perf test
+    array<array<Qd,n>,n> M;
+    for (size_t i = 0; i < n; ++i)
+      for (size_t j = 0; j < n; ++j)
+        M[i][j] = random_quaternion<double>(rng);
+    cout << det(M);
+  }
+  cout << " OK" << endl;
+}
+
 void test_io() {
   stringstream s;
   s << Qf() << Qf(1) << Qf(-1) << Qf(0,1) << Qf(0,-1) << Qf(0,0,1) << Qf(0,0,-1);
@@ -1604,7 +1617,8 @@ int main(int argc, char** argv) {
   test_axby();
   test_swap();
   test_binary_quaternions(); // really requires specialized implementation
-  test_integer_quaternions(); // some operations don't work (transencentals)
+  test_integer_quaternions(); // some operations don't work (transcendentals)
+  test_quaternion_matrix();
   test_io();
   test_io_eps();
   test_io_style();
