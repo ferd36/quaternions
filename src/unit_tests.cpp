@@ -27,7 +27,7 @@
 
 #include <set>
 #include <unordered_set>
-#include <chrono> // definitely needed on some platforms, but not with clang
+#include <chrono> // definitely needed on some platforms, but maybe not with clang
 #include <random>
 #include <iomanip>
 
@@ -155,7 +155,7 @@ inline array<array<T,n>,n> conj(const array<array<T,n>,n>& a) {
   array<array<T,n>,n> r;
   for (size_t i = 0; i < n; ++i)
     for (size_t j = 0; j < n; ++j)
-      r[i][j] = conj(a[i][j]);
+      r[i][j] = conj(a[i][j]); // std::conj will transform reals into complex here
   return r;
 }
 
@@ -562,15 +562,11 @@ void test_complex_matrix_2d_representation() {
     assert(from_complex_matrix_2d(r) == Qd(1,2,3,4));
   }
   {
-    Qd x(1,2,3,4);
+    Qd x(1,2,3,4); MR m = to_complex_matrix_2d(x);
     assert(from_complex_matrix_2d(to_complex_matrix_2d(x)) == x);
-    MR m = to_complex_matrix_2d(x);
     assert(to_complex_matrix_2d(from_complex_matrix_2d(m)) == m);
-    assert(norm_squared(x) == m[0][0]*m[1][1] - m[0][1]*m[1][0]);
-    MR ct;
-    ct[0] = {{conj(m[0][0]),conj(m[1][0])}};
-    ct[1] = {{conj(m[0][1]),conj(m[1][1])}};
-    assert(to_complex_matrix_2d(conj(x)) == ct);
+    assert(norm_squared(x) == det(m));
+    assert(to_complex_matrix_2d(conj(x)) == transpose(conj(m)));
   }
   {
     Qd x(1,2,3,4), y(5,6,7,8);
@@ -594,23 +590,18 @@ void test_real_matrix_4d_representation() {
     assert(to_real_matrix_4d(Qd_k) == mat4d({0,0,0,1, 0,0,-1,0, 0,1,0,0, -1,0,0,0}));
   }
   {
-    Qd x(1,2,3,4);
+    Qd x(1,2,3,4); MR m = to_real_matrix_4d(x);
     assert(from_real_matrix_4d(to_real_matrix_4d(x)) == x);
-    MR m = to_real_matrix_4d(x);
     assert(to_real_matrix_4d(from_real_matrix_4d(m)) == m);
-    // TODO: write 4 by 4 determinant test, maybe when I have a det function in mat utils lib
-    //assert(norm_squared(x) == m[0][0]*m[1][1] - m[0][1]*m[1][0]);
-//    MR ct;
-//    ct[0] = {{conj(m[0][0]),conj(m[1][0])}};
-//    ct[1] = {{conj(m[0][1]),conj(m[1][1])}};
-//    assert(to_complex_matrix_2d(conj(x)) == ct);
+    assert(norm_squared(x) == std::sqrt(det(m)));
+    assert(to_real_matrix_4d(conj(x)) == transpose(m)); // std::conj puts us in complex, but we are reals
   }
   {
-//    Qd x(1,2,3,4), y(5,6,7,8);
-//    MR mx = to_complex_matrix_2d(x);
-//    MR my = to_complex_matrix_2d(y);
-//    assert(to_complex_matrix_2d(x + y) == mx + my);
-//    assert(to_complex_matrix_2d(x * y) == mx * my);
+    Qd x(1,2,3,4), y(5,6,7,8);
+    MR mx = to_real_matrix_4d(x);
+    MR my = to_real_matrix_4d(y);
+    assert(to_real_matrix_4d(x + y) == mx + my);
+    assert(to_real_matrix_4d(x * y) == mx * my);
   }
 }
 
