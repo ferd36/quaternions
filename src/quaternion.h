@@ -37,6 +37,7 @@
 #include <complex>
 #include <iterator>
 #include <assert.h>
+#include <boost/mpl/bool.hpp>
 
 #include "quaternion_utils.h"
 
@@ -49,12 +50,14 @@ namespace quaternion {
  * TODO: provide same operations as boost
  * TODO: remove copies/constructions in expressions
  * TODO: IEEE 754/IEC 559?
+ * TODO: add round method
  * TODO: study matrix representation and isomorphism
  * TODO: check references to make sure functionality covered
  * TODO: remove dependency on boost (to e.g. build simply on appveyor)
  * TODO: integer Quaternions, binary Quaternions
  * TODO: std::complex is too slow? IEEE 754?
  * TODO: expression templates?
+ * TODO: remove IS_CONVERTIBLE in favor std::common_type
  */
 template<typename T =double>
 class Quaternion {
@@ -913,8 +916,8 @@ inline bool nearly_equal(const std::complex<T2>& y, const Quaternion<T>& x, T3 e
 /**
  * Quaternion <-> Quaternion
  */
-template<typename T>
-inline bool operator==(const Quaternion<T>& x, const Quaternion<T>& y) {
+template<typename T1, typename T2>
+inline bool operator==(const Quaternion<T1>& x, const Quaternion<T2>& y) {
   return x.a() == y.a() && x.b() == y.b() && x.c() == y.c() && x.d() == y.d();
 }
 
@@ -923,8 +926,8 @@ inline bool operator!=(const Quaternion<T>& x, const Quaternion<T>& y) {
   return !(x == y);
 }
 
-template <typename T, typename T2, typename T3, IS_CONVERTIBLE(T2, T), IS_CONVERTIBLE(T3,T)>
-inline bool nearly_equal(const Quaternion<T>& x, const Quaternion<T2>& y, T3 eps) {
+template <typename T1, typename T2, typename T3>
+inline bool nearly_equal(const Quaternion<T1>& x, const Quaternion<T2>& y, T3 eps) {
   return is_nearly_equal(x.a(), y.a(), eps)
          && is_nearly_equal(x.b(), y.b(), eps)
          && is_nearly_equal(x.c(), y.c(), eps)
@@ -1211,11 +1214,12 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
 /**
  * Real power of a Quaternion.
  */
-template <typename T>
-inline Quaternion<T> pow(const Quaternion<T>& x, T a) {
+template <typename T, typename T1, typename std::enable_if<!std::is_same<T1, int>()>::type* = nullptr>
+inline Quaternion<typename std::common_type<T,T1>::type> pow(const Quaternion<T>& x, T1 a) {
+  Quaternion<typename std::common_type<T,T1>::type> xx(x); // TODO: check speed
   if (std::floor(a) == a)
-    return pow(x, (int) a); // TODO: worth it? or powi? Helps with numerical stability, maybe speed
-  return exp(a * log(x));
+    return pow(x, (int) a); // KEEP, really helps with numerical accuracy
+  return exp(a * log(xx));
 }
 
 /**

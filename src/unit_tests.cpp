@@ -995,6 +995,20 @@ void test_pow3() {
 void test_pow() {
   cout << "Testing pow" << endl;
 
+  { // pow should work as is for various combinations of floats/ints.
+    // The library should figure out which actual method to use.
+    Quaternion<int> x(1,2,3,4);
+    Quaternion<long> y(1,2,3,4);
+    Quaternion<float> z(1,2,3,4);
+    Quaternion<double> t(1,2,3,4);
+    assert(pow(x,3) == pow(y,3));
+    assert(pow(x,3) == pow(z,3));
+    assert(pow(x,3) == pow(t,3));
+    assert(pow(x,3.5) == pow(y,3.5));
+    assert(pow(x,3.5) == pow(z,3.5));
+    assert(pow(x,3.5) == pow(t,3.5));
+  }
+
   assert(pow(Qf_0,2) == 0);
   assert(pow(Qf_1,2) == 1);
   assert(pow(Qf_i,2) == -1);
@@ -1049,6 +1063,7 @@ void test_q_pow() {
 
   assert(pow(Qd_0,Qd(2)) == 0);
   assert(pow(Qd_1,Qd(2)) == 1);
+  cout << pow(Qd_i,Qd(2)) << endl;
   assert(pow(Qd_i,Qd(2)) == -1);
   assert(pow(Qd_j,Qd(2)) == -1);
   assert(pow(Qd_k,Qd(2)) == -1);
@@ -1277,13 +1292,20 @@ void test_integer_quaternions() {
   cout << "Testing integer quaternions" << endl;
   {
     using Qi = Quaternion<int>;
-    Qi x(1,2,3,4), y(5,6,7,8);
-    assert(x + y == Qi(6,8,10,12));
-    //cout << pow(x, 5) << endl; TODO this almost works, but pow needs to be refactored
+    Qi x(1, 2, 3, 4), y(5, 6, 7, 8);
+    assert(x + y == Qi(6, 8, 10, 12));
+    //cout << pow(x, 5) << endl;
+    //cout << pow(x, 3.5) << endl;
     //cout << exp(x) << endl; // this doesn't compile for now
+  }
+  {
+    Cd x(1,1);
+    cout << pow(x, 3) << endl;
   }
   // TODO: more tests here
 }
+
+// TODO: try quaternion with complex anyway
 
 void test_quaternion_matrix() {
   cout << "Testing quaternion matrix: ";
