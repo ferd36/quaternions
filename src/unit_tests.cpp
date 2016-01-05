@@ -997,6 +997,8 @@ void test_pow() {
 
   { // pow should work as is for various combinations of floats/ints.
     // The library should figure out which actual method to use.
+    // We don't want to have to write pow(x, (int) 3) or pow(x, (float)3.5),
+    // as it is not convenient.
     Quaternion<int> x(1,2,3,4);
     Quaternion<long> y(1,2,3,4);
     Quaternion<float> z(1,2,3,4);
@@ -1024,9 +1026,9 @@ void test_pow() {
   assert(nearly_equal(pow(Qf(2), -3), Qf(1.0f / 8), 1e-6));
   assert(nearly_equal(pow(Qf(-2), -3), Qf(-1.0f / 8), 1e-6));
   assert(nearly_equal(pow(Qd_i, -2), pow(Cd(0, 1), -2.0f), 1e-15));
-  // TODO: verify
-  assert(nearly_equal(pow(Qd_j, -2), Qd(-1), 1e-10));
-  assert(nearly_equal(pow(Qd_k, -2), Qd(-1), 1e-10));
+  assert(pow(Qd_i, -2) == -1);
+  assert(pow(Qd_j, -2) == -1);
+  assert(pow(Qd_k, -2) == -1);
 
   assert(pow(Qf_1, 0.5f) == 1);
   assert(nearly_equal(pow(-Qf_1, 0.5f), Qf_i, 1e-6));
@@ -1063,7 +1065,6 @@ void test_q_pow() {
 
   assert(pow(Qd_0,Qd(2)) == 0);
   assert(pow(Qd_1,Qd(2)) == 1);
-  cout << pow(Qd_i,Qd(2)) << endl;
   assert(pow(Qd_i,Qd(2)) == -1);
   assert(pow(Qd_j,Qd(2)) == -1);
   assert(pow(Qd_k,Qd(2)) == -1);
@@ -1458,9 +1459,10 @@ void test_multiplication_speed() {
   }
 }
 
+// TODO: warm up tests correctly, and get some variance
 void test_pow_speed() {
   cout << "Testing pow speed" << endl;
-  size_t N = 100000;
+  size_t N = 1000000;
 
   std::default_random_engine generator;
   std::lognormal_distribution<float> distribution(0.0,1.0);

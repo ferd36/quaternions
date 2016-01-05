@@ -1216,9 +1216,9 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
  */
 template <typename T, typename T1, typename std::enable_if<!std::is_same<T1, int>()>::type* = nullptr>
 inline Quaternion<typename std::common_type<T,T1>::type> pow(const Quaternion<T>& x, T1 a) {
-  Quaternion<typename std::common_type<T,T1>::type> xx(x); // TODO: check speed
+  Quaternion<typename std::common_type<T,T1>::type> xx(x); // TODO: needed?
   if (std::floor(a) == a)
-    return pow(x, (int) a); // KEEP, really helps with numerical accuracy
+    return pow(x, (int) a); // KEEP, really helps with numerical accuracy for e.g. pow(Q,Q)
   return exp(a * log(xx));
 }
 
