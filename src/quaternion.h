@@ -58,6 +58,7 @@ namespace quaternion {
  * TODO: std::complex is too slow? IEEE 754?
  * TODO: expression templates?
  * TODO: remove IS_CONVERTIBLE in favor std::common_type
+ * TODO: slerp, fitting, maybe separate Euler
  */
 template<typename T =double>
 class Quaternion {
@@ -675,7 +676,7 @@ inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
 }
 
 /**
- * Returns three Euler angles {heading, attitude, bank} in radians.
+ * Returns three Euler angles {yaw, pitch, roll} in radians.
  * x is required to be a unit quaternion.
  *
  * WARNING: conversion to/from Euler angles is not ready.
@@ -698,7 +699,7 @@ inline std::array<T, 3> to_euler(const Quaternion<T>& x, T eps = 1e-12) {
 
 /**
  * Returns a unit quaternion corresponding to the three Euler angles
- * {heading, attitude, bank} expressed in radians.
+ * {yaw, pitch, roll} expressed in radians.
  * The conventions used are with the 3,2,1 convention ??? TODO: verify
  */
 template <typename T>
