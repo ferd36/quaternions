@@ -47,18 +47,10 @@ namespace quaternion {
  * A Quaternion class.
  * todo: fix the location of quaternion.h to make it easy to include after git clone
  * TODO: quaternion logo
- * TODO: provide same operations as boost
  * TODO: remove copies/constructions in expressions
  * TODO: IEEE 754/IEC 559?
- * TODO: add round method
- * TODO: study matrix representation and isomorphism
- * TODO: check references to make sure functionality covered
- * TODO: remove dependency on boost (to e.g. build simply on appveyor)
- * TODO: integer Quaternions, binary Quaternions
- * TODO: std::complex is too slow? IEEE 754?
- * TODO: expression templates?
  * TODO: remove IS_CONVERTIBLE in favor std::common_type
- * TODO: slerp, fitting, maybe separate Euler
+ * TODO: arc-trans, rounding, rotate vector, slerp, fitting, maybe separate Euler
  */
 template<typename T =double>
 class Quaternion {
@@ -342,6 +334,12 @@ public:
    * Dividing by a constant.
    */
   Quaternion operator/=(T k) {
+#ifndef QUATERNION_FAST
+    if (k == 0) { // TODO: Check slow down, and make optional
+      _a = std::numeric_limits<T>::infinity();
+      return *this;
+    }
+#endif
     _a /= k;
     _b /= k;
     _c /= k;
@@ -393,6 +391,12 @@ public:
    */
   template<typename T1>
   Quaternion operator/=(const std::complex<T1>& y) {
+#ifndef QUATERNION_FAST
+    if (y.real() == 0 && y.imag() == 0) { // TODO: Check slow down, and make optional
+      _a = std::numeric_limits<T>::infinity();
+      return *this;
+    }
+#endif
 
     T n2 = y.real() * y.real() + y.imag() * y.imag();
     T at = _a * y.real() + _b * y.imag();
@@ -459,6 +463,14 @@ public:
   Quaternion operator/=(const Quaternion<T1>& y) {
 
     T n2 = y.norm_squared();
+
+#ifndef QUATERNION_FAST
+    if (n2 == 0) { // TODO: Check slow down, and make optional
+      _a = std::numeric_limits<T>::infinity();
+      return *this;
+    }
+#endif
+
     T at = _a * y.a() + _b * y.b() + _c * y.c() + _d * y.d();
     T bt = -_a * y.b() + _b * y.a() - _c * y.d() + _d * y.c();
     T ct = -_a * y.c() + _b * y.d() + _c * y.a() - _d * y.b();
@@ -749,7 +761,7 @@ inline Quaternion<T> from_euler(const std::array<T, 3>& x) {
   T c1 = std::cos(x[1]/2), s1 = std::sin(x[1]/2);
   T c2 = std::cos(x[2]/2), s2 = std::sin(x[2]/2);
   T c0c1 = c0*c1, s0s1 = s0*s1, s0c1 = s0*c1, c0s1 = c0*s1;
-  return {c0c1*c2-s0s1*s2,s0s1*c2+c0c1*s2,s0c1*c2+s0s1*s2,-c0s1*s2+s0c1*s2};
+  return {c0c1*c2+s0s1*s2,s0c1*c2-c0c1*s2,c0s1*c2+s0c1*s2,c0c1*s2-s0s1*c2};
 }
 
 /**

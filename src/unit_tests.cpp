@@ -554,6 +554,13 @@ void test_accessors() {
     assert(!x.is_unit());
     assert(-x == Qf(-1,-2,-3,-4));
   }
+  {
+    assert(is_inf(Qd_i/0));
+#ifndef QUATERNION_FAST
+    assert(is_inf(Qd_i/Qd_0));
+#endif
+    assert(is_nan(Qd_0/Qd_0));
+  }
 
   {
     Qf x(3.14);
@@ -717,50 +724,42 @@ void test_to_polar_representation() {
 void test_to_rotation_matrix() {
   cout << "Testing rotation matrix" << endl;
   typedef rotation_matrix<double> RM;
+  auto rm = make_mat<3,3,double>;
 
   {
     Qd x(1);
-    RM expected;
-    expected[0] = {{1,0,0}};
-    expected[1] = {{0,1,0}};
-    expected[2] = {{0,0,1}};
-    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-10));
-    RM r = to_rotation_matrix(x);
-    Qd y = from_rotation_matrix(r);
-    assert(y == Qd_1);
+    RM expected = rm({1,0,0, 0,1,0, 0,0,1});
+    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-16));
+    assert(from_rotation_matrix(expected) == x);
+    assert(from_rotation_matrix(to_rotation_matrix(x)) == x);
+    assert(to_rotation_matrix(from_rotation_matrix(expected)) == expected);
   }
   {
     Qd x(0,1);
-    RM expected;
-    expected[0] = {{1,0,0}};
-    expected[1] = {{0,-1,0}};
-    expected[2] = {{0,0,-1}};
-    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-10));
-    RM r = to_rotation_matrix(x);
-    Qd y = from_rotation_matrix(r);
-    assert(y == Qd_i);
+    RM expected = rm({1,0,0, 0,-1,0, 0,0,-1});
+    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-16));
+    assert(from_rotation_matrix(expected) == x);
+    assert(from_rotation_matrix(to_rotation_matrix(x)) == x);
+    assert(to_rotation_matrix(from_rotation_matrix(expected)) == expected);
   }
   {
     Qd x(0,0,1);
-    RM expected;
-    expected[0] = {{-1,0,0}};
-    expected[1] = {{0,1,0}};
-    expected[2] = {{0,0,-1}};
-    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-10));
-    RM r = to_rotation_matrix(x);
-    Qd y = from_rotation_matrix(r);
-    assert(y == Qd_j);
+    RM expected = rm({-1,0,0, 0,1,0, 0,0,-1});
+    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-16));
+    assert(from_rotation_matrix(expected) == x);
+    assert(from_rotation_matrix(to_rotation_matrix(x)) == x);
+    assert(to_rotation_matrix(from_rotation_matrix(expected)) == expected);
   }
   {
     Qd x(0,0,0,1);
-    RM expected;
-    expected[0] = {{-1,0,0}};
-    expected[1] = {{0,-1,0}};
-    expected[2] = {{0,0,1}};
-    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-10));
-    RM r = to_rotation_matrix(x);
-    Qd y = from_rotation_matrix(r);
-    assert(y == Qd_k);
+    RM expected = rm({-1,0,0, 0,-1,0, 0,0,1});
+    assert(nearly_equal(to_rotation_matrix(x), expected, 1e-16));
+    assert(from_rotation_matrix(expected) == x);
+    assert(from_rotation_matrix(to_rotation_matrix(x)) == x);
+    assert(to_rotation_matrix(from_rotation_matrix(expected)) == expected);
+  }
+  {
+    // TODO: more tests here
   }
 }
 
@@ -775,13 +774,10 @@ void test_euler_angles() {
     assert((to_euler(Qd_k) == A{{pi,0,pi}}));
   }
   {
-    cout << from_euler(A{{pi,0,0}}) << endl;
-    cout << from_euler(A{{0,pi,0}}) << endl;
-    cout << from_euler(A{{0,0,pi}}) << endl;
-    assert(nearly_equal(from_euler(A{{0,0,pi}}), Qd_i, 1e-16));
-    assert(nearly_equal(from_euler(A{{pi,0,0}}), Qd_j, 1e-16));
-    cout << from_euler(A{{pi,0,pi}}) << endl;
-    assert(nearly_equal(from_euler(A{{pi,0,pi}}), Qd_k, 1e-1));
+    assert(nearly_equal(from_euler(A{{pi,0,0}}), Qd_i, 1e-16));
+    assert(nearly_equal(from_euler(A{{0,pi,0}}), Qd_j, 1e-16));
+    assert(nearly_equal(from_euler(A{{0,0,pi}}), -Qd_i + Qd_k, 1e-16));
+    assert(nearly_equal(from_euler(A{{pi,0,pi}}), Qd_j, 1e-1));
   }
 }
 
