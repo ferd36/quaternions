@@ -220,6 +220,47 @@ public:
   }
 
   /**
+  * Return true if this Quaternion is zero, false otherwise.
+  */
+  template <typename T1 =T>
+  bool is_zero(T1 eps = 0) const {
+    return is_scalar_zero(_a, eps)
+           && is_scalar_zero(_b, eps)
+           && is_scalar_zero(_c, eps)
+           && is_scalar_zero(_d, eps);
+  }
+
+  /**
+   * Return true if this Quaternion is not zero, false otherwise.
+   */
+  template <typename T1 =T>
+  bool is_non_zero(T1 eps = 0) const {
+    return !is_zero(eps);
+  }
+
+  /**
+   * Return true if any component of this quaternion is nan, false otherwise.
+   * TODO: use "isnan" instad of "is_nan" to keep consistent?
+   */
+  bool is_nan() const {
+    return std::isnan(_a) || std::isnan(_b) || std::isnan(_c) || std::isnan(_d);
+  }
+
+  /**
+  * Return true if any component of this quaternion is inf, false otherwise.
+  */
+  bool is_inf() const {
+    return std::isinf(_a) || std::isinf(_b) || std::isinf(_c) || std::isinf(_d);
+  }
+
+  /**
+  * Return true if all the components of this quaternion are finite, false otherwise.
+  */
+  bool is_finite() const {
+    return std::isfinite(_a) && std::isfinite(_b) && std::isfinite(_c) && std::isfinite(_d);
+  }
+
+  /**
    * Return true if this Quaternion has norm 1, false otherwise.
    */
   template<typename T1 =T>
@@ -807,6 +848,32 @@ inline T norm_sup(const Quaternion<T>& x) {
 /**
  * Quaternion tests.
  */
+
+template <typename T, typename T1 =T>
+inline bool is_zero(const Quaternion<T>& x, T1 eps = 0) {
+  return x.is_zero(eps);
+}
+
+template <typename T, typename T1 =T>
+inline bool is_non_zero(const Quaternion<T>& x, T1 eps = 0) {
+  return x.is_non_zero(eps);
+}
+
+template <typename T>
+inline bool is_nan(const Quaternion<T>& x) {
+  return x.is_nan();
+}
+
+template <typename T>
+inline bool is_inf(const Quaternion<T>& x) {
+  return x.is_inf();
+}
+
+template <typename T>
+inline bool is_finite(const Quaternion<T>& x) {
+  return x.is_finite();
+}
+
 template<typename T, typename T1 =T>
 inline bool is_unit(const Quaternion<T>& x, T1 eps = 0) {
   return x.is_unit(eps);

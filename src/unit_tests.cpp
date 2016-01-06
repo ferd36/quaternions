@@ -468,10 +468,86 @@ void test_IJK() {
 void test_accessors() {
   cout << "Testing accessors" << endl;
   {
+    Qd x;
+    assert(x.real() == 0);
+    assert(x.unreal() == 0);
+    assert(x.unreal() == Qd());
+    assert(x.is_zero());
+    assert(x.is_zero(1e-6));
+    assert(!x.is_non_zero());
+    assert(!x.is_non_zero(1e-6));
+    assert(x.is_finite());
+    assert(!x.is_inf());
+    assert(!x.is_nan());
+    assert(x.is_real());
+    assert(x.is_complex());
+    assert(!x.is_unreal());
+    assert(!x.is_unit());
+    assert(-x == x);
+  }
+  {
+    Qd x(1);
+    assert(x.real() == 1);
+    assert(x.unreal() == 0);
+    assert(x.unreal() == Qd());
+    assert(!x.is_zero());
+    assert(!x.is_zero(1e-6));
+    assert(x.is_non_zero());
+    assert(x.is_non_zero(1e-6));
+    assert(x.is_finite());
+    assert(!x.is_inf());
+    assert(!x.is_nan());
+    assert(x.is_real());
+    assert(x.is_complex());
+    assert(!x.is_unreal());
+    assert(x.is_unit());
+    assert(-x == Qd(-1));
+  }
+  {
+    Qd x(0,1);
+    assert(x.real() == 0);
+    assert(x.unreal() == Qd(0,1));
+    assert(!x.is_zero());
+    assert(!x.is_zero(1e-6));
+    assert(x.is_non_zero());
+    assert(x.is_non_zero(1e-6));
+    assert(x.is_finite());
+    assert(!x.is_inf());
+    assert(!x.is_nan());
+    assert(!x.is_real());
+    assert(x.is_complex());
+    assert(x.is_unreal());
+    assert(x.is_unit());
+    assert(-x == Qd(0,-1));
+  }
+  {
+    Qd x(1e-12);
+    assert(x.real() == 1e-12);
+    assert(x.unreal() == 0);
+    assert(!x.is_zero());
+    assert(x.is_zero(1e-6));
+    assert(x.is_non_zero());
+    assert(!x.is_non_zero(1e-6));
+    assert(x.is_finite());
+    assert(!x.is_inf());
+    assert(!x.is_nan());
+    assert(x.is_real());
+    assert(x.is_complex());
+    assert(!x.is_unreal());
+    assert(!x.is_unit());
+  }
+  {
     Qf x(1, 2, 3, 4);
     assert(x.real() == 1);
-    assert(x.unreal() != 0); // TODO: check what is happening here exactly
+    assert(x.unreal() != 0);
     assert(x.unreal() == Qf(0, 2, 3, 4));
+    assert(!x.is_zero());
+    assert(!x.is_zero(1e-6));
+    assert(x.is_non_zero());
+    assert(x.is_non_zero(1e-6));
+    assert(x.is_finite());
+    assert(!x.is_inf());
+    assert(!x.is_nan());
     assert(!x.is_real());
     assert(!x.is_complex());
     assert(!x.is_unreal());
