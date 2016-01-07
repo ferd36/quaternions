@@ -372,6 +372,14 @@ void test_constructors() {
   }
 
   {
+    int d[] = {1,2,3,4, 5,6,7,8};
+    int* it = d;
+    Qf x(it), y(it + 4);
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
+    assert(y.a() == 5 && y.b() == 6 && y.c() == 7 && y.d() == 8);
+  }
+
+  {
     vector<int> d{1,2,3,4};
     Qf x(d.begin());
     assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
@@ -386,6 +394,11 @@ void test_constructors() {
   {
     Qf x{1,0,2,0};
     assert(x.a() == 1 && x.b() == 0 && x.c() == 2 && x.d() == 0);
+  }
+
+  {
+    Qd x({1,2,3,4});
+    assert(x.a() == 1 && x.b() == 2 && x.c() == 3 && x.d() == 4);
   }
 
   {
@@ -564,14 +577,12 @@ void test_accessors() {
 
   {
     Qf x(3.14);
-    float a = x.to_real();
-    assert(a == 3.14f);
+    assert(x.real() == 3.14f);
   }
 
   {
     Qf x(3.14, 2.71);
-    Cf c = x.to_complex();
-    assert(c.real() == 3.14f && c.imag() == 2.71f);
+    assert(x.c1().real() == 3.14f && x.c1().imag() == 2.71f);
   }
 
   {
@@ -784,7 +795,7 @@ void test_euler_angles() {
 void test_norms() {
   cout << "Testing norms" << endl;
   {
-    assert(abs(Qld_0) == 0);
+    assert(afbs(Qld_0) == 0);
     assert(abs(Qld_1) == 1);
     assert(abs(Qld_i) == 1);
     assert(abs(Qld_j) == 1);
@@ -945,7 +956,7 @@ void test_unary_w_quaternion() {
   {
     Qf x(1), y(3.14);
     x += y;
-    assert(std::abs(x.to_real() - 4.14f) < 1e-6);
+    assert(std::abs(x.real() - 4.14f) < 1e-6);
   }
 
   {

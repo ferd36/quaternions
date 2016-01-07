@@ -56,8 +56,8 @@ template<typename T =double>
 class Quaternion {
 public:
   /**
-   * The value of each component of a Quaternion.
-   * See below for allowed type.
+   * The type of each component of the 4 components of a Quaternion.
+   * See below for allowed types.
    */
   typedef T value_type;
 
@@ -90,46 +90,40 @@ public:
   : _a(a), _b(b), _c(c), _d(d) { }
 
   /**
-   * Construct a Quaternion from at most 4 components of type T.
+   * Construct a Quaternion from at most 4 components of type T1.
    * Specifying only a != 0 makes the Quaternion a real.
    * Specifying only a != and b != 0 makes the Quaternion an ordinary complex number.
+   * NOTE: IS_CONVERTIBLE to avoid ambiguity with constructor from iterator.
    */
-  template<typename T1 = T, IS_NOT_ITERATOR(T1)>
+  template<typename T1, IS_CONVERTIBLE(T1,T)>
   Quaternion(T1 a = 0, T1 b = 0, T1 c = 0, T1 d = 0)
   : _a(a), _b(b), _c(c), _d(d) { }
 
   /**
-   * Construct a Quaternion from 2 complex<T>.
-   * This sets all 4 components of the Quaternion.
+   * Construct a Quaternion from 1 or 2 std::complex<T>.
    */
   template<typename T1>
   Quaternion(const std::complex<T1>& x, const std::complex<T1>& y = std::complex<T1>(0, 0))
   : _a(x.real()), _b(x.imag()), _c(y.real()), _d(y.imag()) { }
 
   /**
-   * Construct from a pointer to a range of 4 elements ("float[4]").
-   * TODO: make sure we can't use the next constructor here
-   */
-  template<typename T1 = T>
-  Quaternion(T1 *it)
-  : _a(*it), _b(*++it), _c(*++it), _d(*++it) { }
-
-  /**
    * Construct from an iterator to a range of 4 elements.
+   * The iterator is dereferenced exactly 4 times, and advanced (++)
+   * exactly 3 times.
    */
   template<typename It, IS_ITERATOR(It)>
   Quaternion(It it)
   : _a(*it), _b(*++it), _c(*++it), _d(*++it) { }
 
   /**
-   * Copy constructor.
+   * Copy constructor, from a Quaternion with another value type.
    */
   template<typename T1>
   Quaternion(const Quaternion<T1>& y)
   : _a(y.a()), _b(y.b()), _c(y.c()), _d(y.d()) { }
 
   /**
-   * Assignment operator.
+   * Assignment operator, from a Quaternion with another value type.
    */
   template<typename T1>
   Quaternion& operator=(const Quaternion<T1>& other) {
@@ -157,25 +151,6 @@ public:
   std::complex<T> c2() const { return {_c, _d}; }
 
   /**
-   * Only for real Quaternions, will assert if not real.
-   * TODO: remove this? they get triggered "accidentally"?
-   * Plus, it tries to convert to the base type sometimes to carry
-   * out computations!!
-   */
-  T to_real() const {
-    assert(is_real());
-    return _a;
-  }
-
-  /**
-   * Only for complex, will assert if not complex.
-   */
-  std::complex<T> to_complex() const {
-    assert(is_complex());
-    return {_a, _b};
-  }
-
-  /**
    * Ordered list form.
    */
   std::array<T, 4> to_array() const {
@@ -183,9 +158,13 @@ public:
   }
 
   /**
-   * The real and "unreal" parts of the Quaternion.
+   * The real part of this Quaternion.
    */
   T real() const { return _a; }
+
+  /**
+   * The "unreal" part of this Quaternion, which is a Quaternion itself.
+   */
   Quaternion unreal() const { return {0, _b, _c, _d}; }
 
   /**
@@ -212,8 +191,8 @@ public:
   }
 
   /**
-  * Return true if this Quaternion is zero, false otherwise.
-  */
+   * Return true if this Quaternion is zero, false otherwise.
+   */
   template <typename T1 =T>
   bool is_zero(T1 eps = 0) const {
     return is_scalar_zero(_a, eps)
@@ -232,7 +211,7 @@ public:
 
   /**
    * Return true if any component of this quaternion is nan, false otherwise.
-   * TODO: use "isnan" instad of "is_nan" to keep consistent?
+   * TODO: use "isnan" instead of "is_nan" to keep consistent?
    */
   bool is_nan() const {
     return std::isnan(_a) || std::isnan(_b) || std::isnan(_c) || std::isnan(_d);
@@ -335,7 +314,7 @@ public:
    */
   Quaternion operator/=(T k) {
 #ifndef QUATERNION_FAST
-    if (k == 0) { // TODO: Check slow down, and make optional
+    if (k == 0) {
       _a = std::numeric_limits<T>::infinity();
       return *this;
     }
@@ -392,7 +371,7 @@ public:
   template<typename T1>
   Quaternion operator/=(const std::complex<T1>& y) {
 #ifndef QUATERNION_FAST
-    if (y.real() == 0 && y.imag() == 0) { // TODO: Check slow down, and make optional
+    if (y.real() == 0 && y.imag() == 0) {
       _a = std::numeric_limits<T>::infinity();
       return *this;
     }
@@ -465,7 +444,7 @@ public:
     T n2 = y.norm_squared();
 
 #ifndef QUATERNION_FAST
-    if (n2 == 0) { // TODO: Check slow down, and make optional
+    if (n2 == 0) {
       _a = std::numeric_limits<T>::infinity();
       return *this;
     }

@@ -42,7 +42,6 @@ namespace quaternion {
  * or trouble will ensue.
  */
 #define IS_ITERATOR(X) typename std::enable_if<!std::is_same<typename std::iterator_traits<X>::value_type, void>::value>::type* =nullptr
-#define IS_NOT_ITERATOR(X) typename std::enable_if<std::is_same<typename std::iterator_traits<X>::value_type, void>::value>::type* =nullptr
 #define IS_CONVERTIBLE(FROM, TO) typename std::enable_if<std::is_convertible<FROM,TO>::value>::type* =nullptr
 
 /**
