@@ -795,7 +795,7 @@ void test_euler_angles() {
 void test_norms() {
   cout << "Testing norms" << endl;
   {
-    assert(afbs(Qld_0) == 0);
+    assert(abs(Qld_0) == 0);
     assert(abs(Qld_1) == 1);
     assert(abs(Qld_i) == 1);
     assert(abs(Qld_j) == 1);
