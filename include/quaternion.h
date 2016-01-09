@@ -134,8 +134,6 @@ public:
     return *this;
   }
 
-  // TODO: copy to valarray, array, vector...
-
   /**
    * Accessors for all 4 components of the Quaternion.
    */
@@ -269,15 +267,15 @@ public:
   }
 
   /**
-  * Unary plus.
-  */
+   * Unary plus.
+   */
   Quaternion operator+() const {
     return *this;
   }
 
   /**
    * Unary minus.
-  */
+   */
   Quaternion operator-() const {
     return {-_a, -_b, -_c, -_d};
   }
@@ -291,16 +289,16 @@ public:
   }
 
   /**
-  * Unary +=.
-  */
+   * Unary +=.
+   */
   Quaternion operator-=(T y) {
     _a -= y;
     return *this;
   }
 
   /**
-  * Scaling by a constant.
-  */
+   * Scaling by a constant.
+   */
   Quaternion operator*=(T k) {
     _a = k * _a;
     _b = k * _b;
@@ -337,8 +335,8 @@ public:
   }
 
   /**
-  * Unary -=.
-  */
+   * Unary -=.
+   */
   template<typename T1>
   Quaternion operator-=(const std::complex<T1>& y) {
     _a -= y.real();
@@ -614,9 +612,6 @@ inline Quaternion<T> from_complex_matrix_2d(const complex_matrix_2d<T>& cm) {
 
 /**
  * Type used for 4x4 real matrix representation of a quaternion.
- * TODO: how do we ensure that T behaves like a real, and not a complex?
- * It needs to allow boost fractions, and custom types, but that don't behave like complex.
- * i.e. only 1 root of unity?
  */
 template <typename T>
 using real_matrix_4d = std::array<std::array<T,4>,4>;
@@ -754,7 +749,7 @@ inline Quaternion<T> from_euler(const std::array<T, 3>& x) {
  * TODO: provide lexicographic order on quaternions?
  */
 template <typename T>
-struct QuaternionHash : public std::unary_function<Quaternion<T>, size_t> {
+struct hash : public std::unary_function<Quaternion<T>, size_t> {
 
   inline size_t operator()(const Quaternion<T>& x) const {
 
@@ -779,6 +774,20 @@ struct QuaternionHash : public std::unary_function<Quaternion<T>, size_t> {
     }
 
     return mix(h);
+  }
+};
+
+/**
+ * Lexicographic order on quaternions, which is a total order, but not compatible
+ * with the field structure.
+ */
+template <typename T>
+struct lexicographic_order : std::binary_function<Quaternion<T>, Quaternion<T>, bool> {
+  inline constexpr bool operator()(const Quaternion<T>& x, const Quaternion<T>& y) const {
+    return x.a() < y.a()
+    || (x.a() == y.a() && x.b() < y.b())
+    || (x.a() == y.a() && x.b() == y.b() && x.c() < y.c())
+    || (x.a() == y.a() && x.b() == y.b() && x.c() == y.c() && x.d() < y.d());
   }
 };
 
@@ -1236,7 +1245,7 @@ inline Quaternion<T> pow4(const Quaternion<T>& x) {
 // TODO: this needs to be redone, with powi, powf, and a switcher on type like std::pow
 /**
  * I benchmarked that method written via the polar representation,
- * and it turned out to be much slower, and less numerically stable,
+ * and it turned out to be much slower, and lexicographic_order numerically stable,
  * than this implementation. This implementation is also much faster
  * than the boost implementation. However, via the polar representation
  * I could compute pow for any real exponent, whereas this method is

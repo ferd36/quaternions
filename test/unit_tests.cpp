@@ -33,6 +33,7 @@
 
 #include <boost/math/quaternion.hpp>
 #include <boost/rational.hpp>
+#include <map>
 
 using namespace std;
 using namespace boost;
@@ -1361,6 +1362,62 @@ void test_swap() {
   }
 }
 
+void test_lexicographic_order() {
+  cout << "Testing lexicographic order" << endl;
+  quaternion::lexicographic_order<double> lt;
+  {
+    assert(lt(Qd_0, Qd_1));
+    assert(lt(Qd_1, Qd(2)));
+    assert(!lt(Qd_1, Qd_i));
+    assert(lt(Qd_i, Qd_1));
+    assert(lt(Qd_j, Qd_i));
+    assert(lt(Qd_j, Qd_1));
+    assert(lt(Qd_k, Qd_j));
+    assert(lt(Qd_k, Qd_i));
+    assert(lt(Qd_k, Qd_1));
+    assert(!lt(Qd(1,2,3,4), Qd(1,2,3,4)));
+    assert(lt(Qd(1,2,3,4), Qd(5,6,7,8)));
+    assert(lt(Qd(1,2,3,4), Qd(1,5,7,8)));
+    assert(lt(Qd(1,2,3,4), Qd(1,2,7,8)));
+    assert(lt(Qd(1,2,3,4), Qd(1,2,3,8)));
+  }
+}
+
+void test_hash() {
+  cout << "Testing hash" << endl;
+  {
+    Qf x(1,2,3,4);
+    quaternion::hash<Qf::value_type> h;
+    assert(h(x) == 4040899601354814717);
+  }
+}
+
+void test_stl() {
+  cout << "Testing STL" << endl;
+  {
+    vector<Qf> qs{{1, 2, 3, 4},
+                  {5, 6, 7, 8},
+                  {1, 3, 5, 7},
+                  {2, 4, 6, 8}};
+    auto v = accumulate(qs.begin(), qs.end(), Qf_1, multiplies<Qf>());
+    assert(v == Qf_1 * Qf(1, 2, 3, 4) * Qf(5, 6, 7, 8) * Qf(1, 3, 5, 7) * Qf(2, 4, 6, 8));
+  }
+
+  {
+    unordered_set<Qd, quaternion::hash<double>> q_set = {{1, 2, 3, 4}, {5, 6, 7, 8}, {1, 2, 3, 4}};
+    assert(q_set.size() == 2);
+    auto v = accumulate(q_set.begin(), q_set.end(), Qd_0, plus<Qd>());
+    assert(v == Qd(1,2,3,4) + Qd(5,6,7,8));
+  }
+  {
+    using Qi = Quaternion<int>;
+    map<Qi, int, quaternion::lexicographic_order<int>> m = {{Qi(2), 3}, {Qi(3,4,5), 1}, {Qi(3,4,6), 2}};
+    assert(m.size() == 3);
+    auto t = accumulate(m.begin(), m.end(), 0, [](int tt, const pair<Qi,int>& q){ return tt + q.second; });
+    assert(t == 6);
+  }
+}
+
 void test_binary_quaternions() {
   cout << "Testing binary quaternions" << endl;
   {
@@ -1384,7 +1441,6 @@ void test_integer_quaternions() {
   }
   {
     Cd x(1,1);
-    cout << pow(x, 3) << endl;
   }
   // TODO: more tests here
 }
@@ -1433,34 +1489,6 @@ void test_io_style() {
   s << set_display_style(q_nice) << x << " ";
   s << set_display_style(q_compact) << x ;
   assert(s.str() == "1+2i+3j+4k {1,2,3,4}");
-}
-
-void test_hash() {
-  cout << "Testing hash" << endl;
-  {
-    Qf x(1,2,3,4);
-    QuaternionHash<Qf::value_type> h;
-    assert(h(x) == 4040899601354814717);
-  }
-}
-
-void test_stl() {
-  cout << "Testing STL" << endl;
-  {
-    vector<Qf> qs{{1, 2, 3, 4},
-                  {5, 6, 7, 8},
-                  {1, 3, 5, 7},
-                  {2, 4, 6, 8}};
-    auto v = accumulate(qs.begin(), qs.end(), Qf_1, multiplies<Qf>());
-    assert(v == Qf_1 * Qf(1, 2, 3, 4) * Qf(5, 6, 7, 8) * Qf(1, 3, 5, 7) * Qf(2, 4, 6, 8));
-  }
-
-  {
-    unordered_set<Qd,QuaternionHash<double>> q_set = {{1,2,3,4},{5,6,7,8},{1,2,3,4}};
-    assert(q_set.size() == 2);
-    auto v = accumulate(q_set.begin(), q_set.end(), Qd_0, plus<Qd>());
-    assert(v == Qd(1,2,3,4) + Qd(5,6,7,8));
-  }
 }
 
 /**
@@ -1707,8 +1735,6 @@ int main(int argc, char** argv) {
   test_unary_w_complex();
   test_unary_w_quaternion();
   test_operators();
-  test_hash();
-  test_stl();
   //test_boost_rational(); disabled for now, but keep, works fine
   test_pow2();
   test_pow3();
@@ -1723,6 +1749,9 @@ int main(int argc, char** argv) {
   test_hyper_trigo();
   test_axby();
   test_swap();
+  test_lexicographic_order();
+  test_hash();
+  test_stl();
   test_binary_quaternions(); // really requires specialized implementation
   test_integer_quaternions(); // some operations don't work (transcendentals)
   test_quaternion_matrix();
