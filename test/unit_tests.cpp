@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#include "quaternion.h"
-#include "quaternion_io.h"
+#include "../include/quaternion.h"
+#include "../include/quaternion_io.h"
 
 #include <set>
 #include <unordered_set>
