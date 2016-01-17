@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0) # travis doesn't want 3.0 I'm using locally
+cmake_minimum_required(VERSION 3.0) # travis doesn't want 3.4 I'm using locally
 project(quaternions)
 
 set(CMAKE_CXX_FLAGS "-Wall -std=c++11")

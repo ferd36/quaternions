@@ -22,11 +22,11 @@ before_install:
   # - sudo apt-get install -y -qq g++-4.8
 
   # make sure we're using new gcc tools
-  - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-4.8 90
+   - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-4.8 90
 
 install:
   - export CXX="g++-4.8"
-  - pip install --user travis requests[security] cpp-coveralls
+   - pip install --user travis requests[security] cpp-coveralls
 
 script:
   - make -f Makefile.mk

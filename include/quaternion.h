@@ -45,9 +45,7 @@ namespace quaternion {
 
 /**
  * A Quaternion class.
- * todo: fix the location of quaternion.h to make it easy to include after git clone
  * TODO: quaternion logo
- * TODO: remove copies/constructions in expressions
  * TODO: IEEE 754/IEC 559?
  * TODO: remove IS_CONVERTIBLE in favor std::common_type
  * TODO: arc-trans, rounding, rotate vector, slerp, fitting, maybe separate Euler
@@ -311,12 +309,12 @@ public:
    * Dividing by a constant.
    */
   Quaternion operator/=(T k) {
-#ifndef QUATERNION_FAST
-    if (k == 0) {
-      _a = std::numeric_limits<T>::infinity();
-      return *this;
-    }
-#endif
+//#ifndef QUATERNION_FAST
+//    if (k == 0) {
+//      _a = std::numeric_limits<T>::infinity();
+//      return *this;
+//    }
+//#endif
     _a /= k;
     _b /= k;
     _c /= k;
@@ -368,12 +366,12 @@ public:
    */
   template<typename T1>
   Quaternion operator/=(const std::complex<T1>& y) {
-#ifndef QUATERNION_FAST
-    if (y.real() == 0 && y.imag() == 0) {
-      _a = std::numeric_limits<T>::infinity();
-      return *this;
-    }
-#endif
+//#ifndef QUATERNION_FAST
+//    if (y.real() == 0 && y.imag() == 0) {
+//      _a = std::numeric_limits<T>::infinity();
+//      return *this;
+//    }
+//#endif
 
     T n2 = y.real() * y.real() + y.imag() * y.imag();
     T at = _a * y.real() + _b * y.imag();
@@ -443,6 +441,7 @@ public:
 
 #ifndef QUATERNION_FAST
     if (n2 == 0) {
+      // TODO: copysign? which sign?
       _a = std::numeric_limits<T>::infinity();
       return *this;
     }
@@ -642,7 +641,7 @@ inline real_matrix_4d<T> to_real_matrix_4d(const Quaternion<T>& x) {
  */
 template <typename T>
 inline Quaternion<T> from_real_matrix_4d(const real_matrix_4d<T>& rm) {
-  // TODO: asserts
+  // TODO: asserts?
   return {rm[0][0],rm[0][1],rm[0][2],rm[0][3]};
 }
 
