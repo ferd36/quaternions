@@ -26,7 +26,7 @@ before_install:
 
 install:
   - export CXX="g++-4.8"
-   - pip install --user travis requests[security] cpp-coveralls
+  - pip install --user travis requests[security] cpp-coveralls
 
 script:
   - make -f Makefile.mk
