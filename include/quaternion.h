@@ -309,12 +309,7 @@ public:
    * Dividing by a constant.
    */
   Quaternion operator/=(T k) {
-//#ifndef QUATERNION_FAST
-//    if (k == 0) {
-//      _a = std::numeric_limits<T>::infinity();
-//      return *this;
-//    }
-//#endif
+
     _a /= k;
     _b /= k;
     _c /= k;
@@ -366,12 +361,6 @@ public:
    */
   template<typename T1>
   Quaternion operator/=(const std::complex<T1>& y) {
-//#ifndef QUATERNION_FAST
-//    if (y.real() == 0 && y.imag() == 0) {
-//      _a = std::numeric_limits<T>::infinity();
-//      return *this;
-//    }
-//#endif
 
     T n2 = y.real() * y.real() + y.imag() * y.imag();
     T at = _a * y.real() + _b * y.imag();
@@ -433,19 +422,14 @@ public:
 
   /**
    * Unary division with other Quaternion.
+   *
+   * Warning: if the norm of y is zero, the result is
+   * 4 NaNs, but maybe it should be inf.
    */
   template<typename T1>
   Quaternion operator/=(const Quaternion<T1>& y) {
 
     T n2 = y.norm_squared();
-
-#ifndef QUATERNION_FAST
-    if (n2 == 0) {
-      // TODO: copysign? which sign?
-      _a = std::numeric_limits<T>::infinity();
-      return *this;
-    }
-#endif
 
     T at = _a * y.a() + _b * y.b() + _c * y.c() + _d * y.d();
     T bt = -_a * y.b() + _b * y.a() - _c * y.d() + _d * y.c();
