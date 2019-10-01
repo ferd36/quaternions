@@ -30,6 +30,7 @@
 #include <chrono> // definitely needed on some platforms, but maybe not with clang
 #include <random>
 #include <iomanip>
+#include <functional>
 
 #include <boost/math/quaternion.hpp>
 #include <boost/rational.hpp>
@@ -209,7 +210,7 @@ operator*(const array<array<T,n>,n>& a, const array<array<T,n>,n>& b) {
  */
 std::default_random_engine generator;
 std::uniform_real_distribution<float> distribution(0.0,1.0);
-auto rng = bind(distribution, generator);
+auto rng = std::bind(distribution, generator);
 
 /**
  * A function to generate random quaternions.
@@ -1538,7 +1539,8 @@ void test_multiplication_speed() {
   cout << "Testing multiplication speed" << endl;
   size_t N = 100000;
 
-  Qf q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
+  Qf q1 = random_quaternion<float>(rng);
+  Qf q2 = random_quaternion<float>(rng);
 
   {
     float certificate = 0.0;
@@ -1647,7 +1649,8 @@ void test_axby_speed() {
   cout << "Testing axby speed" << endl;
   size_t N = 100000;
 
-  Qf q1 = random_quaternion<float>(rng), q2 = random_quaternion<float>(rng);
+  Qf q1 = random_quaternion<float>(rng);
+  Qf q2 = random_quaternion<float>(rng);
 
   { // With Boost
     qf a(q1.a(),q1.b(),q1.c(),q1.d()), b(q2.a(),q2.b(),q2.c(),q2.d());
