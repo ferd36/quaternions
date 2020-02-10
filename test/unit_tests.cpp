@@ -1769,6 +1769,7 @@ int main(int argc, char** argv) {
   test_pow_speed();
   test_axby_speed();
   test_tan_speed();
+  cout << "All tests completed OK" << endl;
 
   return 0;
 }
