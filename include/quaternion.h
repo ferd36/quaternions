@@ -1258,7 +1258,7 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
   if (expt % 4 == 2)
     y *= pow2(x);
   if (expt % 4 == 1)
-    y *= x; std::pow(3,4);
+    y *= x;
   return y;
 }
 
