@@ -186,6 +186,10 @@ public:
     return _b * _b + _c * _c + _d * _d;
   }
 
+  void normalize_real() {
+    _a = sqrt((T)1.0 - unreal_norm_squared());
+  }
+
   /**
    * Return true if this Quaternion is zero, false otherwise.
    */
