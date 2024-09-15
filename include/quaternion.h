@@ -37,7 +37,6 @@
 #include <complex>
 #include <iterator>
 #include <assert.h>
-#include <boost/mpl/bool.hpp>
 
 #include "quaternion_utils.h"
 
