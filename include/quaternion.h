@@ -718,7 +718,7 @@ inline Quaternion<T> from_euler(const std::array<T, 3>& x) {
   T c1 = std::cos(x[1]/2), s1 = std::sin(x[1]/2);
   T c2 = std::cos(x[2]/2), s2 = std::sin(x[2]/2);
   T c0c1 = c0*c1, s0s1 = s0*s1, s0c1 = s0*c1, c0s1 = c0*s1;
-  return {c0c1*c2+s0s1*s2,s0c1*c2-c0c1*s2,c0s1*c2+s0c1*s2,c0c1*s2-s0s1*c2};
+  return {c0c1*c2+s0s1*s2,s0s1*c2-c0c1*s2,c0s1*c2+s0c1*s2,c0c1*s2-s0s1*c2};
 }
 
 /**
