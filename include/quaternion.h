@@ -1,7 +1,8 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Frank Astier
+ * Copyright (c) 2015 Frank Astier.
+ * Portions copyright (c) 2019 D3 Engineering, LLC.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -1254,7 +1255,7 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
     return pow4(x);
 
   Quaternion<T> x4 = pow4(x), y = x4;
-  for (size_t i = 1; i < expt / 4; ++i)
+  for (int i = 1; i < expt / 4; ++i)
     y *= x4;
   if (expt % 4 == 3)
     y *= pow3(x);
