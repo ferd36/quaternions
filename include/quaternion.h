@@ -37,7 +37,6 @@
 #include <complex>
 #include <iterator>
 #include <assert.h>
-#include <boost/mpl/bool.hpp>
 
 #include "quaternion_utils.h"
 
@@ -184,6 +183,10 @@ public:
    */
   T unreal_norm_squared() const {
     return _b * _b + _c * _c + _d * _d;
+  }
+
+  void normalize_real() {
+    _a = sqrt((T)1.0 - unreal_norm_squared());
   }
 
   /**
@@ -657,30 +660,30 @@ template<typename T>
 inline Quaternion<T> from_rotation_matrix(const rotation_matrix<T>& rm) {
   T t = rm[0][0] + rm[1][1] + rm[2][2];
   if (t > 0) {
-    T s = 0.5 / std::sqrt(t + 1);
-    return {0.25 / s,
+    T s = (T)0.5 / std::sqrt(t + 1);
+    return {(T)0.25 / s,
             (rm[2][1] - rm[1][2]) * s,
             (rm[0][2] - rm[2][0]) * s,
             (rm[1][0] - rm[0][1]) * s};
   } else {
     if (rm[0][0] > rm[1][1] && rm[0][0] > rm[2][2]) {
-      T s = 2.0 * std::sqrt(1.0 + rm[0][0] - rm[1][1] - rm[2][2]);
+      T s = (T)2.0 * std::sqrt((T)1.0 + rm[0][0] - rm[1][1] - rm[2][2]);
       return {(rm[2][1] - rm[1][2]) / s,
-              0.25 * s,
+              (T)0.25 * s,
               (rm[0][1] + rm[1][0]) / s,
               (rm[0][2] + rm[2][0]) / s};
     } else if (rm[1][1] > rm[2][2]) {
-      T s = 2.0 * std::sqrt(1.0 + rm[1][1] - rm[0][0] - rm[2][2]);
+      T s = (T)2.0 * std::sqrt((T)1.0 + rm[1][1] - rm[0][0] - rm[2][2]);
       return {(rm[0][2] - rm[2][0]) / s,
               (rm[0][1] + rm[1][0]) / s,
-              0.25 * s,
+              (T)0.25 * s,
               (rm[1][2] + rm[2][1]) / s};
     } else {
-      T s = 2.0 * std::sqrt(1.0 + rm[2][2] - rm[0][0] - rm[1][1]);
+      T s = (T)2.0 * std::sqrt((T)1.0 + rm[2][2] - rm[0][0] - rm[1][1]);
       return {(rm[1][0] - rm[0][1]) / s,
               (rm[0][2] + rm[2][0]) / s,
               (rm[1][2] + rm[2][1]) / s,
-              0.25 * s};
+              (T)0.25 * s};
     }
   }
 }
@@ -1258,7 +1261,7 @@ inline Quaternion<T> pow(const Quaternion<T>& x, int expt) {
   if (expt % 4 == 2)
     y *= pow2(x);
   if (expt % 4 == 1)
-    y *= x; std::pow(3,4);
+    y *= x;
   return y;
 }
 
