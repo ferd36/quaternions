@@ -29,8 +29,8 @@
 #ifndef QUATERNIONS_QUATERNION_H
 #define QUATERNIONS_QUATERNION_H
 
-#include <math.h> // for atan2, which handles signs for us properly
-
+#include <cmath> // for atan2, which handles signs for us properly
+#include <cstdint>
 #include <limits>
 #include <type_traits>
 #include <array>
